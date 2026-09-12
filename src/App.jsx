@@ -14,7 +14,6 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import ControlPanel from './components/ControlPanel'
-import TelemetryHUD from './components/TelemetryHUD'
 import './App.css'
 
 const DEFAULT_PARTICLES = 2200
@@ -226,25 +225,18 @@ export default function App() {
         onPointerDown={handlePointerDown}
       />
       {showHud && (
-        <>
-          <TelemetryHUD
-            shape={shape}
-            particleCount={particleCount}
-            exposure={exposure}
-          />
-          <ControlPanel
-            shape={shape}           setShape={handleShape}
-            palette={palette}       setPalette={handlePalette}
-            exposure={exposure}     setExposure={handleExposure}
-            dispersion={dispersion} setDispersion={handleDispersion}
-            driftSpeed={driftSpeed} setDriftSpeed={handleDriftSpeed}
-            particleCount={particleCount} setParticleCount={handleParticleCount}
-            gravity={gravity}       setGravity={handleGravity}
-            onReset={handleReset}
-            onPulseNova={() => triggerShockwave(0, 0)}
-            fpsBadgeRef={fpsBadgeRef}
-          />
-        </>
+        <ControlPanel
+          shape={shape}           setShape={handleShape}
+          palette={palette}       setPalette={handlePalette}
+          exposure={exposure}     setExposure={handleExposure}
+          dispersion={dispersion} setDispersion={handleDispersion}
+          driftSpeed={driftSpeed} setDriftSpeed={handleDriftSpeed}
+          particleCount={particleCount} setParticleCount={handleParticleCount}
+          gravity={gravity}       setGravity={handleGravity}
+          onReset={handleReset}
+          onPulseNova={() => triggerShockwave(0, 0)}
+          fpsBadgeRef={fpsBadgeRef}
+        />
       )}
     </div>
   )
