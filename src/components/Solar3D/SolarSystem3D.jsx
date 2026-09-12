@@ -146,6 +146,23 @@ const PLANET_CONFIG = [
       { id: 'triton',  name: 'Triton (Retrograde Frost)', r: 1.6, dist: 27, speed: -1.4, color: 0xfbcfe8, roughness: 0.35, metalness: 0.1 }, // Retrograde orbit
     ],
   },
+  {
+    id: 'pluto',
+    name: 'Pluto (Dwarf Planet)',
+    texture: 'pluto.jpg',
+    r: 3.2,
+    dist: 760,
+    speed: 0.0014,
+    tilt: 2.05, // 120 deg axial tilt
+    rot: -0.012, // Retrograde spin
+    roughness: 0.85,
+    metalness: 0.05,
+    inclination: 0.30, // 17 deg orbital inclination out of ecliptic plane
+    moons: [
+      { id: 'charon', name: 'Charon (Binary Moon)', r: 1.6, dist: 13, speed: 1.8, color: 0xc4b5fd, roughness: 0.8 },
+      { id: 'hydra',  name: 'Hydra',                r: 0.5, dist: 20, speed: 1.1, color: 0xe5e7eb, roughness: 0.9 },
+    ],
+  },
 ]
 
 export default function SolarSystem3D({ onReturn }) {
@@ -317,14 +334,21 @@ export default function SolarSystem3D({ onReturn }) {
         points.map(pt => new THREE.Vector3(pt.x, 0, pt.y))
       )
       const orbitMat = new THREE.LineBasicMaterial({
-        color: p.id === 'earth' ? 0x38bdf8 : 0x64748b,
+        color: p.id === 'earth' ? 0x38bdf8 : p.id === 'pluto' ? 0xc084fc : 0x64748b,
         transparent: true,
-        opacity: p.id === 'earth' ? 0.30 : 0.12,
+        opacity: p.id === 'earth' ? 0.30 : p.id === 'pluto' ? 0.28 : 0.12,
       })
-      scene.add(new THREE.Line(orbitGeo, orbitMat))
+      const orbitLine = new THREE.Line(orbitGeo, orbitMat)
+      if (p.inclination) {
+        orbitLine.rotation.x = p.inclination
+      }
+      scene.add(orbitLine)
 
       // Orbital Pivot Group
       const pivot = new THREE.Group()
+      if (p.inclination) {
+        pivot.rotation.x = p.inclination
+      }
       scene.add(pivot)
 
       // Photorealistic Planet Sphere with NASA Equirectangular Map
@@ -674,7 +698,7 @@ export default function SolarSystem3D({ onReturn }) {
               className={`nav-chip ${selectedPlanet === p.name ? 'active' : ''}`}
               onClick={() => mountRef.current?.focusPlanet?.(p.id)}
             >
-              {p.name.toUpperCase()}
+              {p.id === 'pluto' ? '♇ PLUTO' : p.name.toUpperCase()}
             </button>
           ))}
         </div>
