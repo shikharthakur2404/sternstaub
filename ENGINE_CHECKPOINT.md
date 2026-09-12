@@ -1,9 +1,9 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `1d6fc58`  
+> Git Commit Reference: `bc2bafa`  
 > Live Public Deployment: https://shikharthakur2404.github.io/sternstaub/  
-> Last Verified Working State: Full-bleed edge-to-edge canvas (Vite 1126px container & side borders eradicated), OffscreenCanvas Worker, 60+ FPS locked, auto-collapsing drawer on wormhole traversal, default gravity off, and toggleable Nova Pulse mode.
+> Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Rotatable Keplerian Solar System). 2D Worker automatically pauses (0% CPU/GPU) in 3D mode. 4D Wormhole transit forward, Quantum Singularity Gate + W keybind for reverse transit with white hole emergence.
 
 ---
 
@@ -57,6 +57,9 @@ Follow these non-negotiable architectural rules:
 | `src/components/ControlPanel.jsx` | Glassmorphic HUD | Controls Geometry (5 shapes), Exposure slider, Dispersion, Drift, Particles, Gravity toggle, Nova pulse, Palettes (6 themes), Presets. |
 | `src/components/ControlPanel.css` | HUD Styling | Promoted to GPU layer via `transform: translateZ(0); will-change: transform;`. |
 | `src/config/palettes.js` | Color Themes | Ethereal Gold (Default), Hyperion Blue, Borealis Emerald, Supernova Iris, Solar Flare, Cosmic Amethyst. |
+| `src/components/Solar3D/SolarSystem3D.jsx` | 3D Planetary Engine | Three.js WebGL scene with OrbitControls, 8 rotatable planets, Earth clouds & Moon, Saturn 3D rings, Asteroid belt, camera lerp, and Singularity Gate. |
+| `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, planet nav chips, time warp slider, reverse plunge singularity vortex overlay. |
+| `src/components/Solar3D/planetTextures.js` | Procedural Texture Synthesizer | High-res canvas equirectangular texture generators for Sun and all 8 planets with rings and clouds. |
 
 ---
 
