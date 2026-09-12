@@ -1,6 +1,6 @@
-# sternstaub ✦
+# Sternstaub (Stardust) ✦
 
-> *German for "stardust"*
+> *Interactive Celestial Particle Engine*
 
 A lightweight, high-performance cosmic particle engine built with HTML5 Canvas 2D + React + Vite.  
 Zero external 3D dependencies (`three` / `@react-three/fiber` free). Multi-spectral sprite cache running on an isolated OffscreenCanvas Web Worker with 5 morphing celestial geometries at locked 60+ FPS.
