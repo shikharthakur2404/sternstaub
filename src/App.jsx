@@ -65,10 +65,15 @@ export default function App() {
     }
 
     // Bootstrap the worker with the OffscreenCanvas + initial config
+    // CRITICAL: send real viewport dimensions NOW so the worker sets canvas
+    // pixel buffer correctly. Without this the buffer stays at default 300×150
+    // and CSS stretch makes every particle appear 4-5× bigger than intended.
     worker.postMessage(
       {
         type:   'init',
         canvas: offscreen,
+        width:  canvas.offsetWidth,
+        height: canvas.offsetHeight,
         config: {
           palette:       INITIAL_PALETTE,
           shape:         INITIAL_SHAPE,

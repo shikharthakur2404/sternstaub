@@ -191,14 +191,14 @@ class Particle {
 
     const roll = Math.random()
     if (roll < 0.18) {
-      // Nebula Mist: soft atmospheric depth — kept subtle
-      this.tier = 0; this.baseSize = Math.random() * 8 + 10;   this.baseAlpha = Math.random() * 0.08 + 0.04
+      // Nebula Mist: soft atmospheric depth
+      this.tier = 0; this.baseSize = Math.random() * 12 + 8;   this.baseAlpha = Math.random() * 0.10 + 0.04
     } else if (roll < 0.85) {
-      // Body Mass: chromatic radiance — the main visual signal
-      this.tier = 1; this.baseSize = Math.random() * 5 + 3;    this.baseAlpha = Math.random() * 0.30 + 0.22
+      // Body Mass: chromatic radiance
+      this.tier = 1; this.baseSize = Math.random() * 5 + 2.5;  this.baseAlpha = Math.random() * 0.30 + 0.22
     } else {
       // Stellar Sparkle: tight diffraction points
-      this.tier = 2; this.baseSize = Math.random() * 3 + 2;    this.baseAlpha = Math.random() * 0.65 + 0.35
+      this.tier = 2; this.baseSize = Math.random() * 2.5 + 1.5; this.baseAlpha = Math.random() * 0.65 + 0.35
     }
 
     this.colorIdx     = Math.floor(Math.random() * 4)
@@ -380,6 +380,11 @@ self.onmessage = ({ data }) => {
 
     case 'init': {
       canvas = data.canvas
+      // Set the pixel buffer to real viewport dimensions IMMEDIATELY.
+      // Without this, OffscreenCanvas defaults to 300×150 and CSS stretch
+      // makes every particle appear 4-6× larger than intended.
+      canvas.width  = data.width  || 1440
+      canvas.height = data.height || 900
       ctx = canvas.getContext('2d', { alpha: false })
       Object.assign(config, data.config)
       sprites = rebuildSprites(config.palette)
