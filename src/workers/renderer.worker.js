@@ -50,13 +50,13 @@ function hexToRgba(hex, alpha) {
 // ── Sprite Generators (OffscreenCanvas, runs inside Worker) ───────────────────
 
 function createNebulaSprite(hexColor) {
-  const size = 128, half = size / 2
+  const size = 80, half = size / 2   // 80px — enough softness, no waste
   const oc = new OffscreenCanvas(size, size)
   const sc = oc.getContext('2d')
   const g = sc.createRadialGradient(half, half, 0, half, half, half)
-  g.addColorStop(0,   hexToRgba(hexColor, 0.40))
-  g.addColorStop(0.3, hexToRgba(hexColor, 0.20))
-  g.addColorStop(0.6, hexToRgba(hexColor, 0.07))
+  g.addColorStop(0,   hexToRgba(hexColor, 0.30))  // reduced peak alpha
+  g.addColorStop(0.3, hexToRgba(hexColor, 0.14))
+  g.addColorStop(0.6, hexToRgba(hexColor, 0.04))
   g.addColorStop(1,   hexToRgba(hexColor, 0))
   sc.fillStyle = g
   sc.fillRect(0, 0, size, size)
@@ -191,11 +191,14 @@ class Particle {
 
     const roll = Math.random()
     if (roll < 0.18) {
-      this.tier = 0; this.baseSize = Math.random() * 22 + 14; this.baseAlpha = Math.random() * 0.12 + 0.05
+      // Nebula Mist: soft atmospheric depth — kept subtle
+      this.tier = 0; this.baseSize = Math.random() * 8 + 10;   this.baseAlpha = Math.random() * 0.08 + 0.04
     } else if (roll < 0.85) {
-      this.tier = 1; this.baseSize = Math.random() * 8 + 3;   this.baseAlpha = Math.random() * 0.35 + 0.2
+      // Body Mass: chromatic radiance — the main visual signal
+      this.tier = 1; this.baseSize = Math.random() * 5 + 3;    this.baseAlpha = Math.random() * 0.30 + 0.22
     } else {
-      this.tier = 2; this.baseSize = Math.random() * 4 + 2;   this.baseAlpha = Math.random() * 0.7 + 0.3
+      // Stellar Sparkle: tight diffraction points
+      this.tier = 2; this.baseSize = Math.random() * 3 + 2;    this.baseAlpha = Math.random() * 0.65 + 0.35
     }
 
     this.colorIdx     = Math.floor(Math.random() * 4)
