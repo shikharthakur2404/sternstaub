@@ -50,13 +50,13 @@ function hexToRgba(hex, alpha) {
 // ── Sprite Generators (OffscreenCanvas, runs inside Worker) ───────────────────
 
 function createNebulaSprite(hexColor) {
-  const size = 80, half = size / 2   // 80px — enough softness, no waste
+  const size = 96, half = size / 2
   const oc = new OffscreenCanvas(size, size)
   const sc = oc.getContext('2d')
   const g = sc.createRadialGradient(half, half, 0, half, half, half)
-  g.addColorStop(0,   hexToRgba(hexColor, 0.30))  // reduced peak alpha
-  g.addColorStop(0.3, hexToRgba(hexColor, 0.14))
-  g.addColorStop(0.6, hexToRgba(hexColor, 0.04))
+  g.addColorStop(0,   hexToRgba(hexColor, 0.48))
+  g.addColorStop(0.3, hexToRgba(hexColor, 0.24))
+  g.addColorStop(0.65, hexToRgba(hexColor, 0.08))
   g.addColorStop(1,   hexToRgba(hexColor, 0))
   sc.fillStyle = g
   sc.fillRect(0, 0, size, size)
@@ -68,9 +68,9 @@ function createBodySprite(hexColor) {
   const oc = new OffscreenCanvas(size, size)
   const sc = oc.getContext('2d')
   const g = sc.createRadialGradient(half, half, 0, half, half, half)
-  g.addColorStop(0,    'rgba(255,255,255,0.95)')
-  g.addColorStop(0.18, hexToRgba(hexColor, 0.9))
-  g.addColorStop(0.5,  hexToRgba(hexColor, 0.28))
+  g.addColorStop(0,    'rgba(255, 255, 255, 1)')
+  g.addColorStop(0.18, hexToRgba(hexColor, 0.95))
+  g.addColorStop(0.50, hexToRgba(hexColor, 0.40))
   g.addColorStop(1,    hexToRgba(hexColor, 0))
   sc.fillStyle = g
   sc.fillRect(0, 0, size, size)
@@ -78,20 +78,20 @@ function createBodySprite(hexColor) {
 }
 
 function createSparkleSprite(hexColor) {
-  const size = 32, half = size / 2
+  const size = 36, half = size / 2
   const oc = new OffscreenCanvas(size, size)
   const sc = oc.getContext('2d')
   const g = sc.createRadialGradient(half, half, 0, half, half, half)
-  g.addColorStop(0,    'rgba(255,255,255,1)')
-  g.addColorStop(0.25, hexToRgba(hexColor, 0.8))
+  g.addColorStop(0,    'rgba(255, 255, 255, 1)')
+  g.addColorStop(0.25, hexToRgba(hexColor, 0.90))
   g.addColorStop(1,    hexToRgba(hexColor, 0))
   sc.fillStyle = g
   sc.fillRect(0, 0, size, size)
-  sc.strokeStyle = 'rgba(255,255,255,0.45)'
-  sc.lineWidth = 0.75
+  sc.strokeStyle = 'rgba(255, 255, 255, 0.75)'
+  sc.lineWidth = 1.0
   sc.beginPath()
-  sc.moveTo(half, half - 10); sc.lineTo(half, half + 10)
-  sc.moveTo(half - 10, half); sc.lineTo(half + 10, half)
+  sc.moveTo(half, half - 11); sc.lineTo(half, half + 11)
+  sc.moveTo(half - 11, half); sc.lineTo(half + 11, half)
   sc.stroke()
   return oc
 }
@@ -191,14 +191,14 @@ class Particle {
 
     const roll = Math.random()
     if (roll < 0.18) {
-      // Nebula Mist: soft atmospheric depth
-      this.tier = 0; this.baseSize = Math.random() * 12 + 8;   this.baseAlpha = Math.random() * 0.10 + 0.04
+      // Nebula Mist: soft luminous cosmic gas aura
+      this.tier = 0; this.baseSize = Math.random() * 16 + 14;  this.baseAlpha = Math.random() * 0.18 + 0.12
     } else if (roll < 0.85) {
-      // Body Mass: chromatic radiance
-      this.tier = 1; this.baseSize = Math.random() * 5 + 2.5;  this.baseAlpha = Math.random() * 0.30 + 0.22
+      // Body Mass: intense chromatic radiance & core brilliance
+      this.tier = 1; this.baseSize = Math.random() * 8 + 6;    this.baseAlpha = Math.random() * 0.35 + 0.50
     } else {
-      // Stellar Sparkle: tight diffraction points
-      this.tier = 2; this.baseSize = Math.random() * 2.5 + 1.5; this.baseAlpha = Math.random() * 0.65 + 0.35
+      // Stellar Sparkle: sharp piercing diffraction stars
+      this.tier = 2; this.baseSize = Math.random() * 4 + 3;    this.baseAlpha = Math.random() * 0.25 + 0.75
     }
 
     this.colorIdx     = Math.floor(Math.random() * 4)
@@ -322,10 +322,10 @@ function render(now) {
   ctx.fillStyle = bgGrad
   ctx.fillRect(0, 0, w, h)
 
-  // ── 2. Additive Particle Blit Pass ──
+  // Additive Particle Blit Pass
   ctx.globalCompositeOperation = 'lighter'
   const n = particles.length
-  const densityComp = Math.sqrt(1800 / Math.max(n, 500))
+  const densityComp = Math.min(1.2, Math.sqrt(2400 / Math.max(n, 800)))
   const timeSec = now * 0.001
 
   for (let i = 0; i < n; i++) {
