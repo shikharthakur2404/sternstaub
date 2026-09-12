@@ -57,9 +57,9 @@ Follow these non-negotiable architectural rules:
 | `src/components/ControlPanel.jsx` | Glassmorphic HUD | Controls Geometry (5 shapes), Exposure slider, Dispersion, Drift, Particles, Gravity toggle, Nova pulse, Palettes (6 themes), Presets. |
 | `src/components/ControlPanel.css` | HUD Styling | Promoted to GPU layer via `transform: translateZ(0); will-change: transform;`. |
 | `src/config/palettes.js` | Color Themes | Ethereal Gold (Default), Hyperion Blue, Borealis Emerald, Supernova Iris, Solar Flare, Cosmic Amethyst. |
-| `src/components/Solar3D/SolarSystem3D.jsx` | 3D Planetary Engine | Three.js WebGL scene with OrbitControls, 8 rotatable planets, Earth clouds & Moon, Saturn 3D rings, Asteroid belt, camera lerp, and Singularity Gate. |
+| `src/components/Solar3D/SolarSystem3D.jsx` | 3D Planetary Engine | Three.js WebGL scene with OrbitControls, 8 rotatable planets, authentic moon systems, Earth clouds & Moon, Saturn 3D rings, Asteroid belt, camera lerp, and Singularity Gate. |
 | `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, planet nav chips, time warp slider, reverse plunge singularity vortex overlay. |
-| `src/components/Solar3D/planetTextures.js` | Procedural Texture Synthesizer | High-res canvas equirectangular texture generators for Sun and all 8 planets with rings and clouds. |
+| `public/textures/planets/` | Authentic NASA Equirectangular Maps | Real photographic 1K/2K maps for Sun, Mercury, Venus, Earth, Earth clouds, Moon, Mars, Jupiter, Saturn, Saturn rings, Uranus, Neptune. |
 
 ---
 
