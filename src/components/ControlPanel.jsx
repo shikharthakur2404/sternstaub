@@ -12,6 +12,7 @@ export default function ControlPanel({
   particleCount, setParticleCount,
   palette,       setPalette,
   onReset,
+  fpsBadgeRef,
 }) {
   const [isOpen, setIsOpen] = useState(true)
 
@@ -45,7 +46,10 @@ export default function ControlPanel({
   return (
     <div className={`control-panel ${isOpen ? 'open' : 'closed'}`}>
       <div className="panel-header">
-        <span className="panel-title">✦ sternstaub</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="panel-title">✦ sternstaub</span>
+          <span ref={fpsBadgeRef} className="fps-indicator">60 FPS</span>
+        </div>
         <div style={{ display: 'flex', gap: 6 }}>
           <button className="icon-btn" onClick={onReset} title="Reset">↺</button>
           <button className="icon-btn" onClick={() => setIsOpen(!isOpen)}>

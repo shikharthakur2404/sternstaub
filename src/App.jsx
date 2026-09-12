@@ -1,9 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // App.jsx — sternstaub
 //
-// Pure HTML5 Canvas 2D particle system. No Three.js, no GLSL, no heavy deps.
-// ~1800 particles shaped into a humanoid silhouette using parametric point
-// distribution. Additive blending ("lighter") creates the optical glow effect.
+// Pure HTML5 Canvas 2D particle engine. Zero external 3D dependencies.
+// ~1,800 particles shaped into a humanoid silhouette with parametric distribution.
+//
+// PERFORMANCE ARCHITECTURE:
+// - Hardware-accelerated GPU sprite blitting (offscreen radial gradient cache)
+// - Additive blending ("lighter" composite) for white-hot core optical radiance
+// - Zero per-frame shadowBlur / save / restore calls (eliminates 100k+ CPU blurs/sec)
+// - Cached background gradients & decoupled direct-DOM FPS telemetry
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState, useCallback } from 'react'
@@ -13,9 +18,42 @@ import './App.css'
 
 const PARTICLE_COUNT = 1800
 
+// Helper to convert hex strings to rgba
+function hexToRgba(hex, alpha) {
+  let c = hex.replace('#', '')
+  if (c.length === 3) {
+    c = c.split('').map(char => char + char).join('')
+  }
+  const num = parseInt(c, 16)
+  const r = (num >> 16) & 255
+  const g = (num >> 8) & 255
+  const b = num & 255
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+// ── Offscreen Sprite Generator ───────────────────────────────────────────────
+// Pre-renders a radial glow particle once into an offscreen canvas.
+// Enables direct GPU texture blits via drawImage() at 60-120 FPS.
+function createGlowSprite(hexColor) {
+  const size = 64
+  const half = size / 2
+  const offscreen = document.createElement('canvas')
+  offscreen.width = size
+  offscreen.height = size
+  const sCtx = offscreen.getContext('2d')
+
+  const grad = sCtx.createRadialGradient(half, half, 0, half, half, half)
+  grad.addColorStop(0, 'rgba(255, 255, 255, 1)')
+  grad.addColorStop(0.18, hexToRgba(hexColor, 0.95))
+  grad.addColorStop(0.48, hexToRgba(hexColor, 0.32))
+  grad.addColorStop(1, hexToRgba(hexColor, 0))
+
+  sCtx.fillStyle = grad
+  sCtx.fillRect(0, 0, size, size)
+  return offscreen
+}
+
 // ── Humanoid silhouette point generator ──────────────────────────────────────
-// Returns a random {x, y} coordinate shaped like a human body.
-// Origin (0,0) is the center of the canvas — coordinates are offsets from center.
 function getSilhouetteTarget() {
   const u = Math.random()
 
@@ -58,41 +96,27 @@ class Particle {
     this.baseY       = target.y
     this.x           = this.baseX
     this.y           = this.baseY
-    this.radius      = Math.random() * 2.6 + 0.8
+    this.radius      = Math.random() * 2.5 + 0.8
     this.angle       = Math.random() * Math.PI * 2
-    this.frequency   = Math.random() * 0.02 + 0.01   // how fast it oscillates
-    this.amplitude   = Math.random() * 25 + 5         // how far it can drift
-    this.colorIdx    = Math.floor(Math.random() * 4)  // which palette color to use
-    this.alpha       = Math.random() * 0.7 + 0.3
+    this.frequency   = Math.random() * 0.02 + 0.01   // oscillation velocity
+    this.amplitude   = Math.random() * 25 + 5         // drift range
+    this.colorIdx    = Math.floor(Math.random() * 4)  // palette color index
+    this.alpha       = Math.random() * 0.6 + 0.4
   }
 
   update(dispersion, drift) {
-    // Advance the oscillation angle
     this.angle += this.frequency * drift
 
-    // Compute organic offset using trig — cheap alternative to Perlin noise
+    // Fast harmonic trigonometric displacement
     const noiseX = Math.cos(this.angle + this.baseY * 0.05) * this.amplitude
     const noiseY = Math.sin(this.angle + this.baseX * 0.05) * this.amplitude
 
-    // Target position = base silhouette position + noise * dispersion
     const targetX = this.baseX + noiseX * dispersion
     const targetY = this.baseY + noiseY * dispersion
 
-    // Smooth lerp towards target — feels organic, not snappy
+    // Smooth lerp
     this.x += (targetX - this.x) * 0.1
     this.y += (targetY - this.y) * 0.1
-  }
-
-  draw(ctx, colors, cx, cy) {
-    ctx.save()
-    ctx.beginPath()
-    ctx.arc(cx + this.x, cy + this.y, this.radius, 0, Math.PI * 2)
-    ctx.fillStyle     = colors[this.colorIdx]
-    ctx.globalAlpha   = this.alpha
-    ctx.shadowColor   = colors[this.colorIdx]
-    ctx.shadowBlur    = this.radius * 4  // glow halo around each particle
-    ctx.fill()
-    ctx.restore()
   }
 }
 
@@ -101,27 +125,34 @@ class Particle {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
   const canvasRef = useRef(null)
+  const fpsBadgeRef = useRef(null)
 
-  // All tunable state
+  // State
   const [dispersion,    setDispersion]    = useState(1)
   const [driftSpeed,    setDriftSpeed]    = useState(2)
   const [particleCount, setParticleCount] = useState(PARTICLE_COUNT)
   const [palette,       setPalette]       = useState('cosmicBlue')
 
-  // Refs so the animation loop always reads the latest values
-  // without needing to re-register the loop on every state change
+  // Live ref to avoid re-binding RAF loop on slider drag
   const stateRef = useRef({ dispersion, driftSpeed, palette })
   useEffect(() => {
     stateRef.current = { dispersion, driftSpeed, palette }
   }, [dispersion, driftSpeed, palette])
 
-  // Rebuild particles when count changes
+  // Pre-render offscreen sprite cache on palette change
+  const spritesRef = useRef([])
+  useEffect(() => {
+    const pal = PALETTES[palette] || PALETTES.cosmicBlue
+    spritesRef.current = pal.glow.map(color => createGlowSprite(color))
+  }, [palette])
+
+  // Particle instances
   const particlesRef = useRef([])
   useEffect(() => {
     particlesRef.current = Array.from({ length: particleCount }, () => new Particle())
   }, [particleCount])
 
-  // Reset everything to defaults
+  // Reset handler
   const reset = useCallback(() => {
     setDispersion(1)
     setDriftSpeed(2)
@@ -134,56 +165,90 @@ export default function App() {
   // ── Main animation loop ───────────────────────────────────────────────────
   useEffect(() => {
     const canvas = canvasRef.current
-    const ctx    = canvas.getContext('2d')
+    if (!canvas) return
+    const ctx = canvas.getContext('2d', { alpha: false }) // alpha: false enables direct framebuffer blits
     let rafId
 
-    // Resize canvas to match its CSS size
+    // Background gradient cache
+    let cachedBg = null
+    let cachedW  = 0
+    let cachedH  = 0
+    let cachedPal = ''
+
+    // FPS Telemetry
+    let frameCount = 0
+    let lastTime   = performance.now()
+
     const resize = () => {
       canvas.width  = canvas.offsetWidth
       canvas.height = canvas.offsetHeight
+      cachedBg = null // invalidate cache on resize
     }
     resize()
     window.addEventListener('resize', resize)
 
-    // particles initialized via separate hook below
-
-    const render = () => {
-      const { dispersion, driftSpeed, palette } = stateRef.current
-      const pal = PALETTES[palette]
+    const render = (now) => {
+      const { dispersion, driftSpeed, palette: curPal } = stateRef.current
+      const pal = PALETTES[curPal] || PALETTES.cosmicBlue
       const w   = canvas.width
       const h   = canvas.height
-      const cx  = w / 2  // center x
-      const cy  = h / 2  // center y
+      const cx  = w * 0.5
+      const cy  = h * 0.5
 
-      // ── Background: radial gradient from config ──
-      const bgGrad = ctx.createRadialGradient(cx, cy, 20, cx, cy, w * 0.6)
-      bgGrad.addColorStop(0, pal.bgStart)
-      bgGrad.addColorStop(1, pal.bgEnd)
-      ctx.fillStyle = bgGrad
+      // ── Background pass ──
+      if (!cachedBg || cachedW !== w || cachedH !== h || cachedPal !== curPal) {
+        cachedBg = ctx.createRadialGradient(cx, cy, 20, cx, cy, w * 0.6)
+        cachedBg.addColorStop(0, pal.bgStart)
+        cachedBg.addColorStop(1, pal.bgEnd)
+        cachedW  = w
+        cachedH  = h
+        cachedPal = curPal
+      }
+      ctx.fillStyle = cachedBg
       ctx.fillRect(0, 0, w, h)
 
-      // ── Additive blending: overlapping particles brighten each other ──
-      // This is the key to the "white-hot core" optical glow effect
+      // ── Additive GPU Blitting pass ──
       ctx.globalCompositeOperation = 'lighter'
 
-      for (const p of particlesRef.current) {
-        p.update(dispersion, driftSpeed)
-        p.draw(ctx, pal.glow, cx, cy)
+      const sprites = spritesRef.current
+      const particles = particlesRef.current
+      const numSprites = sprites.length
+
+      if (numSprites > 0) {
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i]
+          p.update(dispersion, driftSpeed)
+
+          ctx.globalAlpha = p.alpha
+          const sprite = sprites[p.colorIdx % numSprites]
+          const size = p.radius * 7 // scaled optical glow halo
+          ctx.drawImage(sprite, cx + p.x - size * 0.5, cy + p.y - size * 0.5, size, size)
+        }
       }
 
-      // Reset to normal blending before next frame
       ctx.globalCompositeOperation = 'source-over'
+
+      // ── Telemetry (Every 500ms) ──
+      frameCount++
+      if (now - lastTime >= 500) {
+        const fps = Math.round((frameCount * 1000) / (now - lastTime))
+        if (fpsBadgeRef.current) {
+          fpsBadgeRef.current.textContent = `${fps} FPS`
+        }
+        frameCount = 0
+        lastTime = now
+      }
 
       rafId = requestAnimationFrame(render)
     }
 
-    render()
+    rafId = requestAnimationFrame(render)
 
     return () => {
       cancelAnimationFrame(rafId)
       window.removeEventListener('resize', resize)
     }
-  }, []) // only runs once — stateRef handles live updates
+  }, [])
 
   return (
     <div className="app">
@@ -198,6 +263,7 @@ export default function App() {
         setParticleCount={setParticleCount}
         setPalette={setPalette}
         onReset={reset}
+        fpsBadgeRef={fpsBadgeRef}
       />
     </div>
   )
