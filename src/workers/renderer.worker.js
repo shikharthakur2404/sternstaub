@@ -1034,7 +1034,7 @@ function render(now) {
         p.vx = Math.cos(ang) * spd
         p.vy = Math.sin(ang) * spd * 0.65
       }
-      self.postMessage({ type: 'wormholePhase', phase: 'emergence', shape: config.shape })
+      self.postMessage({ type: 'wormholePhase', phase: 'emergence', shape: config.shape, target: wormhole.targetShape })
     }
   } else if (wormhole.state === 'emergence') {
     const elapsed = (now - wormhole.startTime) / 1000
@@ -1238,7 +1238,7 @@ self.onmessage = ({ data }) => {
         const dx = a.x - data.relX
         const dy = a.y - data.relY
         if (Math.sqrt(dx * dx + dy * dy) < 48) {
-          triggerWormhole()
+          triggerWormhole('solar')
           break
         }
       }
@@ -1256,6 +1256,44 @@ self.onmessage = ({ data }) => {
       canvas.height = data.height
       bgGrad  = null
       vigGrad = null
+      break
+    }
+
+    case 'pause': {
+      if (rafId) cancelAnimationFrame(rafId)
+      rafId = null
+      break
+    }
+
+    case 'resume': {
+      if (!rafId && canvas && ctx) {
+        lastTime = performance.now()
+        rafId = requestAnimationFrame(render)
+      }
+      break
+    }
+
+    case 'returnWormhole': {
+      if (!rafId && canvas && ctx) {
+        lastTime = performance.now()
+        rafId = requestAnimationFrame(render)
+      }
+      wormhole.state = 'emergence'
+      wormhole.startTime = performance.now()
+      config.shape = data.targetShape || 'silhouette'
+      const n = particles.length
+      for (let i = 0; i < n; i++) {
+        const p = particles[i]
+        p.morphTo(config.shape)
+        p.x = (Math.random() - 0.5) * 30
+        p.y = (Math.random() - 0.5) * 30
+        p.wz = -180
+        const ang = Math.random() * Math.PI * 2
+        const spd = Math.random() * 26 + 14
+        p.vx = Math.cos(ang) * spd
+        p.vy = Math.sin(ang) * spd * 0.65
+      }
+      self.postMessage({ type: 'wormholePhase', phase: 'emergence', shape: config.shape })
       break
     }
 

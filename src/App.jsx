@@ -12,9 +12,11 @@
 // how hard the render worker is running.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react'
 import ControlPanel from './components/ControlPanel'
 import './App.css'
+
+const SolarSystem3D = lazy(() => import('./components/Solar3D/SolarSystem3D'))
 
 const DEFAULT_PARTICLES = 2200
 const INITIAL_PALETTE   = 'etherealGold'
@@ -25,6 +27,10 @@ export default function App() {
   const workerRef    = useRef(null)
   const fpsBadgeRef  = useRef(null)
   const initDoneRef  = useRef(false)
+
+  // ── Multi-Engine Dimensional Mode ('stardust' | 'solar3d') ──
+  const [sceneMode,        setSceneMode]        = useState('stardust')
+  const sceneModeRef                            = useRef('stardust')
 
   // ── React state (drives HUD display only — values forwarded to worker) ──
   const [shape,            setShape]            = useState(INITIAL_SHAPE)
@@ -39,6 +45,10 @@ export default function App() {
   const [isAnomalyHovered, setIsAnomalyHovered] = useState(false)
   const [wormholeBanner,   setWormholeBanner]   = useState('')
   const wasPanelOpenRef                         = useRef(true)
+
+  useEffect(() => {
+    sceneModeRef.current = sceneMode
+  }, [sceneMode])
 
   // ── Worker factory ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -79,8 +89,14 @@ export default function App() {
         } else if (data.phase === 'horizon') {
           setWormholeBanner('⦿ 4D HYPERSPACE WARP TRANSIT // TRAVERSING SPACETIME THROAT')
         } else if (data.phase === 'emergence') {
-          setWormholeBanner(`☉ RELATIVISTIC EMERGENCE // ${data.shape ? data.shape.toUpperCase() : 'SOLAR'} SYSTEM MATERIALIZED`)
-          if (data.shape) setShape(data.shape)
+          if (data.target === 'solar' || data.shape === 'solar') {
+            worker.postMessage({ type: 'pause' })
+            setSceneMode('solar3d')
+            setWormholeBanner('')
+          } else {
+            setWormholeBanner(`☉ RELATIVISTIC EMERGENCE // ${data.shape ? data.shape.toUpperCase() : 'SOLAR'} SYSTEM MATERIALIZED`)
+            if (data.shape) setShape(data.shape)
+          }
         }
       } else if (data.type === 'wormholeComplete') {
         if (data.shape) setShape(data.shape)
@@ -140,11 +156,30 @@ export default function App() {
     workerRef.current?.postMessage({ type: 'config', ...patch })
   }, [])
 
+  const handleWormhole = useCallback((target = 'solar') => {
+    setIsPanelOpen(prev => {
+      wasPanelOpenRef.current = prev
+      return false
+    })
+    workerRef.current?.postMessage({ type: 'wormhole', targetShape: target })
+  }, [])
+
+  const handleReturnFromSolar3D = useCallback(() => {
+    setSceneMode('stardust')
+    setShape('silhouette')
+    workerRef.current?.postMessage({ type: 'returnWormhole', targetShape: 'silhouette' })
+    setWormholeBanner('☉ WHITE HOLE SINGULARITY EMERGENCE // RETURNING TO STARDUST DIMENSION')
+  }, [])
+
   // Each setter updates both React state (for HUD) and the worker
   const handleShape = useCallback((v) => {
+    if (v === 'solar') {
+      handleWormhole('solar')
+      return
+    }
     setShape(v)
     workerRef.current?.postMessage({ type: 'morph', shape: v })
-  }, [])
+  }, [handleWormhole])
 
   const handlePalette = useCallback((v) => {
     setPalette(v)
@@ -219,15 +254,7 @@ export default function App() {
     workerRef.current?.postMessage({ type: 'pointerDown', relX, relY })
   }, [])
 
-  const handleWormhole = useCallback((target) => {
-    setIsPanelOpen(prev => {
-      wasPanelOpenRef.current = prev
-      return false
-    })
-    workerRef.current?.postMessage({ type: 'wormhole', targetShape: target })
-  }, [])
-
-  // ── Global Hotkeys (H: Toggle HUDs, F: Fullscreen, Space: Toggle Nova) ──────
+  // ── Global Hotkeys (H: Toggle HUDs, F: Fullscreen, Space: Toggle Nova, W: Wormhole) ──
   const [showHud, setShowHud] = useState(true)
 
   useEffect(() => {
@@ -246,12 +273,22 @@ export default function App() {
         e.preventDefault()
         setPulseNova(prev => !prev)
       } else if (e.key === 'w' || e.key === 'W') {
-        handleWormhole()
+        if (sceneModeRef.current === 'stardust') {
+          handleWormhole('solar')
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleWormhole])
+
+  // Background prefetch 3D engine while user explores 2D Stardust
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      import('./components/Solar3D/SolarSystem3D')
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [])
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -264,17 +301,22 @@ export default function App() {
         onPointerDown={handlePointerDown}
       />
 
-
+      {/* 3D Rotatable Keplerian Planetary Engine */}
+      {sceneMode === 'solar3d' && (
+        <Suspense fallback={null}>
+          <SolarSystem3D onReturn={handleReturnFromSolar3D} />
+        </Suspense>
+      )}
 
       {/* Cinematic Spacetime Wormhole Banner */}
-      {wormholeBanner && (
+      {wormholeBanner && sceneMode === 'stardust' && (
         <div className="wormhole-hud-banner">
           <span className="wormhole-radar-pulse" />
           <span className="wormhole-banner-text">{wormholeBanner}</span>
         </div>
       )}
 
-      {showHud && (
+      {showHud && sceneMode === 'stardust' && (
         <ControlPanel
           isOpen={isPanelOpen}    setIsOpen={setIsPanelOpen}
           shape={shape}           setShape={handleShape}
@@ -286,7 +328,7 @@ export default function App() {
           gravity={gravity}       setGravity={handleGravity}
           pulseNova={pulseNova}   setPulseNova={setPulseNova}
           onReset={handleReset}
-          onWormhole={() => handleWormhole()}
+          onWormhole={() => handleWormhole('solar')}
           fpsBadgeRef={fpsBadgeRef}
         />
       )}
