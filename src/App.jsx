@@ -37,7 +37,6 @@ export default function App() {
   const [pulseNova,        setPulseNova]        = useState(false)
   const [isPanelOpen,      setIsPanelOpen]      = useState(true)
   const [isAnomalyHovered, setIsAnomalyHovered] = useState(false)
-  const [anomalyPos,       setAnomalyPos]       = useState({ x: 0, y: 0 })
   const [wormholeBanner,   setWormholeBanner]   = useState('')
   const wasPanelOpenRef                         = useRef(true)
 
@@ -69,7 +68,6 @@ export default function App() {
         fpsBadgeRef.current.textContent = `${data.value} FPS`
       } else if (data.type === 'anomalyHover') {
         setIsAnomalyHovered(data.hovered)
-        if (data.x != null) setAnomalyPos({ x: data.x, y: data.y })
       } else if (data.type === 'wormholePhase') {
         // Auto-collapse control panel into drawer while wormhole plays
         setIsPanelOpen(prev => {
@@ -266,18 +264,7 @@ export default function App() {
         onPointerDown={handlePointerDown}
       />
 
-      {/* Floating tooltip when anomaly is hovered */}
-      {isAnomalyHovered && !wormholeBanner && (
-        <div
-          className="anomaly-tooltip"
-          style={{
-            left: `${anomalyPos.x}px`,
-            top: `${anomalyPos.y - 32}px`,
-          }}
-        >
-          ✦ QUANTUM ANOMALY · CLICK TO ENTER WORMHOLE
-        </div>
-      )}
+
 
       {/* Cinematic Spacetime Wormhole Banner */}
       {wormholeBanner && (

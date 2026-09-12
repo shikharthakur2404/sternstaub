@@ -22,32 +22,7 @@ body {
   cursor: crosshair;
 }
 
-/* ── Quantum Anomaly Tooltip ── */
-.anomaly-tooltip {
-  position: absolute;
-  transform: translate(-50%, -100%);
-  padding: 6px 12px;
-  background: rgba(8, 10, 24, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(253, 224, 71, 0.6);
-  border-radius: 999px;
-  color: #fef08a;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  pointer-events: none;
-  z-index: 90;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(253, 224, 71, 0.25);
-  animation: tooltip-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  white-space: nowrap;
-}
 
-@keyframes tooltip-pop {
-  from { opacity: 0; transform: translate(-50%, -90%) scale(0.9); }
-  to   { opacity: 1; transform: translate(-50%, -100%) scale(1); }
-}
 
 /* ── Cinematic Spacetime Wormhole Banner ── */
 .wormhole-hud-banner {
