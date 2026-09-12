@@ -132,6 +132,9 @@ label {
   transition: all 0.2s;
   text-align: center;
 }
+.shape-btn:last-child:nth-child(odd) {
+  grid-column: span 2;
+}
 .shape-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;

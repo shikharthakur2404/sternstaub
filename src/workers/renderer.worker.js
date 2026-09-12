@@ -171,8 +171,9 @@ function getTorusTarget() {
   }
 }
 
-function getTarget(shape) {
+function getTarget(shape, particle) {
   switch (shape) {
+    case 'solar':       return getSolarTarget(particle)
     case 'singularity': return getSingularityTarget()
     case 'galaxy':      return getGalaxyTarget()
     case 'torus':       return getTorusTarget()
@@ -180,10 +181,118 @@ function getTarget(shape) {
   }
 }
 
+// ── Solar System Orbital Physics ─────────────────────────────────────────────
+function initSolarParticle(p) {
+  const u = Math.random()
+  if (u < 0.12) {
+    // Sol Core (The Sun)
+    p.solarType = 'sun'
+    p.orbitR = Math.sqrt(Math.random()) * 26
+    p.orbitTheta = Math.random() * Math.PI * 2
+    p.orbitOmega = 0.004
+    p.orbitInc = 0.70
+  } else if (u < 0.36) {
+    // 8 Planetary Spheres + Major Moons
+    p.solarType = 'planet'
+    const pIdx = Math.floor(Math.random() * 8)
+    const orbits = [46, 68, 94, 122, 192, 256, 310, 362]
+    const omegas = [0.038, 0.027, 0.020, 0.015, 0.008, 0.0055, 0.0038, 0.0026]
+    p.orbitR = orbits[pIdx]
+    p.orbitOmega = omegas[pIdx]
+    const rad = pIdx === 4 ? 8.5 : (pIdx === 5 ? 7.5 : (pIdx === 6 || pIdx === 7 ? 5.5 : 4.0))
+    p.clusterR = Math.sqrt(Math.random()) * rad
+    p.clusterAngle = Math.random() * Math.PI * 2
+    p.orbitTheta = pIdx * 0.785
+    p.orbitInc = 0.65
+  } else if (u < 0.64) {
+    // Main Asteroid Belt (between Mars & Jupiter)
+    p.solarType = 'asteroid'
+    p.orbitR = 142 + (Math.random() - 0.5) * 36
+    p.orbitTheta = Math.random() * Math.PI * 2
+    p.orbitOmega = 0.011 + (Math.random() - 0.5) * 0.002
+    p.orbitInc = 0.65 + (Math.random() - 0.5) * 0.06
+  } else if (u < 0.82) {
+    // Saturn Ring System (dense tilted disc orbiting Saturn at R=256)
+    p.solarType = 'saturn_ring'
+    p.orbitR = 256
+    p.orbitOmega = 0.0055
+    p.ringR = 12 + Math.random() * 24
+    p.ringAngle = Math.random() * Math.PI * 2
+    p.orbitTheta = 5 * 0.785
+    p.orbitInc = 0.65
+  } else if (u < 0.93) {
+    // Kuiper Belt & Outskirts
+    p.solarType = 'kuiper'
+    p.orbitR = 380 + Math.random() * 65
+    p.orbitTheta = Math.random() * Math.PI * 2
+    p.orbitOmega = 0.0018 + (Math.random() - 0.5) * 0.0006
+    p.orbitInc = 0.62 + (Math.random() - 0.5) * 0.10
+  } else {
+    // Eccentric Comet with Ion Dust Tail
+    p.solarType = 'comet'
+    p.cometProg = Math.random()
+    p.tailOffset = Math.random() * 42
+    p.orbitOmega = 0.010
+    p.orbitInc = 0.65
+  }
+}
+
+function getSolarTarget(p) {
+  if (!p.solarType) initSolarParticle(p)
+
+  switch (p.solarType) {
+    case 'sun': {
+      return {
+        x: p.orbitR * Math.cos(p.orbitTheta),
+        y: p.orbitR * Math.sin(p.orbitTheta) * p.orbitInc,
+      }
+    }
+    case 'planet': {
+      const px = p.orbitR * Math.cos(p.orbitTheta)
+      const py = p.orbitR * Math.sin(p.orbitTheta) * p.orbitInc
+      return {
+        x: px + p.clusterR * Math.cos(p.clusterAngle),
+        y: py + p.clusterR * Math.sin(p.clusterAngle) * 0.65,
+      }
+    }
+    case 'saturn_ring': {
+      const px = p.orbitR * Math.cos(p.orbitTheta)
+      const py = p.orbitR * Math.sin(p.orbitTheta) * p.orbitInc
+      return {
+        x: px + p.ringR * Math.cos(p.ringAngle),
+        y: py + p.ringR * Math.sin(p.ringAngle) * 0.28,
+      }
+    }
+    case 'comet': {
+      const nu = p.cometProg * Math.PI * 2
+      const e = 0.84, a = 190
+      const r = (a * (1 - e * e)) / (1 + e * Math.cos(nu))
+      const hx = r * Math.cos(nu - 0.7)
+      const hy = r * Math.sin(nu - 0.7) * p.orbitInc
+      const dist = Math.sqrt(hx * hx + hy * hy) || 1
+      const ux = hx / dist, uy = hy / dist
+      return {
+        x: hx + ux * p.tailOffset,
+        y: hy + uy * p.tailOffset,
+      }
+    }
+    case 'asteroid':
+    case 'kuiper':
+    default: {
+      return {
+        x: p.orbitR * Math.cos(p.orbitTheta),
+        y: p.orbitR * Math.sin(p.orbitTheta) * p.orbitInc,
+      }
+    }
+  }
+}
+
 // ── Particle Class ────────────────────────────────────────────────────────────
 class Particle {
   constructor(shape) {
-    const t = getTarget(shape)
+    this.currentShape = shape
+    initSolarParticle(this)
+    const t = getTarget(shape, this)
     this.baseX = this.targetBaseX = t.x
     this.baseY = this.targetBaseY = t.y
     this.x = t.x; this.y = t.y
@@ -210,15 +319,32 @@ class Particle {
   }
 
   morphTo(shape) {
-    const t = getTarget(shape)
+    this.currentShape = shape
+    if (shape === 'solar') {
+      initSolarParticle(this)
+    }
+    const t = getTarget(shape, this)
     this.targetBaseX = t.x
     this.targetBaseY = t.y
   }
 
   update(dispersion, drift, pointer, gravityOn, shockwave) {
-    // Morph lerp
-    this.baseX += (this.targetBaseX - this.baseX) * 0.045
-    this.baseY += (this.targetBaseY - this.baseY) * 0.045
+    // Advance continuous orbital movement in solar mode
+    if (this.currentShape === 'solar') {
+      this.orbitTheta += this.orbitOmega * drift
+      if (this.ringAngle !== undefined) this.ringAngle += 0.012 * drift
+      if (this.cometProg !== undefined) this.cometProg = (this.cometProg + 0.003 * drift) % 1
+
+      const target = getSolarTarget(this)
+      this.targetBaseX = target.x
+      this.targetBaseY = target.y
+      this.baseX += (this.targetBaseX - this.baseX) * 0.065
+      this.baseY += (this.targetBaseY - this.baseY) * 0.065
+    } else {
+      // Morph lerp
+      this.baseX += (this.targetBaseX - this.baseX) * 0.045
+      this.baseY += (this.targetBaseY - this.baseY) * 0.045
+    }
 
     // Harmonic oscillation
     this.angle += this.frequency * drift
