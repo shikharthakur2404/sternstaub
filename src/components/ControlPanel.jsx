@@ -32,6 +32,8 @@ export default function ControlPanel({
   const [openGeom,     setOpenGeom]     = useState(true)
   const [openDynamics, setOpenDynamics] = useState(true)
   const [openSpectra,  setOpenSpectra]  = useState(true)
+  // Presets & Memory (disabled for now)
+  /*
   const [openPresets,  setOpenPresets]  = useState(false)
 
   const savePreset = () => {
@@ -64,6 +66,7 @@ export default function ControlPanel({
     }
     reader.readAsText(file)
   }
+  */
 
   return (
     <>
@@ -72,7 +75,7 @@ export default function ControlPanel({
         <button
           className="hud-collapsed-pill"
           onClick={() => setIsOpen(true)}
-          title="Open Feature Control Panel"
+          title="Open Feature Control Panel (H to completely hide/show HUD)"
         >
           <span className="pill-pulse" />
           <span className="pill-title">✦ TUNE HUD</span>
@@ -271,7 +274,8 @@ export default function ControlPanel({
             </div>
           </div>
 
-          {/* ── Accordion 4: Presets & Memory ── */}
+          {/* ── Accordion 4: Presets & Memory (disabled for now) ── */}
+          {/*
           <div className="accordion-section">
             <button
               className={`accordion-header ${openPresets ? 'active' : ''}`}
@@ -295,6 +299,7 @@ export default function ControlPanel({
               </div>
             </div>
           </div>
+          */}
 
         </div>
       </div>
