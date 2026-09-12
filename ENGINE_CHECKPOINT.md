@@ -1,7 +1,7 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `bc2bafa`  
+> Git Commit Reference: `33b815a`  
 > Live Public Deployment: https://shikharthakur2404.github.io/sternstaub/  
 > Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Rotatable Keplerian Solar System). 2D Worker automatically pauses (0% CPU/GPU) in 3D mode. 4D Wormhole transit forward, Quantum Singularity Gate + W keybind for reverse transit with white hole emergence.
 
