@@ -8,9 +8,9 @@ import './ControlPanel.css'
 
 const SHAPES = [
   { id: 'silhouette',  label: '✦ Astral' },
-  { id: 'solar',       label: '☀️ Solar' },
+  { id: 'solar',       label: '☉ Solar' },
   { id: 'singularity', label: '⦿ Singularity' },
-  { id: 'galaxy',      label: '🌀 Galaxy' },
+  { id: 'galaxy',      label: '⊛ Galaxy' },
   { id: 'torus',       label: '⊚ Torus' },
 ]
 
