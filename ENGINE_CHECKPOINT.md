@@ -1,9 +1,9 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `dbe8ac7`  
+> Git Commit Reference: `3e4c6ee`  
 > Live Public Deployment: https://shikharthakur2404.github.io/sternstaub/  
-> Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Rotatable Keplerian Solar System). 2D Worker automatically pauses (0% CPU/GPU) in 3D mode. 4D Wormhole transit forward, Quantum Singularity Gate + W keybind for reverse transit with white hole emergence.
+> Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Rotatable Keplerian Solar System). Cinema-grade Interstellar Gargantua black hole with relativistic Doppler accretion disk, dual gravitational lensing light arcs, photon ring, and 32-ring 4D hyperspace tunnel with 160 dual-chromatic star streaks. Seamless physical momentum handoff to Three.js with deep-space camera swoop (quartic deceleration), expanding White Hole emergence shockwave ring, 180 3D warp deceleration lines, and arrival telemetry HUD. Complete 9-planet Solar System including Pluto & Charon, authentic moons, Earth clouds, Saturn rings, and Asteroid Belt.
 
 ---
 
@@ -15,9 +15,10 @@ Your goal is to restore or rebuild the "sternstaub" Tier 1 Canvas 2D engine to i
 
 Follow these non-negotiable architectural rules:
 1. PURE CANVAS 2D + OFFSCREENCANVAS WORKER:
-   - ZERO external 3D dependencies (no Three.js, no R3F).
+   - ZERO external 3D dependencies (no Three.js, no R3F) in Dimension 1.
    - ALL Canvas 2D operations, physics, and requestAnimationFrame loops MUST run in a dedicated Web Worker (`src/workers/renderer.worker.js`).
    - The main thread (`src/App.jsx`) is ONLY an event and React state proxy.
+   - Dimension 2 (`src/components/Solar3D/SolarSystem3D.jsx`) is lazy-loaded on wormhole transit; 2D worker pauses during 3D session.
 
 2. CRITICAL BUGS PREVENTED:
    - NO REACT STRICTMODE: `src/main.jsx` must NOT use `<StrictMode>`. Calling `canvas.transferControlToOffscreen()` twice throws `InvalidStateError` and crashes with a black screen.
@@ -57,9 +58,9 @@ Follow these non-negotiable architectural rules:
 | `src/components/ControlPanel.jsx` | Glassmorphic HUD | Controls Geometry (5 shapes), Exposure slider, Dispersion, Drift, Particles, Gravity toggle, Nova pulse, Palettes (6 themes), Presets. |
 | `src/components/ControlPanel.css` | HUD Styling | Promoted to GPU layer via `transform: translateZ(0); will-change: transform;`. |
 | `src/config/palettes.js` | Color Themes | Ethereal Gold (Default), Hyperion Blue, Borealis Emerald, Supernova Iris, Solar Flare, Cosmic Amethyst. |
-| `src/components/Solar3D/SolarSystem3D.jsx` | 3D Planetary Engine | Three.js WebGL scene with OrbitControls, 8 rotatable planets, authentic moon systems, Earth clouds & Moon, Saturn 3D rings, Asteroid belt, camera lerp, and Singularity Gate. |
-| `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, planet nav chips, time warp slider, reverse plunge singularity vortex overlay. |
-| `public/textures/planets/` | Authentic NASA Equirectangular Maps | Real photographic 1K/2K maps for Sun, Mercury, Venus, Earth, Earth clouds, Moon, Mars, Jupiter, Saturn, Saturn rings, Uranus, Neptune. |
+| `src/components/Solar3D/SolarSystem3D.jsx` | 3D Planetary Engine | Three.js WebGL scene with OrbitControls, 9 rotatable planets (incl. Pluto & Charon), authentic moon systems, Earth clouds & Moon, Saturn 3D rings, Asteroid belt, camera lerp, and Singularity Gate. |
+| `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, planet nav chips, time warp slider, arrival telemetry banner, reverse plunge singularity vortex overlay. |
+| `public/textures/planets/` | Authentic NASA Equirectangular Maps | Real photographic 1K/2K maps for Sun, Mercury, Venus, Earth, Earth clouds, Moon, Mars, Jupiter, Saturn, Saturn rings, Uranus, Neptune, Pluto. |
 
 ---
 
@@ -82,21 +83,34 @@ morphSpeed = 0.045 // attractor lerp speed
 
 ---
 
-## 5. QUANTUM ANOMALY & EINSTEIN-ROSEN BRIDGE SPECIFICATION
+## 5. QUANTUM ANOMALY & INTERSTELLAR GARGANTUA WORMHOLE TRANSIT
 
 ```javascript
 // Quantum Anomaly Beacon (Particle 0)
 - Always active across all 5 geometries.
 - Renders via createAnomalySprite(): 8-point diffraction star with multi-spectral prism chromatic dispersion.
-- Features real-time hovering reticle & rotating bracket lock overlay.
-- Interaction triggers multi-stage cinematic Einstein-Rosen Wormhole transit (~4.5s sequence):
-    1. Collapse (1.8s): Extreme relativistic vortex suction + frame-dragging rotation into central singularity black hole void.
-    2. Horizon (0.8s): Event horizon void with white coronal burst flash; morphs target geometry mid-transit.
-    3. Emergence (2.0s): Relativistic explosive outward ejection into newly configured celestial system.
+- Real-time hovering reticle & rotating bracket lock overlay with cursor pointer changes.
+- Click triggers the 3-stage Interstellar Gargantua wormhole transit:
 
-// Keplerian Orbital Tracks & Planetary Tinting (Solar Mode)
-- Real astronomical planetary color gradients (Mercury slate, Venus golden amber, Earth azure/emerald, Mars terracotta, Jupiter banded cream, Saturn pale gold, Uranus cyan, Neptune royal indigo).
-- Planetary orbital elliptical guide tracks rendered under additive passes.
+1. Stage 1: Gravitational Collapse (2.4s)
+   - Logarithmic spiraling infall physics with tangential frame dragging (dAngle = 28 / (dist + 15)).
+   - Motion-blur velocity tails drawn along particle flight vectors.
+   - Geodesic spacetime distortion metric shockwaves (3 expanding concentric rings).
+   - Relativistic Doppler-beamed accretion disk: blue-shifted (0x38bdf8) approaching side, red-shifted (0x991b1b) receding side.
+   - Upper and lower gravitational lensing light arcs bent around the event horizon.
+   - Pure black event horizon void + laser-sharp white/cyan photon ring.
+
+2. Stage 2: 4D Hyperspace Warp Tunnel (2.0s)
+   - 32 twisting dodecagonal perspective rings streaming at Warp 9 (z = 0 to 1500).
+   - 160 relativistic star streaks with dual-chromatic dispersion (cyan offset + white core).
+   - Central glowing singularity eye.
+   - Exponential coronal whiteout flash (prog > 0.68) transitioning seamlessly into Three.js.
+
+3. Stage 3: Superluminal 3D Planetary Drop-Out (2.6s in Three.js)
+   - Camera spawns at deep space (0, 1800, 2400) and swoops into orbital altitude on a quartic curve (1 - (1 - t)^4).
+   - Expanding White Hole emergence shockwave ring (THREE.RingGeometry) dissipating over 2.6s.
+   - 180 3D hyperspace deceleration streaks (THREE.LineSegments) streaming backward past camera.
+   - Cyan arrival telemetry HUD banner: "✦ HYPERSPACE DROP-OUT // COMPLETED 4D WORMHOLE TRANSIT // ORBITAL INSERTION CONFIRMED" with animated radar ping.
 ```
 
 ---
