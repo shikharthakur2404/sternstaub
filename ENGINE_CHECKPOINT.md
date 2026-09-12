@@ -1,7 +1,8 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `6d3095c`  
+> Git Commit Reference: `6a07a63`  
+> Live Public Deployment: https://shikharthakur2404.github.io/sternstaub/  
 > Last Verified Working State: OffscreenCanvas Worker, 60+ FPS locked, zero main thread CPU load, single unified collapsible accordion feature panel & hotkeys (H/F/Space).
 
 ---
