@@ -15,6 +15,7 @@ const SHAPES = [
 ]
 
 export default function ControlPanel({
+  isOpen,        setIsOpen,
   shape,         setShape,
   palette,       setPalette,
   exposure,      setExposure,
@@ -22,13 +23,11 @@ export default function ControlPanel({
   driftSpeed,    setDriftSpeed,
   particleCount, setParticleCount,
   gravity,       setGravity,
+  pulseNova,     setPulseNova,
   onReset,
-  onPulseNova,
   onWormhole,
   fpsBadgeRef,
 }) {
-  const [isOpen, setIsOpen] = useState(true)
-
   // Collapsible accordion state
   const [openGeom,     setOpenGeom]     = useState(true)
   const [openDynamics, setOpenDynamics] = useState(true)
@@ -36,7 +35,7 @@ export default function ControlPanel({
   const [openPresets,  setOpenPresets]  = useState(false)
 
   const savePreset = () => {
-    const preset = { shape, palette, exposure, dispersion, driftSpeed, particleCount, gravity }
+    const preset = { shape, palette, exposure, dispersion, driftSpeed, particleCount, gravity, pulseNova }
     const blob = new Blob([JSON.stringify(preset, null, 2)], { type: 'application/json' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
@@ -60,6 +59,7 @@ export default function ControlPanel({
         if (p.driftSpeed    != null) setDriftSpeed(p.driftSpeed)
         if (p.particleCount != null) setParticleCount(p.particleCount)
         if (p.gravity       != null) setGravity(p.gravity)
+        if (p.pulseNova     != null) setPulseNova(p.pulseNova)
       } catch { alert('Invalid preset file.') }
     }
     reader.readAsText(file)
@@ -200,11 +200,11 @@ export default function ControlPanel({
                       {gravity ? '◎ Gravity On' : '◌ Gravity Off'}
                     </button>
                     <button
-                      className="action-btn nova-btn"
-                      onClick={onPulseNova}
-                      title="Detonate Supernova Shockwave (Space)"
+                      className={`toggle-btn nova-btn ${pulseNova ? 'active' : ''}`}
+                      onClick={() => setPulseNova(!pulseNova)}
+                      title="Toggle periodic Supernova pulse waves (Space)"
                     >
-                      ✦ Pulse Nova
+                      {pulseNova ? '✦ Nova On' : '✦ Nova Off'}
                     </button>
                   </div>
                   <button

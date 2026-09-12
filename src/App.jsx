@@ -33,10 +33,13 @@ export default function App() {
   const [dispersion,       setDispersion]       = useState(1.0)
   const [driftSpeed,       setDriftSpeed]       = useState(1.8)
   const [particleCount,    setParticleCount]    = useState(DEFAULT_PARTICLES)
-  const [gravity,          setGravity]          = useState(true)
+  const [gravity,          setGravity]          = useState(false)
+  const [pulseNova,        setPulseNova]        = useState(false)
+  const [isPanelOpen,      setIsPanelOpen]      = useState(true)
   const [isAnomalyHovered, setIsAnomalyHovered] = useState(false)
   const [anomalyPos,       setAnomalyPos]       = useState({ x: 0, y: 0 })
   const [wormholeBanner,   setWormholeBanner]   = useState('')
+  const wasPanelOpenRef                         = useRef(true)
 
   // ── Worker factory ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -68,6 +71,11 @@ export default function App() {
         setIsAnomalyHovered(data.hovered)
         if (data.x != null) setAnomalyPos({ x: data.x, y: data.y })
       } else if (data.type === 'wormholePhase') {
+        // Auto-collapse control panel into drawer while wormhole plays
+        setIsPanelOpen(prev => {
+          wasPanelOpenRef.current = prev
+          return false
+        })
         if (data.phase === 'collapse') {
           setWormholeBanner('✦ EVENT HORIZON COLLAPSE DETECTED // TIDAL GRAVITATIONAL VORTEX ENGAGED')
         } else if (data.phase === 'horizon') {
@@ -79,6 +87,10 @@ export default function App() {
       } else if (data.type === 'wormholeComplete') {
         if (data.shape) setShape(data.shape)
         setTimeout(() => setWormholeBanner(''), 2500)
+        // Restore drawer if it was open prior to wormhole transit
+        if (wasPanelOpenRef.current) {
+          setTimeout(() => setIsPanelOpen(true), 600)
+        }
       }
     }
 
@@ -99,7 +111,7 @@ export default function App() {
           dispersion:    1.0,
           driftSpeed:    1.8,
           particleCount: DEFAULT_PARTICLES,
-          gravity:       true,
+          gravity:       false,
         },
       },
       [offscreen]   // transfer (not copy) the canvas
@@ -172,14 +184,16 @@ export default function App() {
     handleExposure(1.0)
     handleDispersion(1.0)
     handleDriftSpeed(1.8)
-    handleGravity(true)
-    postConfig({ exposure: 1.0, dispersion: 1.0, driftSpeed: 1.8, gravity: true })
+    handleGravity(false)
+    setPulseNova(false)
+    postConfig({ exposure: 1.0, dispersion: 1.0, driftSpeed: 1.8, gravity: false })
   }, [handleShape, handlePalette, handleExposure, handleDispersion, handleDriftSpeed, handleGravity, postConfig])
 
-  // ── Shockwave trigger ─────────────────────────────────────────────────────
-  const triggerShockwave = useCallback((relX = 0, relY = 0) => {
-    workerRef.current?.postMessage({ type: 'shockwave', x: relX, y: relY })
-  }, [])
+  // Sync toggleable Nova state with worker
+  useEffect(() => {
+    workerRef.current?.postMessage({ type: 'toggleNova', active: pulseNova })
+  }, [pulseNova])
+
 
   // ── Pointer event forwarding ──────────────────────────────────────────────
   const handlePointerMove = useCallback((e) => {
@@ -208,10 +222,14 @@ export default function App() {
   }, [])
 
   const handleWormhole = useCallback((target) => {
+    setIsPanelOpen(prev => {
+      wasPanelOpenRef.current = prev
+      return false
+    })
     workerRef.current?.postMessage({ type: 'wormhole', targetShape: target })
   }, [])
 
-  // ── Global Hotkeys (H: Toggle HUDs, F: Fullscreen, Space: Nova) ────────────
+  // ── Global Hotkeys (H: Toggle HUDs, F: Fullscreen, Space: Toggle Nova) ──────
   const [showHud, setShowHud] = useState(true)
 
   useEffect(() => {
@@ -228,14 +246,14 @@ export default function App() {
         }
       } else if (e.key === ' ') {
         e.preventDefault()
-        triggerShockwave(0, 0)
+        setPulseNova(prev => !prev)
       } else if (e.key === 'w' || e.key === 'W') {
         handleWormhole()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [triggerShockwave, handleWormhole])
+  }, [handleWormhole])
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -271,6 +289,7 @@ export default function App() {
 
       {showHud && (
         <ControlPanel
+          isOpen={isPanelOpen}    setIsOpen={setIsPanelOpen}
           shape={shape}           setShape={handleShape}
           palette={palette}       setPalette={handlePalette}
           exposure={exposure}     setExposure={handleExposure}
@@ -278,8 +297,8 @@ export default function App() {
           driftSpeed={driftSpeed} setDriftSpeed={handleDriftSpeed}
           particleCount={particleCount} setParticleCount={handleParticleCount}
           gravity={gravity}       setGravity={handleGravity}
+          pulseNova={pulseNova}   setPulseNova={setPulseNova}
           onReset={handleReset}
-          onPulseNova={() => triggerShockwave(0, 0)}
           onWormhole={() => handleWormhole()}
           fpsBadgeRef={fpsBadgeRef}
         />

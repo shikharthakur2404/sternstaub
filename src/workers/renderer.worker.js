@@ -455,7 +455,7 @@ let config = {
   dispersion:    1.0,
   driftSpeed:    1.8,
   particleCount: 2200,
-  gravity:       true,
+  gravity:       false,
 }
 
 // Background cache
@@ -466,6 +466,8 @@ let vigGrad = null, vigW = 0, vigH = 0
 
 const pointer   = { relX: 0, relY: 0, active: false }
 const shockwave = { x: 0, y: 0, radius: 0, maxRadius: 750, speed: 24, force: 35, active: false }
+let autoNova    = false
+let lastNovaTime = 0
 
 // ── Wormhole Spacetime State Machine ─────────────────────────────────────────
 const wormhole = {
@@ -528,7 +530,15 @@ function render(now) {
     shockwave.force  *= 0.94
     if (shockwave.radius >= shockwave.maxRadius || shockwave.force < 0.2) {
       shockwave.active = false
+      lastNovaTime = now
     }
+  } else if (autoNova && (now - lastNovaTime >= 650)) {
+    shockwave.x = 0
+    shockwave.y = 0
+    shockwave.radius = 5
+    shockwave.force = 35
+    shockwave.active = true
+    lastNovaTime = now
   }
 
   // Check Quantum Anomaly Hover
@@ -806,11 +816,24 @@ self.onmessage = ({ data }) => {
     }
 
     case 'shockwave': {
-      shockwave.x      = data.x
-      shockwave.y      = data.y
+      shockwave.x      = data.x ?? 0
+      shockwave.y      = data.y ?? 0
       shockwave.radius = 5
       shockwave.force  = 35
       shockwave.active = true
+      break
+    }
+
+    case 'toggleNova': {
+      autoNova = !!data.active
+      if (autoNova) {
+        shockwave.x      = 0
+        shockwave.y      = 0
+        shockwave.radius = 5
+        shockwave.force  = 35
+        shockwave.active = true
+        lastNovaTime     = performance.now()
+      }
       break
     }
 
