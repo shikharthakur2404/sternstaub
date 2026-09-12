@@ -170,6 +170,16 @@ export default function SolarSystem3D({ onReturn }) {
   const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [simSpeed, setSimSpeed] = useState(1.0)
   const [isWarpingOut, setIsWarpingOut] = useState(false)
+  const [arrivalTelemetry, setArrivalTelemetry] = useState(
+    '✦ HYPERSPACE DROP-OUT // COMPLETED 4D WORMHOLE TRANSIT // ORBITAL INSERTION CONFIRMED'
+  )
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setArrivalTelemetry('')
+    }, 3200)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Shared references for animation loop
   const targetCamPosRef = useRef(null)
@@ -211,7 +221,8 @@ export default function SolarSystem3D({ onReturn }) {
     scene.background = new THREE.Color(0x02050b)
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 8000)
-    camera.position.set(0, 340, 720)
+    // Start at superluminal deep space coordinates for cinematic entry swoop
+    camera.position.set(0, 1800, 2400)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
     renderer.setSize(width, height)
@@ -240,6 +251,50 @@ export default function SolarSystem3D({ onReturn }) {
     const earthCloudsTexture = loadTex('earth_clouds.png')
     const moonTexture        = loadTex('moon.jpg')
     const saturnRingTexture  = loadTex('saturn_ring.png')
+
+    // ── 2b. White Hole Emergence Shockwave & 3D Warp Deceleration Streaks ───
+    const emergenceRingGeo = new THREE.RingGeometry(12, 28, 64)
+    emergenceRingGeo.rotateX(Math.PI / 2)
+    const emergenceRingMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.95,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    })
+    const emergenceRing = new THREE.Mesh(emergenceRingGeo, emergenceRingMat)
+    scene.add(emergenceRing)
+
+    const warpCount = 180
+    const warpPos = new Float32Array(warpCount * 6)
+    for (let i = 0; i < warpCount; i++) {
+      const i6 = i * 6
+      const rad = 60 + Math.random() * 800
+      const ang = Math.random() * Math.PI * 2
+      const x = Math.cos(ang) * rad
+      const y = (Math.random() - 0.5) * 600
+      const z = 800 + Math.random() * 2200
+      const len = 350 + Math.random() * 450
+      warpPos[i6]     = x
+      warpPos[i6 + 1] = y
+      warpPos[i6 + 2] = z
+      warpPos[i6 + 3] = x
+      warpPos[i6 + 4] = y
+      warpPos[i6 + 5] = z + len
+    }
+    const warpGeo = new THREE.BufferGeometry()
+    warpGeo.setAttribute('position', new THREE.BufferAttribute(warpPos, 3))
+    const warpMat = new THREE.LineBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+    })
+    const warpLines = new THREE.LineSegments(warpGeo, warpMat)
+    scene.add(warpLines)
+
+    const arrivalStartTime = performance.now()
+    const arrivalDuration = 2600
 
     // ── 3. Lighting Architecture ────────────────────────────────────────────
     // Central Sol PointLight for realistic daytime illumination & terminator shadows
@@ -585,6 +640,33 @@ export default function SolarSystem3D({ onReturn }) {
       const delta = clock.getDelta()
       const speedMult = simSpeedRef.current
 
+      // Superluminal Arrival Camera Swoop & Warp Deceleration
+      const nowTime = performance.now()
+      const arrivalElapsed = nowTime - arrivalStartTime
+      if (arrivalElapsed < arrivalDuration) {
+        const prog = arrivalElapsed / arrivalDuration
+        const ease = 1 - Math.pow(1 - prog, 4) // Quartic hyper-deceleration
+
+        camera.position.set(
+          0,
+          1800 + (340 - 1800) * ease,
+          2400 + (720 - 2400) * ease
+        )
+        controls.target.set(0, 0, 0)
+
+        // Expand emergence shockwave
+        const ringScale = 1 + ease * 50
+        emergenceRing.scale.set(ringScale, ringScale, ringScale)
+        emergenceRingMat.opacity = Math.max(0, (1 - ease) * 0.95)
+
+        // Stream warp lines backward
+        warpMat.opacity = Math.max(0, (1 - ease) * 0.85)
+        warpLines.position.z -= 28 * (1 - ease)
+      } else {
+        if (emergenceRing.visible) emergenceRing.visible = false
+        if (warpLines.visible) warpLines.visible = false
+      }
+
       // Rotate Sun and Corona
       sunMesh.rotation.y += 0.003 * speedMult
       coronaInnerMesh.rotation.y -= 0.002 * speedMult
@@ -661,6 +743,10 @@ export default function SolarSystem3D({ onReturn }) {
       cancelAnimationFrame(animationFrameId)
       window.removeEventListener('resize', handleResize)
       container.removeEventListener('pointerdown', handlePointerDown)
+      emergenceRingGeo.dispose()
+      emergenceRingMat.dispose()
+      warpGeo.dispose()
+      warpMat.dispose()
       renderer.dispose()
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement)
@@ -727,6 +813,14 @@ export default function SolarSystem3D({ onReturn }) {
           </button>
         </div>
       </div>
+
+      {/* Superluminal Arrival Telemetry Banner */}
+      {arrivalTelemetry && (
+        <div className="arrival-hud-banner">
+          <span className="arrival-radar-pulse" />
+          <span className="arrival-banner-text">{arrivalTelemetry}</span>
+        </div>
+      )}
 
       {/* Cinematic Warp Collapse Overlay during departure */}
       {isWarpingOut && (
