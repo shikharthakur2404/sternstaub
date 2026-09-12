@@ -1,28 +1,39 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// ControlPanel.jsx — floating glassmorphism control panel
+// ControlPanel.jsx — Floating Glassmorphism HUD
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
 import { PALETTES } from '../config/palettes'
 import './ControlPanel.css'
 
+const SHAPES = [
+  { id: 'silhouette',  label: '✦ Astral' },
+  { id: 'singularity', label: '⦿ Singularity' },
+  { id: 'galaxy',      label: '🌀 Galaxy' },
+  { id: 'torus',       label: '⊚ Torus' },
+]
+
 export default function ControlPanel({
+  shape,         setShape,
+  palette,       setPalette,
+  exposure,      setExposure,
   dispersion,    setDispersion,
   driftSpeed,    setDriftSpeed,
   particleCount, setParticleCount,
-  palette,       setPalette,
+  gravity,       setGravity,
   onReset,
+  onPulseNova,
   fpsBadgeRef,
 }) {
   const [isOpen, setIsOpen] = useState(true)
 
   const savePreset = () => {
-    const preset = { dispersion, driftSpeed, particleCount, palette }
+    const preset = { shape, palette, exposure, dispersion, driftSpeed, particleCount, gravity }
     const blob = new Blob([JSON.stringify(preset, null, 2)], { type: 'application/json' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href = url
-    a.download = `sternstaub-${Date.now()}.json`
+    a.download = `sternstaub-${shape}-${Date.now()}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -34,10 +45,13 @@ export default function ControlPanel({
     reader.onload = (ev) => {
       try {
         const p = JSON.parse(ev.target.result)
+        if (p.shape         != null) setShape(p.shape)
+        if (p.palette       != null) setPalette(p.palette)
+        if (p.exposure      != null) setExposure(p.exposure)
         if (p.dispersion    != null) setDispersion(p.dispersion)
         if (p.driftSpeed    != null) setDriftSpeed(p.driftSpeed)
         if (p.particleCount != null) setParticleCount(p.particleCount)
-        if (p.palette       != null) setPalette(p.palette)
+        if (p.gravity       != null) setGravity(p.gravity)
       } catch { alert('Invalid preset file.') }
     }
     reader.readAsText(file)
@@ -51,8 +65,8 @@ export default function ControlPanel({
           <span ref={fpsBadgeRef} className="fps-indicator">60 FPS</span>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button className="icon-btn" onClick={onReset} title="Reset">↺</button>
-          <button className="icon-btn" onClick={() => setIsOpen(!isOpen)}>
+          <button className="icon-btn" onClick={onReset} title="Reset to Defaults">↺</button>
+          <button className="icon-btn" onClick={() => setIsOpen(!isOpen)} title={isOpen ? "Collapse" : "Expand"}>
             {isOpen ? '−' : '+'}
           </button>
         </div>
@@ -61,31 +75,96 @@ export default function ControlPanel({
       {isOpen && (
         <div className="panel-body">
 
+          {/* Celestial Geometry Modes */}
+          <label><span>Celestial Geometry</span></label>
+          <div className="shape-grid">
+            {SHAPES.map(s => (
+              <button
+                key={s.id}
+                className={`shape-btn ${shape === s.id ? 'active' : ''}`}
+                onClick={() => setShape(s.id)}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Exposure / Dynamic Range */}
+          <label>
+            <span>Exposure / Radiance</span>
+            <span className="value-badge">{exposure.toFixed(2)}x</span>
+          </label>
+          <input
+            type="range"
+            min="0.3"
+            max="2.2"
+            step="0.05"
+            value={exposure}
+            onChange={e => setExposure(parseFloat(e.target.value))}
+          />
+
+          {/* Dispersion */}
           <label>
             <span>Dispersion</span>
             <span className="value-badge">{dispersion.toFixed(1)}</span>
           </label>
-          <input type="range" min="0" max="3" step="0.1"
+          <input
+            type="range"
+            min="0.1"
+            max="3"
+            step="0.1"
             value={dispersion}
-            onChange={e => setDispersion(parseFloat(e.target.value))} />
+            onChange={e => setDispersion(parseFloat(e.target.value))}
+          />
 
+          {/* Drift Speed */}
           <label>
-            <span>Drift Speed</span>
+            <span>Drift Velocity</span>
             <span className="value-badge">{driftSpeed.toFixed(1)}</span>
           </label>
-          <input type="range" min="0.1" max="5" step="0.1"
+          <input
+            type="range"
+            min="0.1"
+            max="5"
+            step="0.1"
             value={driftSpeed}
-            onChange={e => setDriftSpeed(parseFloat(e.target.value))} />
+            onChange={e => setDriftSpeed(parseFloat(e.target.value))}
+          />
 
+          {/* Particles */}
           <label>
-            <span>Particles</span>
+            <span>Node Density</span>
             <span className="value-badge">{particleCount.toLocaleString()}</span>
           </label>
-          <input type="range" min="500" max="5000" step="100"
+          <input
+            type="range"
+            min="600"
+            max="6000"
+            step="100"
             value={particleCount}
-            onChange={e => setParticleCount(parseInt(e.target.value))} />
+            onChange={e => setParticleCount(parseInt(e.target.value))}
+          />
 
-          <label><span>Palette</span></label>
+          {/* Interactive Physics Actions */}
+          <div className="physics-row">
+            <button
+              className={`toggle-btn ${gravity ? 'active' : ''}`}
+              onClick={() => setGravity(!gravity)}
+              title="Toggle cursor gravitational wake"
+            >
+              {gravity ? '◎ Gravity On' : '◌ Gravity Off'}
+            </button>
+            <button
+              className="action-btn nova-btn"
+              onClick={onPulseNova}
+              title="Trigger Supernova Shockwave (or click on canvas)"
+            >
+              ✦ Pulse Nova
+            </button>
+          </div>
+
+          {/* Palette Picker */}
+          <label><span>Chromatic Spectrum</span></label>
           <div className="palette-grid">
             {Object.entries(PALETTES).map(([key, pal]) => (
               <button
@@ -99,10 +178,11 @@ export default function ControlPanel({
             ))}
           </div>
 
+          {/* Presets */}
           <div className="preset-row">
-            <button className="preset-btn" onClick={savePreset}>↓ Save</button>
+            <button className="preset-btn" onClick={savePreset}>↓ Save JSON</button>
             <label className="preset-btn load-btn">
-              ↑ Load
+              ↑ Load JSON
               <input type="file" accept=".json" onChange={loadPreset} hidden />
             </label>
           </div>
