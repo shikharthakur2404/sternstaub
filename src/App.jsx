@@ -75,11 +75,11 @@ export default function App() {
           return false
         })
         if (data.phase === 'collapse') {
-          setWormholeBanner('✦ EVENT HORIZON COLLAPSE DETECTED // TIDAL GRAVITATIONAL VORTEX ENGAGED')
+          setWormholeBanner('✦ 4D GRAVITATIONAL LENSING COLLAPSE // EINSTEIN-ROSEN VORTEX ENGAGED')
         } else if (data.phase === 'horizon') {
-          setWormholeBanner('⦿ TRAVERSING EINSTEIN-ROSEN WORMHOLE BRIDGE...')
+          setWormholeBanner('⦿ 4D HYPERSPACE WARP TRANSIT // TRAVERSING SPACETIME THROAT')
         } else if (data.phase === 'emergence') {
-          setWormholeBanner(`☉ ARRIVAL: ${data.shape ? data.shape.toUpperCase() : 'SOLAR'} CELESTIAL SYSTEM`)
+          setWormholeBanner(`☉ RELATIVISTIC EMERGENCE // ${data.shape ? data.shape.toUpperCase() : 'SOLAR'} SYSTEM MATERIALIZED`)
           if (data.shape) setShape(data.shape)
         }
       } else if (data.type === 'wormholeComplete') {

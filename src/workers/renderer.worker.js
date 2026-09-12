@@ -126,20 +126,270 @@ function createAnomalySprite() {
   return oc
 }
 
-const PLANET_COLORS = [
-  '#cbd5e1', // 0: Mercury (slate silver)
-  '#fde047', // 1: Venus (golden sulphur)
-  '#38bdf8', // 2: Earth (azure ocean)
-  '#f87171', // 3: Mars (crimson red)
-  '#fb923c', // 4: Jupiter (amber storm)
-  '#facc15', // 5: Saturn (golden ring)
-  '#22d3ee', // 6: Uranus (cyan ice)
-  '#60a5fa', // 7: Neptune (deep blue)
-]
+// ── Real Astronomical Planet Sprites (Authentic Textures & Geometry) ─────────
+function createMercurySprite() {
+  const size = 32, half = size / 2, r = 7
+  const oc = new OffscreenCanvas(size, size)
+  const ctx = oc.getContext('2d')
+  const grad = ctx.createRadialGradient(half - 2, half - 2, 1, half, half, r)
+  grad.addColorStop(0, '#d1d5db')
+  grad.addColorStop(0.45, '#9ca3af')
+  grad.addColorStop(0.85, '#4b5563')
+  grad.addColorStop(1, '#1f2937')
+  ctx.fillStyle = grad
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = 'rgba(31, 41, 55, 0.7)'
+  const craters = [[-2, -1, 1.2], [1, 2, 1.5], [-3, 2, 1.0], [2, -2, 1.1], [0, 3, 0.8]]
+  craters.forEach(([cx, cy, cr]) => {
+    ctx.beginPath(); ctx.arc(half + cx, half + cy, cr, 0, Math.PI * 2); ctx.fill()
+  })
+  return oc
+}
 
-let anomalySprite = createAnomalySprite()
-let planetSprites = PLANET_COLORS.map(c => createBodySprite(c))
-let solSprite = createBodySprite('#fff7ed')
+function createVenusSprite() {
+  const size = 40, half = size / 2, r = 10
+  const oc = new OffscreenCanvas(size, size)
+  const ctx = oc.getContext('2d')
+  const grad = ctx.createRadialGradient(half - 3, half - 3, 2, half, half, r)
+  grad.addColorStop(0, '#fffbeb')
+  grad.addColorStop(0.35, '#fef08a')
+  grad.addColorStop(0.7, '#eab308')
+  grad.addColorStop(1, '#854d0e')
+  ctx.fillStyle = grad
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.fill()
+  ctx.strokeStyle = 'rgba(254, 240, 138, 0.5)'
+  ctx.lineWidth = 1.5; ctx.stroke()
+  return oc
+}
+
+function createEarthSprite() {
+  const size = 48, half = size / 2, r = 11
+  const oc = new OffscreenCanvas(size, size)
+  const ctx = oc.getContext('2d')
+  // Deep oceanic blue
+  const ocean = ctx.createRadialGradient(half - 3, half - 3, 2, half, half, r)
+  ocean.addColorStop(0, '#38bdf8')
+  ocean.addColorStop(0.4, '#1d4ed8')
+  ocean.addColorStop(0.85, '#1e3a8a')
+  ocean.addColorStop(1, '#0f172a')
+  ctx.fillStyle = ocean
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.fill()
+
+  // Continents
+  ctx.save()
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.clip()
+  ctx.fillStyle = '#15803d'
+  ctx.beginPath(); ctx.ellipse(half - 2, half - 3, 4, 3, 0.4, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = '#16a34a'
+  ctx.beginPath(); ctx.ellipse(half + 3, half - 2, 4.5, 3.5, -0.3, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = '#854d0e'
+  ctx.beginPath(); ctx.ellipse(half + 1, half + 4, 3, 4.5, 0.2, 0, Math.PI * 2); ctx.fill()
+
+  // White weather cloud swirls
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)'
+  ctx.lineWidth = 2.0
+  ctx.beginPath(); ctx.arc(half - 1, half - 4, 5, 0.8, 2.6); ctx.stroke()
+  ctx.beginPath(); ctx.arc(half + 2, half + 2, 6, 2.5, 4.2); ctx.stroke()
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.65)'
+  ctx.beginPath(); ctx.ellipse(half, half, 3, 1.5, 0.2, 0, Math.PI * 2); ctx.fill()
+  ctx.restore()
+
+  // Rayleigh scattering atmospheric limb
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.75)'
+  ctx.lineWidth = 1.8
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.stroke()
+  return oc
+}
+
+function createMarsSprite() {
+  const size = 36, half = size / 2, r = 8.5
+  const oc = new OffscreenCanvas(size, size)
+  const ctx = oc.getContext('2d')
+  const grad = ctx.createRadialGradient(half - 2, half - 2, 1.5, half, half, r)
+  grad.addColorStop(0, '#f97316')
+  grad.addColorStop(0.45, '#c2410c')
+  grad.addColorStop(0.85, '#9a3412')
+  grad.addColorStop(1, '#431407')
+  ctx.fillStyle = grad
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.fill()
+
+  ctx.save()
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.clip()
+  ctx.fillStyle = 'rgba(67, 20, 7, 0.75)'
+  ctx.beginPath(); ctx.ellipse(half + 1, half + 1, 3.5, 2.2, 0.5, 0, Math.PI * 2); ctx.fill()
+  // White polar ice cap
+  ctx.fillStyle = '#ffffff'
+  ctx.beginPath(); ctx.ellipse(half, half - r + 1.2, 3.2, 1.2, 0, 0, Math.PI * 2); ctx.fill()
+  ctx.restore()
+  return oc
+}
+
+function createJupiterSprite() {
+  const size = 72, half = size / 2, r = 20
+  const oc = new OffscreenCanvas(size, size)
+  const ctx = oc.getContext('2d')
+
+  ctx.save()
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.clip()
+  const bands = [
+    { y: -18, h: 4, c: '#fef3c7' },
+    { y: -14, h: 5, c: '#d97706' },
+    { y: -9,  h: 4, c: '#fef08a' },
+    { y: -5,  h: 5, c: '#9a3412' },
+    { y: 0,   h: 4, c: '#fed7aa' },
+    { y: 4,   h: 6, c: '#b45309' },
+    { y: 10,  h: 5, c: '#fde047' },
+    { y: 15,  h: 6, c: '#78350f' },
+  ]
+  bands.forEach(b => {
+    ctx.fillStyle = b.c
+    ctx.fillRect(half - r, half + b.y, r * 2, b.h)
+  })
+
+  // Great Red Spot
+  ctx.fillStyle = '#dc2626'
+  ctx.beginPath(); ctx.ellipse(half + 5, half + 6, 4.5, 2.8, -0.1, 0, Math.PI * 2); ctx.fill()
+  ctx.strokeStyle = '#7f1d1d'; ctx.lineWidth = 0.9; ctx.stroke()
+  ctx.fillStyle = '#fca5a5'
+  ctx.beginPath(); ctx.ellipse(half + 5, half + 6, 2.0, 1.0, -0.1, 0, Math.PI * 2); ctx.fill()
+
+  // 3D sphere spherical shadow overlay
+  const sphereShade = ctx.createRadialGradient(half - 6, half - 6, 4, half, half, r)
+  sphereShade.addColorStop(0, 'rgba(255, 255, 255, 0.25)')
+  sphereShade.addColorStop(0.65, 'rgba(0, 0, 0, 0)')
+  sphereShade.addColorStop(0.92, 'rgba(0, 0, 0, 0.55)')
+  sphereShade.addColorStop(1, 'rgba(0, 0, 0, 0.85)')
+  ctx.fillStyle = sphereShade
+  ctx.fillRect(half - r, half - r, r * 2, r * 2)
+  ctx.restore()
+  return oc
+}
+
+function createSaturnSprite() {
+  const size = 96, half = size / 2, r = 16
+  const oc = new OffscreenCanvas(size, size)
+  const ctx = oc.getContext('2d')
+
+  // Back rings (behind globe)
+  ctx.save()
+  ctx.beginPath()
+  ctx.ellipse(half, half, 38, 12, -0.22, Math.PI, Math.PI * 2)
+  ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(234, 179, 8, 0.45)'; ctx.stroke()
+  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(254, 240, 138, 0.65)'; ctx.stroke()
+  ctx.restore()
+
+  // Planet globe
+  ctx.save()
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.clip()
+  const pGrad = ctx.createRadialGradient(half - 4, half - 4, 3, half, half, r)
+  pGrad.addColorStop(0, '#fef9c3')
+  pGrad.addColorStop(0.4, '#fde047')
+  pGrad.addColorStop(0.75, '#ca8a04')
+  pGrad.addColorStop(1, '#713f12')
+  ctx.fillStyle = pGrad
+  ctx.fillRect(half - r, half - r, r * 2, r * 2)
+  ctx.fillStyle = 'rgba(161, 98, 7, 0.35)'
+  ctx.fillRect(half - r, half - 4, r * 2, 3)
+  ctx.fillRect(half - r, half + 3, r * 2, 4)
+  ctx.restore()
+
+  // Front rings (with Cassini division)
+  ctx.save()
+  ctx.beginPath()
+  ctx.ellipse(half, half, 38, 12, -0.22, 0, Math.PI)
+  ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(254, 240, 138, 0.55)'; ctx.stroke()
+  ctx.beginPath()
+  ctx.ellipse(half, half, 32, 10, -0.22, 0, Math.PI)
+  ctx.lineWidth = 5.5; ctx.strokeStyle = 'rgba(234, 179, 8, 0.75)'; ctx.stroke()
+  ctx.beginPath()
+  ctx.ellipse(half, half, 24, 7.5, -0.22, 0, Math.PI)
+  ctx.lineWidth = 2.0; ctx.strokeStyle = 'rgba(202, 138, 4, 0.4)'; ctx.stroke()
+  ctx.restore()
+  return oc
+}
+
+function createUranusSprite() {
+  const size = 52, half = size / 2, r = 12
+  const oc = new OffscreenCanvas(size, size)
+  const ctx = oc.getContext('2d')
+  const grad = ctx.createRadialGradient(half - 3, half - 3, 2, half, half, r)
+  grad.addColorStop(0, '#cffafe')
+  grad.addColorStop(0.4, '#67e8f9')
+  grad.addColorStop(0.8, '#0891b2')
+  grad.addColorStop(1, '#164e63')
+  ctx.fillStyle = grad
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.fill()
+
+  // Tilted ice ring arc
+  ctx.strokeStyle = 'rgba(165, 243, 252, 0.6)'
+  ctx.lineWidth = 1.3
+  ctx.beginPath(); ctx.ellipse(half, half, 7, 20, 0.35, 0, Math.PI * 2); ctx.stroke()
+  return oc
+}
+
+function createNeptuneSprite() {
+  const size = 52, half = size / 2, r = 12
+  const oc = new OffscreenCanvas(size, size)
+  const ctx = oc.getContext('2d')
+  const grad = ctx.createRadialGradient(half - 3, half - 3, 2, half, half, r)
+  grad.addColorStop(0, '#93c5fd')
+  grad.addColorStop(0.35, '#3b82f6')
+  grad.addColorStop(0.75, '#1d4ed8')
+  grad.addColorStop(1, '#0f172a')
+  ctx.fillStyle = grad
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.fill()
+
+  ctx.save()
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.clip()
+  ctx.fillStyle = 'rgba(224, 242, 254, 0.9)'
+  ctx.fillRect(half - 7, half - 3, 9, 1.3)
+  ctx.fillRect(half + 1, half + 4, 8, 1.1)
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.7)'
+  ctx.beginPath(); ctx.ellipse(half + 2, half - 1, 3, 1.8, 0.2, 0, Math.PI * 2); ctx.fill()
+  ctx.restore()
+
+  ctx.strokeStyle = 'rgba(147, 197, 253, 0.5)'
+  ctx.lineWidth = 1.3
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.stroke()
+  return oc
+}
+
+function createSunSprite() {
+  const size = 110, half = size / 2, r = 26
+  const oc = new OffscreenCanvas(size, size)
+  const ctx = oc.getContext('2d')
+  const corona = ctx.createRadialGradient(half, half, r * 0.7, half, half, half)
+  corona.addColorStop(0, 'rgba(255, 255, 255, 0.95)')
+  corona.addColorStop(0.25, 'rgba(253, 224, 71, 0.8)')
+  corona.addColorStop(0.55, 'rgba(249, 115, 22, 0.4)')
+  corona.addColorStop(0.85, 'rgba(239, 68, 68, 0.15)')
+  corona.addColorStop(1, 'rgba(0, 0, 0, 0)')
+  ctx.fillStyle = corona
+  ctx.fillRect(0, 0, size, size)
+
+  const photo = ctx.createRadialGradient(half - 3, half - 3, 2, half, half, r)
+  photo.addColorStop(0, '#ffffff')
+  photo.addColorStop(0.4, '#fffbeb')
+  photo.addColorStop(0.75, '#fde047')
+  photo.addColorStop(0.95, '#f59e0b')
+  photo.addColorStop(1, '#ea580c')
+  ctx.fillStyle = photo
+  ctx.beginPath(); ctx.arc(half, half, r, 0, Math.PI * 2); ctx.fill()
+  return oc
+}
+
+const anomalySprite = createAnomalySprite()
+const realPlanets = {
+  mercury: createMercurySprite(),
+  venus:   createVenusSprite(),
+  earth:   createEarthSprite(),
+  mars:    createMarsSprite(),
+  jupiter: createJupiterSprite(),
+  saturn:  createSaturnSprite(),
+  uranus:  createUranusSprite(),
+  neptune: createNeptuneSprite(),
+  sun:     createSunSprite(),
+}
 
 function rebuildSprites(palette) {
   const pal = PALETTES[palette] || PALETTES.etherealGold
@@ -235,57 +485,67 @@ function getTarget(shape, particle) {
   }
 }
 
+// ── Solar System Orbital Configuration (Authentic Planets & Tracks) ──────────
+const SOLAR_PLANETS = [
+  { id: 'mercury', name: 'Mercury', r: 54,  omega: 0.038, size: 16, sprite: realPlanets.mercury, baseTheta: 0.2 },
+  { id: 'venus',   name: 'Venus',   r: 80,  omega: 0.027, size: 22, sprite: realPlanets.venus,   baseTheta: 1.1 },
+  { id: 'earth',   name: 'Earth',   r: 114, omega: 0.020, size: 24, sprite: realPlanets.earth,   baseTheta: 2.3, hasMoon: true },
+  { id: 'mars',    name: 'Mars',    r: 152, omega: 0.015, size: 18, sprite: realPlanets.mars,    baseTheta: 3.8 },
+  { id: 'jupiter', name: 'Jupiter', r: 232, omega: 0.008, size: 44, sprite: realPlanets.jupiter, baseTheta: 4.6 },
+  { id: 'saturn',  name: 'Saturn',  r: 308, omega: 0.0055, size: 68, sprite: realPlanets.saturn, baseTheta: 5.4 },
+  { id: 'uranus',  name: 'Uranus',  r: 372, omega: 0.0038, size: 26, sprite: realPlanets.uranus, baseTheta: 0.8 },
+  { id: 'neptune', name: 'Neptune', r: 432, omega: 0.0026, size: 26, sprite: realPlanets.neptune, baseTheta: 2.9 },
+]
+
 // ── Solar System Orbital Physics ─────────────────────────────────────────────
 function initSolarParticle(p) {
   const u = Math.random()
-  if (u < 0.12) {
-    // Sol Core (The Sun)
+  if (u < 0.16) {
+    // Sol Corona & Plasma Prominences
     p.solarType = 'sun'
-    p.orbitR = Math.sqrt(Math.random()) * 26
+    p.orbitR = 8 + Math.sqrt(Math.random()) * 26
     p.orbitTheta = Math.random() * Math.PI * 2
-    p.orbitOmega = 0.004
+    p.orbitOmega = 0.005 + Math.random() * 0.003
     p.orbitInc = 0.70
-  } else if (u < 0.36) {
-    // 8 Planetary Spheres + Major Moons
-    p.solarType = 'planet'
-    const pIdx = Math.floor(Math.random() * 8)
-    const orbits = [46, 68, 94, 122, 192, 256, 310, 362]
-    const omegas = [0.038, 0.027, 0.020, 0.015, 0.008, 0.0055, 0.0038, 0.0026]
-    p.orbitR = orbits[pIdx]
-    p.orbitOmega = omegas[pIdx]
-    const rad = pIdx === 4 ? 8.5 : (pIdx === 5 ? 7.5 : (pIdx === 6 || pIdx === 7 ? 5.5 : 4.0))
-    p.clusterR = Math.sqrt(Math.random()) * rad
-    p.clusterAngle = Math.random() * Math.PI * 2
-    p.orbitTheta = pIdx * 0.785
-    p.orbitInc = 0.65
-  } else if (u < 0.64) {
-    // Main Asteroid Belt (between Mars & Jupiter)
+  } else if (u < 0.42) {
+    // Main Asteroid Belt (dense Keplerian belt between Mars & Jupiter)
     p.solarType = 'asteroid'
-    p.orbitR = 142 + (Math.random() - 0.5) * 36
+    p.orbitR = 188 + (Math.random() - 0.5) * 36
     p.orbitTheta = Math.random() * Math.PI * 2
-    p.orbitOmega = 0.011 + (Math.random() - 0.5) * 0.002
-    p.orbitInc = 0.65 + (Math.random() - 0.5) * 0.06
-  } else if (u < 0.82) {
-    // Saturn Ring System (dense tilted disc orbiting Saturn at R=256)
+    p.orbitOmega = 0.010 + (Math.random() - 0.5) * 0.002
+    p.orbitInc = 0.65 + (Math.random() - 0.5) * 0.07
+  } else if (u < 0.62) {
+    // Saturn Ring System Stardust
     p.solarType = 'saturn_ring'
-    p.orbitR = 256
+    p.orbitR = 308
     p.orbitOmega = 0.0055
-    p.ringR = 12 + Math.random() * 24
+    p.ringR = 14 + Math.random() * 26
     p.ringAngle = Math.random() * Math.PI * 2
-    p.orbitTheta = 5 * 0.785
+    p.orbitTheta = 5.4
     p.orbitInc = 0.65
-  } else if (u < 0.93) {
-    // Kuiper Belt & Outskirts
+  } else if (u < 0.82) {
+    // Kuiper Belt & Outer Oort Dust (deep cold outskirts)
     p.solarType = 'kuiper'
-    p.orbitR = 380 + Math.random() * 65
+    p.orbitR = 450 + Math.random() * 85
     p.orbitTheta = Math.random() * Math.PI * 2
     p.orbitOmega = 0.0018 + (Math.random() - 0.5) * 0.0006
-    p.orbitInc = 0.62 + (Math.random() - 0.5) * 0.10
+    p.orbitInc = 0.62 + (Math.random() - 0.5) * 0.12
+  } else if (u < 0.94) {
+    // Planetary Condensations & Wakes
+    p.solarType = 'planet_dust'
+    const pIdx = Math.floor(Math.random() * 8)
+    const pl = SOLAR_PLANETS[pIdx]
+    p.orbitR = pl.r
+    p.orbitOmega = pl.omega
+    p.clusterR = Math.sqrt(Math.random()) * 14 + 4
+    p.clusterAngle = Math.random() * Math.PI * 2
+    p.orbitTheta = pl.baseTheta
+    p.orbitInc = 0.65
   } else {
     // Eccentric Comet with Ion Dust Tail
     p.solarType = 'comet'
     p.cometProg = Math.random()
-    p.tailOffset = Math.random() * 42
+    p.tailOffset = Math.random() * 48
     p.orbitOmega = 0.010
     p.orbitInc = 0.65
   }
@@ -301,7 +561,7 @@ function getSolarTarget(p) {
         y: p.orbitR * Math.sin(p.orbitTheta) * p.orbitInc,
       }
     }
-    case 'planet': {
+    case 'planet_dust': {
       const px = p.orbitR * Math.cos(p.orbitTheta)
       const py = p.orbitR * Math.sin(p.orbitTheta) * p.orbitInc
       return {
@@ -319,7 +579,7 @@ function getSolarTarget(p) {
     }
     case 'comet': {
       const nu = p.cometProg * Math.PI * 2
-      const e = 0.84, a = 190
+      const e = 0.84, a = 210
       const r = (a * (1 - e * e)) / (1 + e * Math.cos(nu))
       const hx = r * Math.cos(nu - 0.7)
       const hy = r * Math.sin(nu - 0.7) * p.orbitInc
@@ -349,7 +609,9 @@ class Particle {
     const t = getTarget(shape, this)
     this.baseX = this.targetBaseX = t.x
     this.baseY = this.targetBaseY = t.y
-    this.x = t.x; this.y = t.y
+    this.x = this.prevX = t.x
+    this.y = this.prevY = t.y
+    this.wz = 0 // Virtual 3D depth for relativistic wormhole projection
     this.vx = 0;  this.vy = 0
 
     const roll = Math.random()
@@ -383,6 +645,9 @@ class Particle {
   }
 
   update(dispersion, drift, pointer, gravityOn, shockwave) {
+    this.prevX = this.x
+    this.prevY = this.y
+
     // Advance continuous orbital movement in solar mode
     if (this.currentShape === 'solar') {
       this.orbitTheta += this.orbitOmega * drift
@@ -570,43 +835,129 @@ function render(now) {
   ctx.fillStyle = bgGrad
   ctx.fillRect(0, 0, w, h)
 
-  // ── 2. Keplerian Orbital Track Lines (Solar Mode Only) ──
+  // ── 2. Authentic Keplerian Solar System (Real Planet Spheres & Moons) ──
   if (config.shape === 'solar' && wormhole.state === 'idle') {
-    ctx.strokeStyle = 'rgba(147, 197, 253, 0.045)'
+    ctx.save()
+    ctx.globalCompositeOperation = 'source-over'
+
+    // Keplerian Orbital Tracks
     ctx.lineWidth = 1.0
-    const orbits = [46, 68, 94, 122, 192, 256, 310, 362]
-    for (let i = 0; i < orbits.length; i++) {
+    for (let i = 0; i < SOLAR_PLANETS.length; i++) {
+      const pl = SOLAR_PLANETS[i]
+      ctx.strokeStyle = i === 2 ? 'rgba(56, 189, 248, 0.16)' : 'rgba(147, 197, 253, 0.055)'
       ctx.beginPath()
-      ctx.ellipse(cx, cy, orbits[i], orbits[i] * 0.65, 0, 0, Math.PI * 2)
+      ctx.ellipse(cx, cy, pl.r, pl.r * 0.65, 0, 0, Math.PI * 2)
       ctx.stroke()
     }
+
+    // Central Radiant Sol Core (The Sun)
+    const solPulse = 1.0 + Math.sin(now * 0.0035) * 0.035
+    ctx.drawImage(realPlanets.sun, cx - 55 * solPulse, cy - 55 * solPulse, 110 * solPulse, 110 * solPulse)
+
+    // Real Astronomical Planets & Moon
+    const timeSec = now * 0.001
+    for (let i = 0; i < SOLAR_PLANETS.length; i++) {
+      const pl = SOLAR_PLANETS[i]
+      const theta = pl.baseTheta + pl.omega * timeSec * curDrift
+      const px = cx + pl.r * Math.cos(theta)
+      const py = cy + pl.r * Math.sin(theta) * 0.65
+
+      ctx.drawImage(pl.sprite, px - pl.size * 0.5, py - pl.size * 0.5, pl.size, pl.size)
+
+      // Earth's Orbiting Lunar Companion
+      if (pl.hasMoon) {
+        const mTheta = timeSec * 0.35 * curDrift
+        const mx = px + 18 * Math.cos(mTheta)
+        const my = py + 18 * Math.sin(mTheta) * 0.65
+        ctx.fillStyle = '#cbd5e1'
+        ctx.beginPath(); ctx.arc(mx, my, 2.2, 0, Math.PI * 2); ctx.fill()
+        ctx.strokeStyle = 'rgba(203, 213, 225, 0.15)'
+        ctx.lineWidth = 0.8
+        ctx.beginPath(); ctx.ellipse(px, py, 18, 18 * 0.65, 0, 0, Math.PI * 2); ctx.stroke()
+      }
+    }
+    ctx.restore()
   }
 
-  // ── 3. Wormhole Physics & State Advances ──
+  // ── 3. 4D Relativistic Wormhole Spacetime Engine ──
   const n = particles.length
 
   if (wormhole.state === 'collapse') {
     const elapsed = (now - wormhole.startTime) / 1000
-    const duration = 1.8
+    const duration = 2.0
     const prog = Math.min(elapsed / duration, 1.0)
 
-    // Extreme relativistic vortex suction
+    // 4D Spacetime Curvature Metric Grid (Warping Geodesics)
+    const gridAlpha = Math.sin(prog * Math.PI) * 0.42
+    if (gridAlpha > 0.01) {
+      ctx.save()
+      ctx.strokeStyle = `rgba(56, 189, 248, ${gridAlpha})`
+      ctx.lineWidth = 1.0
+      // Warping metric ellipses
+      for (let r = 35; r <= 420; r += 48) {
+        const warpR = r * (1 - prog * 0.55)
+        ctx.beginPath()
+        ctx.ellipse(cx + wormhole.collapseX, cy + wormhole.collapseY, warpR, warpR * (0.65 - prog * 0.25), prog * 1.6, 0, Math.PI * 2)
+        ctx.stroke()
+      }
+      // Frame-dragging inward spiraling geodesics
+      for (let a = 0; a < 8; a++) {
+        const startAngle = (a / 8) * Math.PI * 2 + prog * 4.2
+        ctx.beginPath()
+        for (let step = 0; step < 22; step++) {
+          const rad = 380 * (1 - step / 22)
+          const ang = startAngle + (step / 22) * 3.8 * prog
+          const gx = cx + wormhole.collapseX + Math.cos(ang) * rad
+          const gy = cy + wormhole.collapseY + Math.sin(ang) * rad * 0.65
+          if (step === 0) ctx.moveTo(gx, gy); else ctx.lineTo(gx, gy)
+        }
+        ctx.stroke()
+      }
+      ctx.restore()
+    }
+
+    // 3D Vortex Suction + Virtual Depth (Z) Funnel
     for (let i = 0; i < n; i++) {
       const p = particles[i]
+      p.prevX = p.x; p.prevY = p.y
       const dx = wormhole.collapseX - p.x
       const dy = wormhole.collapseY - p.y
       const dist = Math.sqrt(dx * dx + dy * dy)
-      const pull = Math.min(26, 650 / (dist + 10)) * (0.8 + prog * 0.9)
+      // Plunge along 3rd dimension
+      p.wz = (p.wz || 0) + (20 + prog * 40) * (180 / (dist + 35))
+      const pull = Math.min(32, 750 / (dist + 8)) * (0.9 + prog * 1.5)
       p.vx += (dx / (dist || 1)) * pull
       p.vy += (dy / (dist || 1)) * pull
-      // Relativistic frame-dragging rotation
-      p.vx += -(dy / (dist || 1)) * pull * 1.6
-      p.vy +=  (dx / (dist || 1)) * pull * 1.6
-      p.vx *= 0.89
-      p.vy *= 0.89
-      p.x += p.vx
-      p.y += p.vy
+      // 4D frame-dragging spin
+      p.vx += -(dy / (dist || 1)) * pull * 1.8
+      p.vy +=  (dx / (dist || 1)) * pull * 1.8
+      p.vx *= 0.88; p.vy *= 0.88
+      p.x += p.vx; p.y += p.vy
     }
+
+    // Accretion Disk 3D Gravitational Lensing (Interstellar Gargantua Light-Bend)
+    ctx.save()
+    const lensR = Math.max(10, 48 * (1 - prog * 0.4))
+    // Upper lensed halo
+    ctx.strokeStyle = `rgba(253, 224, 71, ${0.5 + prog * 0.45})`
+    ctx.lineWidth = 3.5
+    ctx.beginPath()
+    ctx.ellipse(cx + wormhole.collapseX, cy + wormhole.collapseY - lensR * 0.35, lensR * 1.8, lensR * 0.9, 0, Math.PI, Math.PI * 2)
+    ctx.stroke()
+    // Lower lensed halo
+    ctx.strokeStyle = `rgba(56, 189, 248, ${0.4 + prog * 0.45})`
+    ctx.beginPath()
+    ctx.ellipse(cx + wormhole.collapseX, cy + wormhole.collapseY + lensR * 0.35, lensR * 1.8, lensR * 0.9, 0, 0, Math.PI)
+    ctx.stroke()
+    // Event Horizon Black Hole Void
+    ctx.fillStyle = '#000000'
+    ctx.beginPath()
+    ctx.arc(cx + wormhole.collapseX, cy + wormhole.collapseY, lensR, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.7 + prog * 0.3})`
+    ctx.lineWidth = 2.0
+    ctx.stroke()
+    ctx.restore()
 
     if (elapsed >= duration) {
       wormhole.state = 'horizon'
@@ -616,38 +967,97 @@ function render(now) {
     }
   } else if (wormhole.state === 'horizon') {
     const elapsed = (now - wormhole.startTime) / 1000
-    const duration = 0.8
+    const duration = 1.4
     const prog = Math.min(elapsed / duration, 1.0)
 
     if (prog >= 0.4 && !wormhole.morphed) {
       wormhole.morphed = true
       config.shape = wormhole.targetShape
-      for (let i = 0; i < n; i++) {
-        particles[i].morphTo(config.shape)
+      for (let i = 0; i < n; i++) particles[i].morphTo(config.shape)
+    }
+
+    // 4D HYPERSPACE WARP TUNNEL PASS
+    ctx.save()
+    const speed = 750
+    for (let ring = 0; ring < 12; ring++) {
+      const ringZ = ((ring * 80 - elapsed * speed) % 900 + 900) % 900
+      const scale = 260 / (ringZ + 15)
+      const ringRadius = 130 * scale
+      const ringAlpha = Math.min(1.0, scale * 0.85) * Math.sin(prog * Math.PI)
+      if (ringRadius > 4 && ringRadius < Math.max(w, h)) {
+        ctx.strokeStyle = ring % 2 === 0
+          ? `rgba(56, 189, 248, ${ringAlpha})`
+          : `rgba(168, 85, 247, ${ringAlpha})`
+        ctx.lineWidth = Math.max(1, 3.2 * scale)
+        ctx.beginPath()
+        for (let pt = 0; pt <= 6; pt++) {
+          const ang = (pt / 6) * Math.PI * 2 + elapsed * 2.2 + ring * 0.25
+          const hx = cx + Math.cos(ang) * ringRadius
+          const hy = cy + Math.sin(ang) * ringRadius * 0.75
+          if (pt === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy)
+        }
+        ctx.stroke()
       }
     }
+
+    // Relativistic Hyper-speed Warp Star Streaks (3D projection)
+    for (let s = 0; s < 42; s++) {
+      const sAng = (s / 42) * Math.PI * 2 + Math.sin(s * 17) * 0.4
+      const inR = 12 + Math.sin(s * 7) * 20
+      const outR = inR + 80 + Math.sin(prog * Math.PI) * 260
+      ctx.strokeStyle = `rgba(255, 255, 255, ${0.45 + Math.sin(prog * Math.PI) * 0.5})`
+      ctx.lineWidth = 1.8
+      ctx.beginPath()
+      ctx.moveTo(cx + Math.cos(sAng) * inR, cy + Math.sin(sAng) * inR * 0.75)
+      ctx.lineTo(cx + Math.cos(sAng) * outR, cy + Math.sin(sAng) * outR * 0.75)
+      ctx.stroke()
+    }
+
+    // Superluminal Coronal Inversion Flash
+    const flash = Math.sin(prog * Math.PI)
+    if (flash > 0.08) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.pow(flash, 2) * 0.95})`
+      ctx.fillRect(0, 0, w, h)
+    }
+    ctx.restore()
 
     if (elapsed >= duration) {
       wormhole.state = 'emergence'
       wormhole.startTime = now
-      // Explosive relativistic ejection outward velocities:
       for (let i = 0; i < n; i++) {
         const p = particles[i]
-        p.x = wormhole.collapseX + (Math.random() - 0.5) * 20
-        p.y = wormhole.collapseY + (Math.random() - 0.5) * 20
+        p.x = (Math.random() - 0.5) * 30
+        p.y = (Math.random() - 0.5) * 30
+        p.wz = -180
         const ang = Math.random() * Math.PI * 2
-        const spd = Math.random() * 24 + 10
+        const spd = Math.random() * 26 + 14
         p.vx = Math.cos(ang) * spd
-        p.vy = Math.sin(ang) * spd
+        p.vy = Math.sin(ang) * spd * 0.65
       }
       self.postMessage({ type: 'wormholePhase', phase: 'emergence', shape: config.shape })
     }
   } else if (wormhole.state === 'emergence') {
     const elapsed = (now - wormhole.startTime) / 1000
     const duration = 2.0
+    const prog = Math.min(elapsed / duration, 1.0)
     for (let i = 0; i < n; i++) {
-      particles[i].update(curDisp, curDrift, pointer, curGrav, shockwave)
+      const p = particles[i]
+      if (p.wz) p.wz *= 0.92
+      p.update(curDisp, curDrift, pointer, curGrav, shockwave)
     }
+    // Relativistic Gravitational Wave Expansion Ripples
+    ctx.save()
+    for (let wave = 1; wave <= 3; wave++) {
+      const waveR = (prog * 680 + wave * 95) % 780
+      const waveAlpha = Math.max(0, (1 - waveR / 780) * 0.55 * (1 - prog))
+      ctx.strokeStyle = `rgba(56, 189, 248, ${waveAlpha})`
+      ctx.lineWidth = 2.0
+      ctx.beginPath()
+      ctx.ellipse(cx, cy, waveR, waveR * 0.65, 0, 0, Math.PI * 2)
+      ctx.stroke()
+    }
+    ctx.restore()
+
     if (elapsed >= duration) {
       wormhole.state = 'idle'
       self.postMessage({ type: 'wormholeComplete', shape: config.shape })
@@ -675,21 +1085,23 @@ function render(now) {
     }
     ctx.globalAlpha = alpha
 
-    const ci = p.colorIdx % 4
-    let sprite
-    if (p.isAnomaly) {
-      sprite = anomalySprite
-    } else if (config.shape === 'solar' && p.solarType === 'planet') {
-      sprite = planetSprites[p.planetIndex % 8] || sprites.body[ci]
-    } else if (config.shape === 'solar' && p.solarType === 'sun') {
-      sprite = solSprite
-    } else {
-      sprite = p.tier === 0
-        ? sprites.nebula[ci]
-        : p.tier === 2
-          ? sprites.sparkle[ci]
-          : sprites.body[ci]
+    // Relativistic Motion Blur Streaks (in collapse phase)
+    if (wormhole.state === 'collapse' && p.prevX !== undefined) {
+      const streakDist = Math.hypot(p.x - p.prevX, p.y - p.prevY)
+      if (streakDist > 2.5) {
+        ctx.strokeStyle = `rgba(147, 197, 253, ${Math.min(0.7, alpha)})`
+        ctx.lineWidth = 1.2
+        ctx.beginPath()
+        ctx.moveTo(cx + p.prevX, cy + p.prevY)
+        ctx.lineTo(cx + p.x, cy + p.y)
+        ctx.stroke()
+      }
     }
+
+    const ci = p.colorIdx % 4
+    const sprite = p.isAnomaly
+      ? anomalySprite
+      : (p.tier === 0 ? sprites.nebula[ci] : (p.tier === 2 ? sprites.sparkle[ci] : sprites.body[ci]))
 
     if (sprite) {
       const sz = p.isAnomaly ? 24 : p.baseSize
@@ -717,29 +1129,6 @@ function render(now) {
         ctx.stroke()
       }
     }
-  }
-
-  // ── 5. Wormhole Special Optical Passes ──
-  if (wormhole.state === 'collapse') {
-    const elapsed = (now - wormhole.startTime) / 1000
-    const prog = Math.min(elapsed / 1.8, 1.0)
-    // Draw event horizon black sphere at singularity
-    const r = Math.max(6, 26 * (1 - prog * 0.4))
-    ctx.globalCompositeOperation = 'source-over'
-    ctx.fillStyle = '#000000'
-    ctx.beginPath()
-    ctx.arc(cx + wormhole.collapseX, cy + wormhole.collapseY, r, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 + prog * 0.5})`
-    ctx.lineWidth = 2.0
-    ctx.stroke()
-  } else if (wormhole.state === 'horizon') {
-    const elapsed = (now - wormhole.startTime) / 1000
-    const prog = Math.min(elapsed / 0.8, 1.0)
-    const flash = Math.sin(prog * Math.PI)
-    ctx.globalCompositeOperation = 'source-over'
-    ctx.fillStyle = `rgba(255, 255, 255, ${flash * 0.92})`
-    ctx.fillRect(0, 0, w, h)
   }
 
   ctx.globalCompositeOperation = 'source-over'
