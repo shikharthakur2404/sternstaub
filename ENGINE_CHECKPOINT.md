@@ -1,9 +1,9 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `a9f2c13`  
+> Git Commit Reference: `94eb9e9`  
 > Live Public Deployment: https://shikharthakur2404.github.io/sternstaub/  
-> Last Verified Working State: OffscreenCanvas Worker, 60+ FPS locked, zero main thread CPU load, Quantum Anomaly beacon, Einstein-Rosen wormhole transit engine, Keplerian orbital resonance tracks, and HUD telemetry.
+> Last Verified Working State: OffscreenCanvas Worker, 60+ FPS locked, zero main thread CPU load, auto-collapsing drawer on wormhole traversal, default gravity off, and toggleable Nova Pulse mode.
 
 ---
 
