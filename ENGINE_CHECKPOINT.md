@@ -1,8 +1,8 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `22ad46e`  
-> Last Verified Working State: OffscreenCanvas Worker, 60+ FPS locked, zero main thread CPU load, left Astrometric Telemetry HUD, collapsible accordion feature container & hotkeys (H/F/Space).
+> Git Commit Reference: `6d3095c`  
+> Last Verified Working State: OffscreenCanvas Worker, 60+ FPS locked, zero main thread CPU load, single unified collapsible accordion feature panel & hotkeys (H/F/Space).
 
 ---
 
