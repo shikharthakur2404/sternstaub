@@ -40,8 +40,15 @@ export default function App() {
     const canvas = canvasRef.current
     if (!canvas || initDoneRef.current) return
 
-    // Transfer canvas rendering surface to worker (zero-copy)
-    const offscreen = canvas.transferControlToOffscreen()
+    // Transfer canvas rendering surface to worker (zero-copy).
+    // Guard: throws InvalidStateError if called more than once on same element.
+    let offscreen
+    try {
+      offscreen = canvas.transferControlToOffscreen()
+    } catch (err) {
+      console.error('[sternstaub] OffscreenCanvas transfer failed:', err)
+      return
+    }
 
     // Vite ?worker syntax → proper Worker module with tree-shaking
     const worker = new Worker(
