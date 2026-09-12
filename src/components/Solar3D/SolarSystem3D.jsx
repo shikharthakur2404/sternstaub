@@ -181,6 +181,14 @@ export default function SolarSystem3D({ onReturn }) {
     return () => clearTimeout(timer)
   }, [])
 
+  const [diwaliMode, setDiwaliMode] = useState(true)
+  const diwaliModeRef = useRef(true)
+  const earthNightMatRef = useRef(null)
+
+  useEffect(() => {
+    diwaliModeRef.current = diwaliMode
+  }, [diwaliMode])
+
   // Shared references for animation loop
   const targetCamPosRef = useRef(null)
   const targetLookAtRef = useRef(new THREE.Vector3(0, 0, 0))
@@ -203,6 +211,8 @@ export default function SolarSystem3D({ onReturn }) {
     const handleKey = (e) => {
       if (e.key === 'w' || e.key === 'W') {
         handleReturnTrigger()
+      } else if (e.key === 'd' || e.key === 'D') {
+        setDiwaliMode(prev => !prev)
       }
     }
     window.addEventListener('keydown', handleKey)
@@ -249,6 +259,7 @@ export default function SolarSystem3D({ onReturn }) {
 
     const sunTexture         = loadTex('sun.jpg')
     const earthCloudsTexture = loadTex('earth_clouds.png')
+    const earthLightsTexture = loadTex('earth_lights.png')
     const moonTexture        = loadTex('moon.jpg')
     const saturnRingTexture  = loadTex('saturn_ring.png')
 
@@ -436,15 +447,116 @@ export default function SolarSystem3D({ onReturn }) {
       // Earth Rotating Cloud Sphere
       let cloudMesh = null
       if (p.hasClouds) {
-        const cGeo = new THREE.SphereGeometry(p.r * 1.016, 64, 64)
+        const cGeo = new THREE.SphereGeometry(p.r * 1.014, 64, 64)
         const cMat = new THREE.MeshStandardMaterial({
           map: earthCloudsTexture,
           transparent: true,
-          opacity: 0.85,
+          opacity: 0.68,
           blending: THREE.NormalBlending,
         })
         cloudMesh = new THREE.Mesh(cGeo, cMat)
         pMesh.add(cloudMesh)
+      }
+
+      // Earth Real Glowing Night Lights & Diwali / New Year Festival Illumination
+      if (p.id === 'earth') {
+        const nightGeo = new THREE.SphereGeometry(p.r * 1.018, 64, 64)
+        const nightMat = new THREE.ShaderMaterial({
+          uniforms: {
+            uLightsMap: { value: earthLightsTexture },
+            uSunPosition: { value: new THREE.Vector3(0, 0, 0) },
+            uTime: { value: 0.0 },
+            uFestiveMode: { value: 1.0 },
+            uFestiveBoost: { value: 2.6 },
+          },
+          vertexShader: `
+            varying vec2 vUv;
+            varying vec3 vWorldNormal;
+            varying vec3 vWorldPosition;
+
+            void main() {
+              vUv = uv;
+              vec4 worldPos = modelMatrix * vec4(position, 1.0);
+              vWorldPosition = worldPos.xyz;
+              vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+              gl_Position = projectionMatrix * viewMatrix * worldPos;
+            }
+          `,
+          fragmentShader: `
+            uniform sampler2D uLightsMap;
+            uniform vec3 uSunPosition;
+            uniform float uTime;
+            uniform float uFestiveMode;
+            uniform float uFestiveBoost;
+
+            varying vec2 vUv;
+            varying vec3 vWorldNormal;
+            varying vec3 vWorldPosition;
+
+            void main() {
+              vec3 sunDir = normalize(uSunPosition - vWorldPosition);
+              float sunDot = dot(vWorldNormal, sunDir);
+
+              // Smooth transition across twilight terminator
+              float nightFactor = smoothstep(0.04, -0.15, sunDot);
+              if (nightFactor <= 0.001) {
+                discard;
+              }
+
+              vec4 texColor = texture2D(uLightsMap, vUv);
+              float lum = max(texColor.r, max(texColor.g, texColor.b));
+              if (lum < 0.02) {
+                discard;
+              }
+
+              // Realistic NASA city lights base (warm incandescent gold)
+              vec3 baseCity = texColor.rgb * vec3(1.3, 1.15, 0.9);
+
+              // ── Diwali & New Year Festival Illumination ──
+              // Coordinates for Indian Subcontinent & South Asia
+              float dU = (vUv.x - 0.722) * 2.8;
+              float dV = (vUv.y - 0.608) * 2.2;
+              float distIndia = sqrt(dU * dU + dV * dV);
+              float indiaEpicenter = smoothstep(0.32, 0.0, distIndia);
+
+              // Shimmering Diya micro-twinkle across populated lands
+              float twinkle = 1.0 
+                + 0.32 * sin(uTime * 4.2 + vUv.x * 260.0 + vUv.y * 180.0)
+                + 0.18 * cos(uTime * 7.1 + vUv.x * 520.0)
+                + 0.12 * sin(uTime * 9.8 + vUv.y * 340.0);
+
+              // Celebration Fireworks: Periodic sparkling bursts across nocturnal cities
+              float burstSeed = sin(uTime * 4.6 + vUv.x * 740.0) * cos(uTime * 3.8 + vUv.y * 580.0);
+              float fireworkBurst = pow(max(0.0, burstSeed), 10.0) * 3.5;
+
+              // Firework burst chromatic dispersion (festive crimson, emerald, saffron gold)
+              vec3 fireworkColor = mix(
+                vec3(1.0, 0.3, 0.18),
+                vec3(0.25, 1.0, 0.55),
+                sin(vUv.x * 85.0 + uTime * 2.2) * 0.5 + 0.5
+              );
+
+              // Rich Saffron / Amber Diya Flame Tone (Warm incandescent 2400K)
+              vec3 diyaGoldenTone = vec3(1.45, 1.02, 0.44) * (1.0 + indiaEpicenter * 1.6);
+              vec3 festiveIllumination = texColor.rgb * (diyaGoldenTone * twinkle + fireworkColor * fireworkBurst);
+
+              // Soft incandescent atmospheric halo on intense light clusters
+              float halo = pow(lum, 1.6) * 0.65 * (1.0 + indiaEpicenter * 1.0);
+              vec3 haloColor = vec3(1.0, 0.82, 0.36) * halo;
+
+              // Blend realistic mode vs festive celebration mode
+              vec3 result = mix(baseCity, festiveIllumination * uFestiveBoost + haloColor, uFestiveMode);
+
+              gl_FragColor = vec4(result * nightFactor, lum * nightFactor);
+            }
+          `,
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          side: THREE.FrontSide,
+        })
+        earthNightMatRef.current = nightMat
+        pMesh.add(new THREE.Mesh(nightGeo, nightMat))
       }
 
       // Saturn 3D Rings with Radial Mapping & Cassini Division
@@ -590,10 +702,16 @@ export default function SolarSystem3D({ onReturn }) {
       setSelectedPlanet(targetData.name)
       focusedTargetRef.current = targetData
       const targetRadius = targetData.radius || 10
-      const offset = targetData.isMoon
-        ? targetRadius * 5.0 + 8
-        : targetRadius * 3.8 + 12
-      targetCamPosRef.current = new THREE.Vector3(offset, offset * 0.45, offset)
+      if (targetData.id === 'earth') {
+        // Dramatic view of Earth's twilight terminator and glowing night cities
+        const dist = targetRadius * 3.2 + 8
+        targetCamPosRef.current = new THREE.Vector3(dist * 0.72, dist * 0.38, dist * 0.72)
+      } else {
+        const offset = targetData.isMoon
+          ? targetRadius * 5.0 + 8
+          : targetRadius * 3.8 + 12
+        targetCamPosRef.current = new THREE.Vector3(offset, offset * 0.45, offset)
+      }
     }
 
     const handlePointerDown = (e) => {
@@ -724,6 +842,12 @@ export default function SolarSystem3D({ onReturn }) {
         }
       }
 
+      // Update Earth Night Lights Shader Uniforms
+      if (earthNightMatRef.current) {
+        earthNightMatRef.current.uniforms.uTime.value = clock.getElapsedTime()
+        earthNightMatRef.current.uniforms.uFestiveMode.value = diwaliModeRef.current ? 1.0 : 0.0
+      }
+
       controls.update()
       renderer.render(scene, camera)
     }
@@ -747,6 +871,10 @@ export default function SolarSystem3D({ onReturn }) {
       emergenceRingMat.dispose()
       warpGeo.dispose()
       warpMat.dispose()
+      if (earthNightMatRef.current) {
+        earthNightMatRef.current.dispose()
+      }
+      earthLightsTexture.dispose()
       renderer.dispose()
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement)
@@ -784,13 +912,31 @@ export default function SolarSystem3D({ onReturn }) {
               className={`nav-chip ${selectedPlanet === p.name ? 'active' : ''}`}
               onClick={() => mountRef.current?.focusPlanet?.(p.id)}
             >
-              {p.id === 'pluto' ? '♇ PLUTO' : p.name.toUpperCase()}
+              {p.id === 'earth' ? '🌍 EARTH' : p.id === 'pluto' ? '♇ PLUTO' : p.name.toUpperCase()}
             </button>
           ))}
         </div>
 
         {/* Action controls */}
         <div className="hud-actions-strip">
+          <button
+            className={`diwali-glow-btn ${diwaliMode ? 'active' : ''}`}
+            onClick={() => {
+              const next = !diwaliMode
+              setDiwaliMode(next)
+              setArrivalTelemetry(
+                next
+                  ? '🪔 DIWALI & NEW YEAR FESTIVAL ILLUMINATION ACTIVE // EARTH NIGHTSIDE ABLAZE'
+                  : '✦ REALISTIC NASA BLACK MARBLE NIGHT LIGHTS ACTIVE'
+              )
+              setTimeout(() => setArrivalTelemetry(''), 2800)
+            }}
+            title="Toggle Diwali & New Year Festive Night Lights (D)"
+          >
+            <span className="diwali-icon">🪔</span>
+            <span>{diwaliMode ? 'DIWALI LIGHTS: ON' : 'DIWALI LIGHTS: OFF'}</span>
+          </button>
+
           <div className="speed-controller">
             <span className="speed-label">TIME WARP</span>
             <input

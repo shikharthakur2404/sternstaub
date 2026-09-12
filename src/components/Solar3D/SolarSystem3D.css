@@ -189,6 +189,60 @@
   min-width: 28px;
 }
 
+.diwali-glow-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #fef08a;
+  background: rgba(180, 83, 9, 0.28);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow:
+    0 2px 10px rgba(245, 158, 11, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.diwali-glow-btn:hover {
+  background: rgba(245, 158, 11, 0.42);
+  border-color: #f59e0b;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.45);
+  transform: translateY(-1px);
+}
+
+.diwali-glow-btn.active {
+  color: #fffbeb;
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.72) 0%, rgba(245, 158, 11, 0.82) 100%);
+  border-color: #fde047;
+  box-shadow:
+    0 0 20px rgba(245, 158, 11, 0.7),
+    0 0 40px rgba(234, 88, 12, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
+
+.diwali-icon {
+  font-size: 13px;
+  filter: drop-shadow(0 0 4px #f59e0b);
+  display: inline-block;
+}
+
+.diwali-glow-btn.active .diwali-icon {
+  animation: diyaFlicker 1.4s infinite alternate ease-in-out;
+}
+
+@keyframes diyaFlicker {
+  0% { transform: scale(0.95); filter: drop-shadow(0 0 4px #f59e0b); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 10px #fbbf24); }
+  100% { transform: scale(1.0); filter: drop-shadow(0 0 6px #f59e0b); }
+}
+
 .return-wormhole-btn {
   display: flex;
   align-items: center;
