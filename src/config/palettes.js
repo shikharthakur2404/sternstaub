@@ -1,43 +1,44 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// PALETTES.js — all color themes live here
+// palettes.js — all color themes
 //
-// To add a new palette, just add a new entry to this object.
-// Colors are in hex strings — Three.js Color() handles the conversion.
+// Each palette has:
+//   bgStart / bgEnd  → radial background gradient colors
+//   glow             → array of 4 particle colors (randomly assigned per particle)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const PALETTES = {
   cosmicBlue: {
-    label: "Cosmic Blue",
-    primary: "#1a0a3a",      // deep violet — outermost particles
-    secondary: "#0a4a8a",    // ocean blue — mid particles
-    core: "#c8e8ff",         // pale ice white — the glowing center
+    label:   'Cosmic Blue',
+    bgStart: '#102a3a',
+    bgEnd:   '#060d14',
+    glow:    ['#5eead4', '#38bdf8', '#a78bfa', '#ffffff'],
   },
 
   etherealGold: {
-    label: "Ethereal Gold",
-    primary: "#1a0800",      // deep burnt brown — outer edge
-    secondary: "#c84a00",    // amber orange — mid range
-    core: "#fff8c0",         // warm white-gold — core glow
+    label:   'Ethereal Gold',
+    bgStart: '#241500',
+    bgEnd:   '#080400',
+    glow:    ['#fde047', '#fb923c', '#38bdf8', '#ffffff'],
+  },
+
+  navyMauve: {
+    label:   'Navy & Mauve',
+    bgStart: '#1a1b35',
+    bgEnd:   '#080911',
+    glow:    ['#c084fc', '#e879f9', '#38bdf8', '#fdf4ff'],
+  },
+
+  midnightViolet: {
+    label:   'Midnight Violet',
+    bgStart: '#2a1538',
+    bgEnd:   '#0a0610',
+    glow:    ['#f59e0b', '#fbbf24', '#ec4899', '#ffffff'],
   },
 
   auroraGreen: {
-    label: "Aurora Green",
-    primary: "#000a10",      // near-black teal — outer edge
-    secondary: "#00aa88",    // bright teal — mid range
-    core: "#aaffee",         // soft mint white — core
-  },
-
-  dustyRose: {
-    label: "Dusty Rose",
-    primary: "#1a0010",      // deep plum — outer edge
-    secondary: "#884466",    // muted rose — mid range
-    core: "#ffd8ee",         // pale pink white — core
-  },
-
-  voidWhite: {
-    label: "Void White",
-    primary: "#080808",      // near-black — outer
-    secondary: "#444466",    // slate blue — mid
-    core: "#ffffff",         // pure white — core
+    label:   'Aurora',
+    bgStart: '#001a15',
+    bgEnd:   '#000a08',
+    glow:    ['#34d399', '#6ee7b7', '#38bdf8', '#ffffff'],
   },
 }

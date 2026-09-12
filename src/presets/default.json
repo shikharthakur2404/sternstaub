@@ -1,9 +1,0 @@
-{
-  "name": "Cosmic Default",
-  "description": "Soft blue-violet nebula, the original sternstaub palette",
-  "dispersion": 0.4,
-  "driftSpeed": 0.6,
-  "particleCount": 8000,
-  "geometryType": "sphere",
-  "palette": "cosmicBlue"
-}

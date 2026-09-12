@@ -2,94 +2,62 @@
 
 > *German for "stardust"*
 
-An interactive cosmic particle wallpaper built with React Three Fiber + Vite.  
-Thousands of particles orbit a glowing nebula core — fully customizable in real time.
-
-![sternstaub preview](./preview.png)
+A lightweight, high-performance cosmic particle engine built with HTML5 Canvas 2D + React + Vite.  
+Zero external 3D dependencies (`three` / `@react-three/fiber` free). 1,800 particles shaped into a humanoid silhouette with additive blending and real-time dispersion dynamics at 60 FPS.
 
 ---
 
-## What it does
+## Architecture & Features
 
-- **8,000+ particles** rendered via custom GLSL shaders (vertex + fragment)
-- **Soft additive blending** — overlapping particles glow brighter, like real light
-- **Organic drift animation** — particles breathe and drift via sin/cos wave functions
-- **5 color palettes** — Cosmic Blue, Ethereal Gold, Aurora Green, Dusty Rose, Void White
-- **JSON preset system** — save and load your exact settings as `.json` files
-- **Mouse orbit** — drag to rotate, scroll to zoom
+- **Pure Canvas 2D Pipeline** — No WebGL/Three.js overhead. Direct buffer drawing via `CanvasRenderingContext2D`.
+- **Additive Optical Blending** — Uses `globalCompositeOperation = 'lighter'` to generate natural white-hot core radiance when particle clusters overlap.
+- **Parametric Silhouette Generator** — Distributes particles across head, shoulders, torso, and aura clusters using custom parametric probability distributions.
+- **Drift & Dispersion Physics** — Particles orbit home anchor coordinates with harmonic oscillator displacement (`Math.sin`, `Math.cos`).
+- **Dynamic Palettes** — Real-time gradient mapping and glow coloring across 5 cosmic themes.
+- **Glassmorphic Control HUD** — Interactive control panel to tune dispersion, drift speed, particle density, and color grading in real time.
 
 ---
 
-## Stack
+## Visual Computing Triad
+
+`sternstaub` is Tier 1 of the visual computing triad:
+
+1. **`sternstaub` (Tier 1)**: Pure HTML5 Canvas 2D particle simulation, zero 3D dependencies.
+2. **[`nebelkern`](https://github.com/shikharthakur2404/nebelkern) (Tier 2)**: Three.js / React Three Fiber / custom GLSL shaders with 3D curl noise, post-processing bloom, and velocity persistence trails.
+3. **[`nebelkern-metal`](https://github.com/shikharthakur2404/nebelkern-metal) (Tier 3)**: Native Swift + Metal compute pipeline with Apple Silicon UMA shared memory, Liquid Retina XDR EDR headroom, and live desktop wallpaper mode.
+
+---
+
+## Tech Stack
 
 | Layer | Tech |
-|-------|------|
-| Framework | React + Vite |
-| 3D | React Three Fiber + Three.js |
-| Shaders | Custom GLSL (vertex + fragment) |
-| UI | Vanilla CSS (glassmorphism) |
+|---|---|
+| Runtime | React 19 + Vite |
+| Graphics | HTML5 2D Canvas API (`CanvasRenderingContext2D`) |
+| Blending | Additive (`lighter`) |
+| Linting | Oxlint |
+| Styling | Modular CSS (Glassmorphic HUD) |
 
 ---
 
-## Getting started
+## Getting Started
 
 ```bash
+# Install dependencies
 npm install
+
+# Run dev server
 npm run dev
-```
 
-Open `http://localhost:5173` — you'll see the particle cloud immediately.
+# Production build
+npm run build
 
----
-
-## File structure
-
-```
-src/
-├── components/
-│   ├── ParticleCloud.jsx   # The 3D particle system — geometry + shader wiring
-│   ├── ControlPanel.jsx    # The floating UI panel
-│   └── ControlPanel.css    # Panel styles
-├── shaders/
-│   ├── vertex.glsl         # Animates particle positions
-│   └── fragment.glsl       # Colors + glow falloff
-├── config/
-│   └── palettes.js         # All color themes — add new ones here
-├── presets/
-│   ├── default.json        # Loaded on startup
-│   └── goldenNebula.json   # Example preset
-└── App.jsx                 # Root — state + layout
+# Run linter
+npm run lint
 ```
 
 ---
 
-## How to add a new palette
+## License
 
-Open `src/config/palettes.js` and add an entry:
-
-```js
-myPalette: {
-  label: "My Palette",
-  primary:   "#hex",   // outer particles
-  secondary: "#hex",   // mid-range
-  core:      "#hex",   // center glow
-}
-```
-
-That's it — it appears in the UI automatically.
-
----
-
-## How to add a new preset
-
-Edit any JSON in `src/presets/` or use the **Save Preset** button in the UI to export your current settings.
-
----
-
-## Roadmap
-
-- [ ] Tauri wrapper for native macOS `.app`
-- [ ] Audio reactivity (Web Audio API → shader uniforms)
-- [ ] GLSL hot-reload editor (Monaco embedded)
-- [ ] macOS wallpaper mode (`NSWindow.Level.belowNormal`)
-- [ ] Geometry picker (sphere / torus / custom SDF)
+MIT © [Shikhar Thakur](https://github.com/shikharthakur2404)

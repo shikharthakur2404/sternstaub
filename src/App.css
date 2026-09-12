@@ -1,20 +1,19 @@
-/* ─────────────────────────────────────────────────────────────────────────────
-   App.css — global styles, minimal
-───────────────────────────────────────────────────────────────────────────── */
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* ── App global ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #000008;
-  overflow: hidden; /* no scrollbars — canvas fills screen */
+  background: #060d14;
+  overflow: hidden;
 }
 
 .app {
   width: 100vw;
   height: 100vh;
   position: relative;
+}
+
+.main-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
 }

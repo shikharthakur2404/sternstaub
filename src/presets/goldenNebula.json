@@ -1,9 +1,0 @@
-{
-  "name": "Golden Nebula",
-  "description": "Warm gold and amber tones, denser particle cloud",
-  "dispersion": 0.6,
-  "driftSpeed": 0.4,
-  "particleCount": 10000,
-  "geometryType": "sphere",
-  "palette": "etherealGold"
-}
