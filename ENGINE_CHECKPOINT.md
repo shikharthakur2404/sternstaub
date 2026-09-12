@@ -1,9 +1,9 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `6a07a63`  
+> Git Commit Reference: `a9f2c13`  
 > Live Public Deployment: https://shikharthakur2404.github.io/sternstaub/  
-> Last Verified Working State: OffscreenCanvas Worker, 60+ FPS locked, zero main thread CPU load, single unified collapsible accordion feature panel & hotkeys (H/F/Space).
+> Last Verified Working State: OffscreenCanvas Worker, 60+ FPS locked, zero main thread CPU load, Quantum Anomaly beacon, Einstein-Rosen wormhole transit engine, Keplerian orbital resonance tracks, and HUD telemetry.
 
 ---
 
@@ -79,7 +79,26 @@ morphSpeed = 0.045 // attractor lerp speed
 
 ---
 
-## 4. EMERGENCY RESTORATION RUNBOOK
+## 5. QUANTUM ANOMALY & EINSTEIN-ROSEN BRIDGE SPECIFICATION
+
+```javascript
+// Quantum Anomaly Beacon (Particle 0)
+- Always active across all 5 geometries.
+- Renders via createAnomalySprite(): 8-point diffraction star with multi-spectral prism chromatic dispersion.
+- Features real-time hovering reticle & rotating bracket lock overlay.
+- Interaction triggers multi-stage cinematic Einstein-Rosen Wormhole transit (~4.5s sequence):
+    1. Collapse (1.8s): Extreme relativistic vortex suction + frame-dragging rotation into central singularity black hole void.
+    2. Horizon (0.8s): Event horizon void with white coronal burst flash; morphs target geometry mid-transit.
+    3. Emergence (2.0s): Relativistic explosive outward ejection into newly configured celestial system.
+
+// Keplerian Orbital Tracks & Planetary Tinting (Solar Mode)
+- Real astronomical planetary color gradients (Mercury slate, Venus golden amber, Earth azure/emerald, Mars terracotta, Jupiter banded cream, Saturn pale gold, Uranus cyan, Neptune royal indigo).
+- Planetary orbital elliptical guide tracks rendered under additive passes.
+```
+
+---
+
+## 6. EMERGENCY RESTORATION RUNBOOK
 
 If the build breaks or the screen goes black:
 1. Verify `main.jsx` has NO `StrictMode`.
@@ -94,3 +113,4 @@ If the build breaks or the screen goes black:
    kill $(lsof -t -i:5173)
    npm run dev
    ```
+
