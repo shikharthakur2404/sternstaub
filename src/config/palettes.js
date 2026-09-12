@@ -9,7 +9,7 @@
 
 export const PALETTES = {
   etherealGold: {
-    label:   '✦ Ethereal Gold',
+    label:   'Ethereal Gold',
     bgStart: '#241500',
     bgEnd:   '#080400',
     glow:    ['#fde047', '#fb923c', '#38bdf8', '#ffffff'],

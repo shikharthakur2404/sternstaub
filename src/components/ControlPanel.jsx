@@ -233,16 +233,38 @@ export default function ControlPanel({
               <div className="accordion-inner">
                 <div className="accordion-content">
                   <div className="palette-grid">
-                    {Object.entries(PALETTES).map(([key, pal]) => (
-                      <button
-                        key={key}
-                        className={`palette-btn ${palette === key ? 'active' : ''}`}
-                        onClick={() => setPalette(key)}
-                        style={{ background: `linear-gradient(135deg, ${pal.bgStart}, ${pal.glow[0]}, ${pal.glow[2]})` }}
-                      >
-                        {pal.label}
-                      </button>
-                    ))}
+                    {Object.entries(PALETTES).map(([key, pal]) => {
+                      const isActive = palette === key
+                      const p0 = pal.glow[0]
+                      const p1 = pal.glow[1]
+                      const p2 = pal.glow[2]
+                      return (
+                        <button
+                          key={key}
+                          className={`palette-card ${isActive ? 'active' : ''}`}
+                          onClick={() => setPalette(key)}
+                          style={{
+                            '--pal-glow': p0,
+                          }}
+                          title={`Select ${pal.label} Spectrum`}
+                        >
+                          <span
+                            className="palette-gem"
+                            style={{
+                              background: `linear-gradient(135deg, ${p0}, ${p1}, ${p2})`,
+                              boxShadow: `0 0 7px ${p0}99`,
+                            }}
+                          />
+                          <span className="palette-label">{pal.label}</span>
+                          {isActive && (
+                            <span
+                              className="palette-indicator"
+                              style={{ background: p0, boxShadow: `0 0 6px ${p0}` }}
+                            />
+                          )}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               </div>
