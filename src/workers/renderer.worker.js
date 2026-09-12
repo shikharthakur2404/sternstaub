@@ -15,27 +15,31 @@
 //   Worker → Main:  postMessage({ type: 'fps', value })
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Palette data (duplicated from config — workers can't import from main bundle) ──
+// ── Palette data ─────────────────────────────────────────────────────────────
 const PALETTES = {
-  cosmicBlue: {
-    bgStart: '#102a3a', bgEnd: '#060d14',
-    glow: ['#5eead4', '#38bdf8', '#a78bfa', '#ffffff'],
-  },
   etherealGold: {
     bgStart: '#241500', bgEnd: '#080400',
     glow: ['#fde047', '#fb923c', '#38bdf8', '#ffffff'],
   },
-  navyMauve: {
-    bgStart: '#1a1b35', bgEnd: '#080911',
-    glow: ['#c084fc', '#e879f9', '#38bdf8', '#fdf4ff'],
-  },
-  midnightViolet: {
-    bgStart: '#2a1538', bgEnd: '#0a0610',
-    glow: ['#f59e0b', '#fbbf24', '#ec4899', '#ffffff'],
+  cosmicBlue: {
+    bgStart: '#061a2c', bgEnd: '#020810',
+    glow: ['#00f2fe', '#38bdf8', '#818cf8', '#ffffff'],
   },
   auroraGreen: {
-    bgStart: '#001a15', bgEnd: '#000a08',
-    glow: ['#34d399', '#6ee7b7', '#38bdf8', '#ffffff'],
+    bgStart: '#002017', bgEnd: '#010906',
+    glow: ['#10b981', '#06b6d4', '#6ee7b7', '#ffffff'],
+  },
+  supernovaRose: {
+    bgStart: '#200a2c', bgEnd: '#07020d',
+    glow: ['#e879f9', '#f43f5e', '#38bdf8', '#ffffff'],
+  },
+  solarFlare: {
+    bgStart: '#2a0c02', bgEnd: '#0a0200',
+    glow: ['#ff5722', '#ffb300', '#38bdf8', '#ffffff'],
+  },
+  midnightViolet: {
+    bgStart: '#1a0d2e', bgEnd: '#05010a',
+    glow: ['#a855f7', '#ec4899', '#f59e0b', '#ffffff'],
   },
 }
 

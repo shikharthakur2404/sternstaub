@@ -150,7 +150,7 @@ export default function App() {
 
   const handleReset = useCallback(() => {
     handleShape('silhouette')
-    handlePalette('cosmicBlue')
+    handlePalette('etherealGold')
     handleExposure(1.0)
     handleDispersion(1.0)
     handleDriftSpeed(1.8)
