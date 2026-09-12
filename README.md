@@ -3,7 +3,9 @@
 > *German for "stardust"*
 
 A lightweight, high-performance cosmic particle engine built with HTML5 Canvas 2D + React + Vite.  
-Zero external 3D dependencies (`three` / `@react-three/fiber` free). 1,800 particles shaped into a humanoid silhouette with additive blending and real-time dispersion dynamics at 60 FPS.
+Zero external 3D dependencies (`three` / `@react-three/fiber` free). Multi-spectral sprite cache running on an isolated OffscreenCanvas Web Worker with 5 morphing celestial geometries at locked 60+ FPS.
+
+**✦ Live Deployment:** [shikharthakur2404.github.io/sternstaub](https://shikharthakur2404.github.io/sternstaub/)
 
 ---
 
