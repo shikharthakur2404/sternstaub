@@ -100,8 +100,49 @@ function createSparkleSprite(hexColor) {
   return oc
 }
 
+// ── Quantum Anomaly & Astronomical Planet Sprites ────────────────────────────
+function createAnomalySprite() {
+  const size = 64, half = size / 2
+  const oc = new OffscreenCanvas(size, size)
+  const sc = oc.getContext('2d')
+  const g = sc.createRadialGradient(half, half, 0, half, half, half)
+  g.addColorStop(0,    'rgba(255, 255, 255, 1)')
+  g.addColorStop(0.16, 'rgba(167, 139, 250, 0.95)') // violet halo
+  g.addColorStop(0.38, 'rgba(56, 189, 248, 0.70)')  // electric cyan
+  g.addColorStop(0.70, 'rgba(253, 224, 71, 0.30)')  // golden fringe
+  g.addColorStop(1,    'rgba(0, 0, 0, 0)')
+  sc.fillStyle = g
+  sc.fillRect(0, 0, size, size)
+
+  // Prismatic 8-point diffraction star
+  sc.strokeStyle = 'rgba(255, 255, 255, 0.95)'
+  sc.lineWidth = 1.2
+  sc.beginPath()
+  sc.moveTo(half, half - 14); sc.lineTo(half, half + 14)
+  sc.moveTo(half - 14, half); sc.lineTo(half + 14, half)
+  sc.moveTo(half - 7, half - 7); sc.lineTo(half + 7, half + 7)
+  sc.moveTo(half - 7, half + 7); sc.lineTo(half + 7, half - 7)
+  sc.stroke()
+  return oc
+}
+
+const PLANET_COLORS = [
+  '#cbd5e1', // 0: Mercury (slate silver)
+  '#fde047', // 1: Venus (golden sulphur)
+  '#38bdf8', // 2: Earth (azure ocean)
+  '#f87171', // 3: Mars (crimson red)
+  '#fb923c', // 4: Jupiter (amber storm)
+  '#facc15', // 5: Saturn (golden ring)
+  '#22d3ee', // 6: Uranus (cyan ice)
+  '#60a5fa', // 7: Neptune (deep blue)
+]
+
+let anomalySprite = createAnomalySprite()
+let planetSprites = PLANET_COLORS.map(c => createBodySprite(c))
+let solSprite = createBodySprite('#fff7ed')
+
 function rebuildSprites(palette) {
-  const pal = PALETTES[palette] || PALETTES.cosmicBlue
+  const pal = PALETTES[palette] || PALETTES.etherealGold
   return {
     nebula:  pal.glow.map(c => createNebulaSprite(c)),
     body:    pal.glow.map(c => createBodySprite(c)),
@@ -176,6 +217,15 @@ function getTorusTarget() {
 }
 
 function getTarget(shape, particle) {
+  if (particle && particle.isAnomaly) {
+    switch (shape) {
+      case 'solar':       return { x: 108 * Math.cos(particle.orbitTheta || 1.2), y: 108 * Math.sin(particle.orbitTheta || 1.2) * 0.65 }
+      case 'singularity': return { x: 44 * Math.cos(1.8), y: 44 * Math.sin(1.8) * 0.42 }
+      case 'galaxy':      return { x: 75 * Math.cos(2.2), y: 75 * Math.sin(2.2) * 0.62 }
+      case 'torus':       return { x: 110 * 0.866, y: 110 * 0.5 * 0.55 }
+      default:            return { x: 0, y: -65 }
+    }
+  }
   switch (shape) {
     case 'solar':       return getSolarTarget(particle)
     case 'singularity': return getSingularityTarget()
@@ -417,19 +467,58 @@ let vigGrad = null, vigW = 0, vigH = 0
 const pointer   = { relX: 0, relY: 0, active: false }
 const shockwave = { x: 0, y: 0, radius: 0, maxRadius: 750, speed: 24, force: 35, active: false }
 
+// ── Wormhole Spacetime State Machine ─────────────────────────────────────────
+const wormhole = {
+  state:       'idle', // 'idle' | 'collapse' | 'horizon' | 'emergence'
+  startTime:   0,
+  collapseX:   0,
+  collapseY:   0,
+  targetShape: 'solar',
+  morphed:     false,
+  lastHovered: false,
+}
+
+const CELESTIAL_ORDER = ['silhouette', 'solar', 'singularity', 'galaxy', 'torus']
+
+function getNextShape(current) {
+  const idx = CELESTIAL_ORDER.indexOf(current)
+  return idx >= 0 ? CELESTIAL_ORDER[(idx + 1) % CELESTIAL_ORDER.length] : 'solar'
+}
+
+function triggerWormhole(forcedTarget) {
+  if (wormhole.state !== 'idle') return
+  const anomaly = particles[0]
+  wormhole.state = 'collapse'
+  wormhole.startTime = performance.now()
+  wormhole.collapseX = (anomaly ? anomaly.x : 0)
+  wormhole.collapseY = (anomaly ? anomaly.y : 0)
+  wormhole.targetShape = forcedTarget || getNextShape(config.shape)
+  wormhole.morphed = false
+  self.postMessage({ type: 'wormholePhase', phase: 'collapse', target: wormhole.targetShape })
+}
+
 // FPS telemetry
 let frameCount = 0
 let lastTime   = 0
 
 function rebuild(count, shape) {
-  particles = Array.from({ length: count }, () => new Particle(shape || config.shape))
+  particles = Array.from({ length: count }, (_, i) => {
+    const p = new Particle(shape || config.shape)
+    if (i === 0) {
+      p.isAnomaly = true
+      p.tier = 2
+      p.baseSize = 24
+      p.baseAlpha = 1.0
+    }
+    return p
+  })
 }
 
 function render(now) {
   if (!canvas || !ctx) { rafId = requestAnimationFrame(render); return }
 
   const { palette: curPal, exposure: curExp, dispersion: curDisp, driftSpeed: curDrift, gravity: curGrav } = config
-  const pal = PALETTES[curPal] || PALETTES.cosmicBlue
+  const pal = PALETTES[curPal] || PALETTES.etherealGold
   const w = canvas.width, h = canvas.height
   const cx = w * 0.5, cy = h * 0.5
 
@@ -442,6 +531,25 @@ function render(now) {
     }
   }
 
+  // Check Quantum Anomaly Hover
+  const anomaly = particles[0]
+  let isAnomalyHovered = false
+  if (anomaly && anomaly.isAnomaly && pointer.active && wormhole.state === 'idle') {
+    const adx = anomaly.x - pointer.relX
+    const ady = anomaly.y - pointer.relY
+    const aDist = Math.sqrt(adx * adx + ady * ady)
+    isAnomalyHovered = aDist < 48
+  }
+  if (isAnomalyHovered !== wormhole.lastHovered) {
+    wormhole.lastHovered = isAnomalyHovered
+    self.postMessage({
+      type: 'anomalyHover',
+      hovered: isAnomalyHovered,
+      x: anomaly ? cx + anomaly.x : cx,
+      y: anomaly ? cy + anomaly.y : cy,
+    })
+  }
+
   // ── 1. Background ──
   if (!bgGrad || bgW !== w || bgH !== h || bgPal !== curPal) {
     bgGrad = ctx.createRadialGradient(cx, cy, 30, cx, cy, Math.max(w, h) * 0.65)
@@ -452,37 +560,182 @@ function render(now) {
   ctx.fillStyle = bgGrad
   ctx.fillRect(0, 0, w, h)
 
-  // Additive Particle Blit Pass
-  ctx.globalCompositeOperation = 'lighter'
+  // ── 2. Keplerian Orbital Track Lines (Solar Mode Only) ──
+  if (config.shape === 'solar' && wormhole.state === 'idle') {
+    ctx.strokeStyle = 'rgba(147, 197, 253, 0.045)'
+    ctx.lineWidth = 1.0
+    const orbits = [46, 68, 94, 122, 192, 256, 310, 362]
+    for (let i = 0; i < orbits.length; i++) {
+      ctx.beginPath()
+      ctx.ellipse(cx, cy, orbits[i], orbits[i] * 0.65, 0, 0, Math.PI * 2)
+      ctx.stroke()
+    }
+  }
+
+  // ── 3. Wormhole Physics & State Advances ──
   const n = particles.length
+
+  if (wormhole.state === 'collapse') {
+    const elapsed = (now - wormhole.startTime) / 1000
+    const duration = 1.8
+    const prog = Math.min(elapsed / duration, 1.0)
+
+    // Extreme relativistic vortex suction
+    for (let i = 0; i < n; i++) {
+      const p = particles[i]
+      const dx = wormhole.collapseX - p.x
+      const dy = wormhole.collapseY - p.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      const pull = Math.min(26, 650 / (dist + 10)) * (0.8 + prog * 0.9)
+      p.vx += (dx / (dist || 1)) * pull
+      p.vy += (dy / (dist || 1)) * pull
+      // Relativistic frame-dragging rotation
+      p.vx += -(dy / (dist || 1)) * pull * 1.6
+      p.vy +=  (dx / (dist || 1)) * pull * 1.6
+      p.vx *= 0.89
+      p.vy *= 0.89
+      p.x += p.vx
+      p.y += p.vy
+    }
+
+    if (elapsed >= duration) {
+      wormhole.state = 'horizon'
+      wormhole.startTime = now
+      wormhole.morphed = false
+      self.postMessage({ type: 'wormholePhase', phase: 'horizon' })
+    }
+  } else if (wormhole.state === 'horizon') {
+    const elapsed = (now - wormhole.startTime) / 1000
+    const duration = 0.8
+    const prog = Math.min(elapsed / duration, 1.0)
+
+    if (prog >= 0.4 && !wormhole.morphed) {
+      wormhole.morphed = true
+      config.shape = wormhole.targetShape
+      for (let i = 0; i < n; i++) {
+        particles[i].morphTo(config.shape)
+      }
+    }
+
+    if (elapsed >= duration) {
+      wormhole.state = 'emergence'
+      wormhole.startTime = now
+      // Explosive relativistic ejection outward velocities:
+      for (let i = 0; i < n; i++) {
+        const p = particles[i]
+        p.x = wormhole.collapseX + (Math.random() - 0.5) * 20
+        p.y = wormhole.collapseY + (Math.random() - 0.5) * 20
+        const ang = Math.random() * Math.PI * 2
+        const spd = Math.random() * 24 + 10
+        p.vx = Math.cos(ang) * spd
+        p.vy = Math.sin(ang) * spd
+      }
+      self.postMessage({ type: 'wormholePhase', phase: 'emergence', shape: config.shape })
+    }
+  } else if (wormhole.state === 'emergence') {
+    const elapsed = (now - wormhole.startTime) / 1000
+    const duration = 2.0
+    for (let i = 0; i < n; i++) {
+      particles[i].update(curDisp, curDrift, pointer, curGrav, shockwave)
+    }
+    if (elapsed >= duration) {
+      wormhole.state = 'idle'
+      self.postMessage({ type: 'wormholeComplete', shape: config.shape })
+    }
+  } else {
+    // Normal update loop
+    for (let i = 0; i < n; i++) {
+      particles[i].update(curDisp, curDrift, pointer, curGrav, shockwave)
+    }
+  }
+
+  // ── 4. Additive Particle Blit Pass ──
+  ctx.globalCompositeOperation = 'lighter'
   const densityComp = Math.min(1.2, Math.sqrt(2400 / Math.max(n, 800)))
   const timeSec = now * 0.001
 
   for (let i = 0; i < n; i++) {
     const p = particles[i]
-    p.update(curDisp, curDrift, pointer, curGrav, shockwave)
 
-    const twinkle = 0.75 + 0.25 * Math.sin(timeSec * 3 + p.twinklePhase)
-    const alpha = Math.min(p.baseAlpha * densityComp * curExp * twinkle, 1.0)
+    let twinkle = 0.75 + 0.25 * Math.sin(timeSec * 3 + p.twinklePhase)
+    let alpha = Math.min(p.baseAlpha * densityComp * curExp * twinkle, 1.0)
+    if (p.isAnomaly) {
+      twinkle = 0.8 + 0.3 * Math.sin(timeSec * 8)
+      alpha = Math.min(1.0, curExp * twinkle)
+    }
     ctx.globalAlpha = alpha
 
     const ci = p.colorIdx % 4
-    const sprite = p.tier === 0
-      ? sprites.nebula[ci]
-      : p.tier === 2
-        ? sprites.sparkle[ci]
-        : sprites.body[ci]
+    let sprite
+    if (p.isAnomaly) {
+      sprite = anomalySprite
+    } else if (config.shape === 'solar' && p.solarType === 'planet') {
+      sprite = planetSprites[p.planetIndex % 8] || sprites.body[ci]
+    } else if (config.shape === 'solar' && p.solarType === 'sun') {
+      sprite = solSprite
+    } else {
+      sprite = p.tier === 0
+        ? sprites.nebula[ci]
+        : p.tier === 2
+          ? sprites.sparkle[ci]
+          : sprites.body[ci]
+    }
 
     if (sprite) {
-      const sz = p.baseSize
+      const sz = p.isAnomaly ? 24 : p.baseSize
       ctx.drawImage(sprite, cx + p.x - sz * 0.5, cy + p.y - sz * 0.5, sz, sz)
     }
+
+    // Draw Quantum Anomaly targeting reticle
+    if (p.isAnomaly && wormhole.state === 'idle') {
+      const pulseR = 16 + Math.sin(timeSec * 5) * 3.5
+      ctx.strokeStyle = isAnomalyHovered ? 'rgba(253, 224, 71, 0.95)' : 'rgba(56, 189, 248, 0.65)'
+      ctx.lineWidth = 1.3
+      ctx.beginPath()
+      ctx.arc(cx + p.x, cy + p.y, pulseR, 0, Math.PI * 2)
+      ctx.stroke()
+
+      if (isAnomalyHovered) {
+        // Rotating bracket lock
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)'
+        ctx.lineWidth = 1.6
+        ctx.beginPath()
+        ctx.arc(cx + p.x, cy + p.y, pulseR + 6, timeSec * 3.5, timeSec * 3.5 + 1.2)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(cx + p.x, cy + p.y, pulseR + 6, timeSec * 3.5 + Math.PI, timeSec * 3.5 + Math.PI + 1.2)
+        ctx.stroke()
+      }
+    }
+  }
+
+  // ── 5. Wormhole Special Optical Passes ──
+  if (wormhole.state === 'collapse') {
+    const elapsed = (now - wormhole.startTime) / 1000
+    const prog = Math.min(elapsed / 1.8, 1.0)
+    // Draw event horizon black sphere at singularity
+    const r = Math.max(6, 26 * (1 - prog * 0.4))
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.fillStyle = '#000000'
+    ctx.beginPath()
+    ctx.arc(cx + wormhole.collapseX, cy + wormhole.collapseY, r, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 + prog * 0.5})`
+    ctx.lineWidth = 2.0
+    ctx.stroke()
+  } else if (wormhole.state === 'horizon') {
+    const elapsed = (now - wormhole.startTime) / 1000
+    const prog = Math.min(elapsed / 0.8, 1.0)
+    const flash = Math.sin(prog * Math.PI)
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.fillStyle = `rgba(255, 255, 255, ${flash * 0.92})`
+    ctx.fillRect(0, 0, w, h)
   }
 
   ctx.globalCompositeOperation = 'source-over'
   ctx.globalAlpha = 1
 
-  // ── 3. Cinematic Vignette ──
+  // ── 6. Cinematic Vignette ──
   if (!vigGrad || vigW !== w || vigH !== h) {
     vigGrad = ctx.createRadialGradient(cx, cy, Math.min(w, h) * 0.42, cx, cy, Math.max(w, h) * 0.78)
     vigGrad.addColorStop(0, 'rgba(0,0,0,0)')
@@ -555,6 +808,31 @@ self.onmessage = ({ data }) => {
     case 'shockwave': {
       shockwave.x      = data.x
       shockwave.y      = data.y
+      shockwave.radius = 5
+      shockwave.force  = 35
+      shockwave.active = true
+      break
+    }
+
+    case 'wormhole': {
+      triggerWormhole(data.targetShape)
+      break
+    }
+
+    case 'pointerDown': {
+      // Check if user clicked on or near the Quantum Anomaly beacon
+      const a = particles[0]
+      if (a && a.isAnomaly && wormhole.state === 'idle') {
+        const dx = a.x - data.relX
+        const dy = a.y - data.relY
+        if (Math.sqrt(dx * dx + dy * dy) < 48) {
+          triggerWormhole()
+          break
+        }
+      }
+      // Otherwise detonate standard supernova shockwave at click point
+      shockwave.x      = data.relX
+      shockwave.y      = data.relY
       shockwave.radius = 5
       shockwave.force  = 35
       shockwave.active = true

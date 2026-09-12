@@ -17,3 +17,80 @@ body {
   height: 100%;
   display: block;
 }
+
+.main-canvas.anomaly-hover {
+  cursor: crosshair;
+}
+
+/* ── Quantum Anomaly Tooltip ── */
+.anomaly-tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  padding: 6px 12px;
+  background: rgba(8, 10, 24, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(253, 224, 71, 0.6);
+  border-radius: 999px;
+  color: #fef08a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+  z-index: 90;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(253, 224, 71, 0.25);
+  animation: tooltip-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+@keyframes tooltip-pop {
+  from { opacity: 0; transform: translate(-50%, -90%) scale(0.9); }
+  to   { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+}
+
+/* ── Cinematic Spacetime Wormhole Banner ── */
+.wormhole-hud-banner {
+  position: fixed;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: rgba(6, 9, 20, 0.90);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  border-radius: 999px;
+  color: #e0f2fe;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  z-index: 150;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(56, 189, 248, 0.3);
+  animation: banner-slide 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes banner-slide {
+  from { opacity: 0; transform: translate(-50%, -16px) scale(0.95); }
+  to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+.wormhole-radar-pulse {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 12px #38bdf8;
+  animation: pulse-ring 1.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50%      { transform: scale(1.5); opacity: 1; box-shadow: 0 0 18px #38bdf8; }
+}

@@ -27,13 +27,16 @@ export default function App() {
   const initDoneRef  = useRef(false)
 
   // ── React state (drives HUD display only — values forwarded to worker) ──
-  const [shape,         setShape]         = useState(INITIAL_SHAPE)
-  const [palette,       setPalette]       = useState(INITIAL_PALETTE)
-  const [exposure,      setExposure]      = useState(1.0)
-  const [dispersion,    setDispersion]    = useState(1.0)
-  const [driftSpeed,    setDriftSpeed]    = useState(1.8)
-  const [particleCount, setParticleCount] = useState(DEFAULT_PARTICLES)
-  const [gravity,       setGravity]       = useState(true)
+  const [shape,            setShape]            = useState(INITIAL_SHAPE)
+  const [palette,          setPalette]          = useState(INITIAL_PALETTE)
+  const [exposure,         setExposure]         = useState(1.0)
+  const [dispersion,       setDispersion]       = useState(1.0)
+  const [driftSpeed,       setDriftSpeed]       = useState(1.8)
+  const [particleCount,    setParticleCount]    = useState(DEFAULT_PARTICLES)
+  const [gravity,          setGravity]          = useState(true)
+  const [isAnomalyHovered, setIsAnomalyHovered] = useState(false)
+  const [anomalyPos,       setAnomalyPos]       = useState({ x: 0, y: 0 })
+  const [wormholeBanner,   setWormholeBanner]   = useState('')
 
   // ── Worker factory ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -57,10 +60,25 @@ export default function App() {
     )
     workerRef.current = worker
 
-    // Listen for FPS telemetry back from the render thread
+    // Listen for FPS telemetry, anomaly hover, and wormhole transit events
     worker.onmessage = ({ data }) => {
       if (data.type === 'fps' && fpsBadgeRef.current) {
         fpsBadgeRef.current.textContent = `${data.value} FPS`
+      } else if (data.type === 'anomalyHover') {
+        setIsAnomalyHovered(data.hovered)
+        if (data.x != null) setAnomalyPos({ x: data.x, y: data.y })
+      } else if (data.type === 'wormholePhase') {
+        if (data.phase === 'collapse') {
+          setWormholeBanner('✦ EVENT HORIZON COLLAPSE DETECTED // TIDAL GRAVITATIONAL VORTEX ENGAGED')
+        } else if (data.phase === 'horizon') {
+          setWormholeBanner('⦿ TRAVERSING EINSTEIN-ROSEN WORMHOLE BRIDGE...')
+        } else if (data.phase === 'emergence') {
+          setWormholeBanner(`☉ ARRIVAL: ${data.shape ? data.shape.toUpperCase() : 'SOLAR'} CELESTIAL SYSTEM`)
+          if (data.shape) setShape(data.shape)
+        }
+      } else if (data.type === 'wormholeComplete') {
+        if (data.shape) setShape(data.shape)
+        setTimeout(() => setWormholeBanner(''), 2500)
       }
     }
 
@@ -184,11 +202,14 @@ export default function App() {
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
-    triggerShockwave(
-      e.clientX - rect.left - canvas.offsetWidth  * 0.5,
-      e.clientY - rect.top  - canvas.offsetHeight * 0.5,
-    )
-  }, [triggerShockwave])
+    const relX = e.clientX - rect.left - canvas.offsetWidth  * 0.5
+    const relY = e.clientY - rect.top  - canvas.offsetHeight * 0.5
+    workerRef.current?.postMessage({ type: 'pointerDown', relX, relY })
+  }, [])
+
+  const handleWormhole = useCallback((target) => {
+    workerRef.current?.postMessage({ type: 'wormhole', targetShape: target })
+  }, [])
 
   // ── Global Hotkeys (H: Toggle HUDs, F: Fullscreen, Space: Nova) ────────────
   const [showHud, setShowHud] = useState(true)
@@ -208,22 +229,46 @@ export default function App() {
       } else if (e.key === ' ') {
         e.preventDefault()
         triggerShockwave(0, 0)
+      } else if (e.key === 'w' || e.key === 'W') {
+        handleWormhole()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [triggerShockwave])
+  }, [triggerShockwave, handleWormhole])
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="app">
       <canvas
         ref={canvasRef}
-        className="main-canvas"
+        className={`main-canvas ${isAnomalyHovered ? 'anomaly-hover' : ''}`}
         onPointerMove={handlePointerMove}
         onPointerLeave={handlePointerLeave}
         onPointerDown={handlePointerDown}
       />
+
+      {/* Floating tooltip when anomaly is hovered */}
+      {isAnomalyHovered && !wormholeBanner && (
+        <div
+          className="anomaly-tooltip"
+          style={{
+            left: `${anomalyPos.x}px`,
+            top: `${anomalyPos.y - 32}px`,
+          }}
+        >
+          ✦ QUANTUM ANOMALY · CLICK TO ENTER WORMHOLE
+        </div>
+      )}
+
+      {/* Cinematic Spacetime Wormhole Banner */}
+      {wormholeBanner && (
+        <div className="wormhole-hud-banner">
+          <span className="wormhole-radar-pulse" />
+          <span className="wormhole-banner-text">{wormholeBanner}</span>
+        </div>
+      )}
+
       {showHud && (
         <ControlPanel
           shape={shape}           setShape={handleShape}
@@ -235,6 +280,7 @@ export default function App() {
           gravity={gravity}       setGravity={handleGravity}
           onReset={handleReset}
           onPulseNova={() => triggerShockwave(0, 0)}
+          onWormhole={() => handleWormhole()}
           fpsBadgeRef={fpsBadgeRef}
         />
       )}

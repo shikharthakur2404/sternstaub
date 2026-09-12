@@ -24,6 +24,7 @@ export default function ControlPanel({
   gravity,       setGravity,
   onReset,
   onPulseNova,
+  onWormhole,
   fpsBadgeRef,
 }) {
   const [isOpen, setIsOpen] = useState(true)
@@ -201,11 +202,18 @@ export default function ControlPanel({
                     <button
                       className="action-btn nova-btn"
                       onClick={onPulseNova}
-                      title="Detonate Supernova Shockwave"
+                      title="Detonate Supernova Shockwave (Space)"
                     >
                       ✦ Pulse Nova
                     </button>
                   </div>
+                  <button
+                    className="action-btn wormhole-btn"
+                    onClick={onWormhole}
+                    title="Traverse Einstein-Rosen Wormhole Bridge (W)"
+                  >
+                    ⦿ Traverse Wormhole (W)
+                  </button>
                 </div>
               </div>
             </div>
