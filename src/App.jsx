@@ -14,6 +14,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import ControlPanel from './components/ControlPanel'
+import TelemetryHUD from './components/TelemetryHUD'
 import './App.css'
 
 const DEFAULT_PARTICLES = 2200
@@ -190,6 +191,30 @@ export default function App() {
     )
   }, [triggerShockwave])
 
+  // ── Global Hotkeys (H: Toggle HUDs, F: Fullscreen, Space: Nova) ────────────
+  const [showHud, setShowHud] = useState(true)
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT') return
+
+      if (e.key === 'h' || e.key === 'H') {
+        setShowHud(prev => !prev)
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {})
+        } else {
+          document.exitFullscreen().catch(() => {})
+        }
+      } else if (e.key === ' ') {
+        e.preventDefault()
+        triggerShockwave(0, 0)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [triggerShockwave])
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="app">
@@ -200,18 +225,27 @@ export default function App() {
         onPointerLeave={handlePointerLeave}
         onPointerDown={handlePointerDown}
       />
-      <ControlPanel
-        shape={shape}           setShape={handleShape}
-        palette={palette}       setPalette={handlePalette}
-        exposure={exposure}     setExposure={handleExposure}
-        dispersion={dispersion} setDispersion={handleDispersion}
-        driftSpeed={driftSpeed} setDriftSpeed={handleDriftSpeed}
-        particleCount={particleCount} setParticleCount={handleParticleCount}
-        gravity={gravity}       setGravity={handleGravity}
-        onReset={handleReset}
-        onPulseNova={() => triggerShockwave(0, 0)}
-        fpsBadgeRef={fpsBadgeRef}
-      />
+      {showHud && (
+        <>
+          <TelemetryHUD
+            shape={shape}
+            particleCount={particleCount}
+            exposure={exposure}
+          />
+          <ControlPanel
+            shape={shape}           setShape={handleShape}
+            palette={palette}       setPalette={handlePalette}
+            exposure={exposure}     setExposure={handleExposure}
+            dispersion={dispersion} setDispersion={handleDispersion}
+            driftSpeed={driftSpeed} setDriftSpeed={handleDriftSpeed}
+            particleCount={particleCount} setParticleCount={handleParticleCount}
+            gravity={gravity}       setGravity={handleGravity}
+            onReset={handleReset}
+            onPulseNova={() => triggerShockwave(0, 0)}
+            fpsBadgeRef={fpsBadgeRef}
+          />
+        </>
+      )}
     </div>
   )
 }

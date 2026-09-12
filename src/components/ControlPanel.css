@@ -1,41 +1,85 @@
-/* ── Glassmorphism panel ── */
+/* ── Glassmorphism Control Panel ── */
 .control-panel {
   position: fixed;
   top: 24px;
   right: 24px;
-  width: 285px;
+  width: 295px;
   max-height: calc(100vh - 48px);
   overflow-y: auto;
   overflow-x: hidden;
-  background: rgba(8, 8, 22, 0.82);
+  background: rgba(8, 10, 24, 0.84);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   color: #e2e8f0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 12px;
+  font-size: 11.5px;
   z-index: 100;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.75);
   transform: translateZ(0);
   will-change: transform;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .control-panel::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
 }
 .control-panel::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
 }
 
+/* Collapsed Pill Button */
+.hud-collapsed-pill {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(8, 10, 24, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 999px;
+  color: #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.2);
+  transition: all 0.2s ease;
+}
+.hud-collapsed-pill:hover {
+  transform: translateY(-1px);
+  border-color: rgba(56, 189, 248, 0.7);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 24px rgba(56, 189, 248, 0.35);
+}
+
+.pill-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+.pill-title {
+  font-weight: 700;
+  color: #7dd3fc;
+  letter-spacing: 0.08em;
+}
+
+/* Panel Header */
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
+  padding: 13px 15px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   position: sticky;
   top: 0;
@@ -44,9 +88,10 @@
 }
 
 .panel-title {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   color: #93c5fd;
 }
 
@@ -63,12 +108,12 @@
 }
 
 .icon-btn {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #93c5fd;
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   display: flex;
@@ -82,10 +127,53 @@
 }
 
 .panel-body {
-  padding: 14px 16px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Collapsible Accordion Sections ── */
+.accordion-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.accordion-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 11px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: ui-monospace, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+.accordion-header:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #93c5fd;
+}
+
+.accordion-chevron {
+  font-size: 11px;
+  color: #38bdf8;
+}
+
+.accordion-content {
+  padding: 10px 11px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 label {
@@ -93,9 +181,8 @@ label {
   justify-content: space-between;
   align-items: center;
   color: rgba(255, 255, 255, 0.5);
-  margin-top: 4px;
-  font-size: 10.5px;
-  letter-spacing: 0.05em;
+  font-size: 10px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   font-weight: 500;
 }
@@ -103,9 +190,9 @@ label {
 .value-badge {
   background: rgba(147, 197, 253, 0.12);
   color: #93c5fd;
-  padding: 2px 7px;
+  padding: 2px 6px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 9.5px;
   text-transform: none;
   letter-spacing: 0;
   font-family: ui-monospace, monospace;
@@ -116,17 +203,16 @@ label {
 .shape-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-top: 2px;
+  gap: 5px;
 }
 
 .shape-btn {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border-radius: 7px;
   padding: 7px 4px;
   color: #cbd5e1;
-  font-size: 11px;
+  font-size: 10.5px;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s;
@@ -143,7 +229,7 @@ label {
   background: rgba(56, 189, 248, 0.18);
   border-color: rgba(56, 189, 248, 0.55);
   color: #38bdf8;
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
   font-weight: 600;
 }
 
@@ -159,8 +245,8 @@ input[type="range"] {
 }
 input[type="range"]::-webkit-slider-thumb {
   appearance: none;
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: #93c5fd;
   cursor: pointer;
@@ -174,18 +260,18 @@ input[type="range"]::-webkit-slider-thumb:hover {
 /* Physics Actions */
 .physics-row {
   display: flex;
-  gap: 7px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 .toggle-btn {
   flex: 1;
-  padding: 7px 4px;
+  padding: 6px 3px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border-radius: 7px;
   color: rgba(255, 255, 255, 0.6);
-  font-size: 10.5px;
+  font-size: 10px;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.2s;
@@ -198,24 +284,21 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 .nova-btn {
   flex: 1;
-  padding: 7px 4px;
+  padding: 6px 3px;
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(236, 72, 153, 0.25));
   border: 1px solid rgba(245, 158, 11, 0.45);
-  border-radius: 8px;
+  border-radius: 7px;
   color: #fbbf24;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.18);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.18);
 }
 .nova-btn:hover {
   transform: scale(1.02);
-  box-shadow: 0 0 18px rgba(245, 158, 11, 0.35);
-}
-.nova-btn:active {
-  transform: scale(0.97);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.35);
 }
 
 /* Palette */
@@ -223,15 +306,14 @@ input[type="range"]::-webkit-slider-thumb:hover {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 5px;
-  margin-top: 2px;
 }
 
 .palette-btn {
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 7px 5px;
+  border-radius: 7px;
+  padding: 7px 4px;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 9.5px;
   color: #fff;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
   transition: all 0.2s;
@@ -247,19 +329,16 @@ input[type="range"]::-webkit-slider-thumb:hover {
 /* Presets */
 .preset-row {
   display: flex;
-  gap: 7px;
-  margin-top: 6px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 6px;
 }
 .preset-btn {
   flex: 1;
-  padding: 7px;
+  padding: 6px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border-radius: 7px;
   color: rgba(255, 255, 255, 0.6);
-  font-size: 10.5px;
+  font-size: 10px;
   font-family: inherit;
   cursor: pointer;
   text-align: center;
