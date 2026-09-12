@@ -81,71 +81,73 @@ export default function TelemetryHUD({ shape, particleCount, exposure }) {
           <span className="telemetry-title">ASTROMETRIC TELEMETRY</span>
         </div>
         <button
-          className="telemetry-toggle-btn"
+          className={`telemetry-toggle-btn ${isOpen ? 'active' : ''}`}
           onClick={() => setIsOpen(!isOpen)}
           title={isOpen ? 'Collapse Telemetry' : 'Expand Telemetry'}
         >
-          {isOpen ? '‹' : '›'}
+          <span className="telemetry-chevron">‹</span>
         </button>
       </div>
 
-      {isOpen && (
-        <div className="telemetry-body">
-          {/* Active Celestial Object Dossier */}
-          <div className="dossier-card">
-            <div className="dossier-tag">{dossier.tag}</div>
-            <div className="dossier-title">{dossier.title}</div>
-            <div className="dossier-grid">
-              {dossier.metrics.map((m, i) => (
-                <div key={i} className="dossier-item">
-                  <span className="dossier-label">{m.label}</span>
-                  <span className="dossier-val">{m.value}</span>
+      <div className={`telemetry-collapse ${isOpen ? 'expanded' : ''}`}>
+        <div className="telemetry-inner">
+          <div className="telemetry-body">
+            {/* Active Celestial Object Dossier */}
+            <div className="dossier-card">
+              <div className="dossier-tag">{dossier.tag}</div>
+              <div className="dossier-title">{dossier.title}</div>
+              <div className="dossier-grid">
+                {dossier.metrics.map((m, i) => (
+                  <div key={i} className="dossier-item">
+                    <span className="dossier-label">{m.label}</span>
+                    <span className="dossier-val">{m.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Engine Core Diagnostics */}
+            <div className="diagnostics-card">
+              <div className="diag-header">
+                <span>SYSTEM ARCHITECTURE</span>
+                <span className="status-pill">NOMINAL</span>
+              </div>
+              <div className="diag-grid">
+                <div className="diag-item">
+                  <span className="diag-label">PIPELINE</span>
+                  <span className="diag-val">OffscreenCanvas</span>
                 </div>
-              ))}
+                <div className="diag-item">
+                  <span className="diag-label">RENDER THREAD</span>
+                  <span className="diag-val">Web Worker (0% UI Lag)</span>
+                </div>
+                <div className="diag-item">
+                  <span className="diag-label">BLIT MODE</span>
+                  <span className="diag-val">Additive ("lighter")</span>
+                </div>
+                <div className="diag-item">
+                  <span className="diag-label">ACTIVE NODES</span>
+                  <span className="diag-val">{particleCount.toLocaleString()}</span>
+                </div>
+                <div className="diag-item">
+                  <span className="diag-label">EXPOSURE</span>
+                  <span className="diag-val">{exposure.toFixed(2)}x Dynamic HDR</span>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Engine Core Diagnostics */}
-          <div className="diagnostics-card">
-            <div className="diag-header">
-              <span>SYSTEM ARCHITECTURE</span>
-              <span className="status-pill">NOMINAL</span>
-            </div>
-            <div className="diag-grid">
-              <div className="diag-item">
-                <span className="diag-label">PIPELINE</span>
-                <span className="diag-val">OffscreenCanvas</span>
+            {/* Keybindings Footer */}
+            <div className="telemetry-hotkeys">
+              <span>KEYBINDINGS</span>
+              <div className="hotkey-list">
+                <span className="hotkey-item"><kbd>CLICK</kbd> Supernova Nova</span>
+                <span className="hotkey-item"><kbd>H</kbd> Toggle HUD</span>
+                <span className="hotkey-item"><kbd>F</kbd> Fullscreen</span>
               </div>
-              <div className="diag-item">
-                <span className="diag-label">RENDER THREAD</span>
-                <span className="diag-val">Web Worker (0% UI Lag)</span>
-              </div>
-              <div className="diag-item">
-                <span className="diag-label">BLIT MODE</span>
-                <span className="diag-val">Additive ("lighter")</span>
-              </div>
-              <div className="diag-item">
-                <span className="diag-label">ACTIVE NODES</span>
-                <span className="diag-val">{particleCount.toLocaleString()}</span>
-              </div>
-              <div className="diag-item">
-                <span className="diag-label">EXPOSURE</span>
-                <span className="diag-val">{exposure.toFixed(2)}x Dynamic HDR</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Keybindings Footer */}
-          <div className="telemetry-hotkeys">
-            <span>KEYBINDINGS</span>
-            <div className="hotkey-list">
-              <span className="hotkey-item"><kbd>CLICK</kbd> Supernova Nova</span>
-              <span className="hotkey-item"><kbd>H</kbd> Toggle HUD</span>
-              <span className="hotkey-item"><kbd>F</kbd> Fullscreen</span>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </aside>
   )
 }

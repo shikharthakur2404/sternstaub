@@ -18,10 +18,28 @@
   z-index: 100;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.75);
   transform: translateZ(0);
-  will-change: transform;
+  will-change: transform, opacity;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hud-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.control-panel.closed {
+  opacity: 0;
+  transform: translateX(20px) scale(0.96);
+  pointer-events: none;
+}
+
+@keyframes hud-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
 }
 
 .control-panel::-webkit-scrollbar {
@@ -53,7 +71,20 @@
   z-index: 100;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.2);
   transition: all 0.2s ease;
+  animation: pill-pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+@keyframes pill-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .hud-collapsed-pill:hover {
   transform: translateY(-1px);
   border-color: rgba(56, 189, 248, 0.7);
@@ -130,15 +161,19 @@
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-/* ── Collapsible Accordion Sections ── */
+/* ── Collapsible Accordion Architecture ── */
 .accordion-section {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 10px;
   overflow: hidden;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.accordion-section:hover {
+  border-color: rgba(56, 189, 248, 0.15);
 }
 
 .accordion-header {
@@ -146,7 +181,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 9px 11px;
+  padding: 10px 12px;
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.6);
@@ -155,21 +190,47 @@
   letter-spacing: 0.08em;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   text-align: left;
 }
 .accordion-header:hover {
   background: rgba(255, 255, 255, 0.04);
   color: #93c5fd;
 }
+.accordion-header.active {
+  color: #e0f2fe;
+}
 
 .accordion-chevron {
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 700;
   color: #38bdf8;
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.accordion-header.active .accordion-chevron {
+  transform: rotate(90deg);
+}
+
+/* CSS Grid 0fr -> 1fr animation technique */
+.accordion-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  opacity: 0;
+}
+.accordion-collapse.expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.accordion-inner {
+  overflow: hidden;
 }
 
 .accordion-content {
-  padding: 10px 11px;
+  padding: 8px 12px 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -185,6 +246,7 @@ label {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   font-weight: 500;
+  margin-top: 2px;
 }
 
 .value-badge {
@@ -215,7 +277,7 @@ label {
   font-size: 10.5px;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
 }
 .shape-btn:last-child:nth-child(odd) {
@@ -224,6 +286,7 @@ label {
 .shape-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
+  transform: translateY(-1px);
 }
 .shape-btn.active {
   background: rgba(56, 189, 248, 0.18);
@@ -297,7 +360,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.18);
 }
 .nova-btn:hover {
-  transform: scale(1.02);
+  transform: translateY(-1px);
   box-shadow: 0 0 16px rgba(245, 158, 11, 0.35);
 }
 
@@ -320,7 +383,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
   font-family: inherit;
   letter-spacing: 0.02em;
 }
-.palette-btn:hover { transform: scale(1.03); }
+.palette-btn:hover {
+  transform: translateY(-1px) scale(1.02);
+}
 .palette-btn.active {
   border-color: rgba(255, 255, 255, 0.6);
   box-shadow: 0 0 12px rgba(147, 197, 253, 0.3);
