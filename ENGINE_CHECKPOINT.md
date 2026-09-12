@@ -1,7 +1,7 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `5c33950`  
+> Git Commit Reference: `1d6fc58`  
 > Live Public Deployment: https://shikharthakur2404.github.io/sternstaub/  
 > Last Verified Working State: Full-bleed edge-to-edge canvas (Vite 1126px container & side borders eradicated), OffscreenCanvas Worker, 60+ FPS locked, auto-collapsing drawer on wormhole traversal, default gravity off, and toggleable Nova Pulse mode.
 
