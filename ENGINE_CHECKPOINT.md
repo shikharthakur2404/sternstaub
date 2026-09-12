@@ -1,9 +1,9 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `3e4c6ee`  
+> Git Commit Reference: `3a0fe64`  
 > Live Public Deployment: https://shikharthakur2404.github.io/sternstaub/  
-> Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Rotatable Keplerian Solar System). Cinema-grade Interstellar Gargantua black hole with relativistic Doppler accretion disk, dual gravitational lensing light arcs, photon ring, and 32-ring 4D hyperspace tunnel with 160 dual-chromatic star streaks. Seamless physical momentum handoff to Three.js with deep-space camera swoop (quartic deceleration), expanding White Hole emergence shockwave ring, 180 3D warp deceleration lines, and arrival telemetry HUD. Complete 9-planet Solar System including Pluto & Charon, authentic moons, Earth clouds, Saturn rings, and Asteroid Belt.
+> Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Rotatable Keplerian Solar System). Cinema-grade Interstellar Gargantua black hole transition. Earth features photorealistic day terrain + real glowing night city lights (NASA Black Marble map via custom WebGL GLSL shader), dynamic solar terminator day/night demarcation, and Diwali & New Year celebration illumination (warm golden diya glow, India subcontinent radiant epicenter, micro-twinkling, celebratory fireworks, and HUD toggle keybind 'D'). Complete 9-planet Solar System with Pluto, authentic moons, Earth clouds, Saturn rings, and Asteroid Belt.
 
 ---
 
@@ -58,9 +58,9 @@ Follow these non-negotiable architectural rules:
 | `src/components/ControlPanel.jsx` | Glassmorphic HUD | Controls Geometry (5 shapes), Exposure slider, Dispersion, Drift, Particles, Gravity toggle, Nova pulse, Palettes (6 themes), Presets. |
 | `src/components/ControlPanel.css` | HUD Styling | Promoted to GPU layer via `transform: translateZ(0); will-change: transform;`. |
 | `src/config/palettes.js` | Color Themes | Ethereal Gold (Default), Hyperion Blue, Borealis Emerald, Supernova Iris, Solar Flare, Cosmic Amethyst. |
-| `src/components/Solar3D/SolarSystem3D.jsx` | 3D Planetary Engine | Three.js WebGL scene with OrbitControls, 9 rotatable planets (incl. Pluto & Charon), authentic moon systems, Earth clouds & Moon, Saturn 3D rings, Asteroid belt, camera lerp, and Singularity Gate. |
-| `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, planet nav chips, time warp slider, arrival telemetry banner, reverse plunge singularity vortex overlay. |
-| `public/textures/planets/` | Authentic NASA Equirectangular Maps | Real photographic 1K/2K maps for Sun, Mercury, Venus, Earth, Earth clouds, Moon, Mars, Jupiter, Saturn, Saturn rings, Uranus, Neptune, Pluto. |
+| `src/components/Solar3D/SolarSystem3D.jsx` | 3D Planetary Engine | Three.js WebGL scene with OrbitControls, 9 rotatable planets (incl. Pluto & Charon), authentic moon systems, Earth clouds & Moon, Earth dynamic night lights with Diwali/New Year celebration shader, Saturn 3D rings, Asteroid belt, camera lerp, and Singularity Gate. |
+| `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, planet nav chips, Diwali glow button, time warp slider, arrival telemetry banner, reverse plunge singularity vortex overlay. |
+| `public/textures/planets/` | Authentic NASA Equirectangular Maps | Real photographic 1K/2K maps for Sun, Mercury, Venus, Earth, Earth clouds, Earth night lights (2048x1024), Moon, Mars, Jupiter, Saturn, Saturn rings, Uranus, Neptune, Pluto. |
 
 ---
 
