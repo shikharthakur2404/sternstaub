@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // SolarSystem3D.jsx — Super-Realistic Keplerian 3D Multi-Cosmic Engine (Three.js)
 // Sol System • TRAPPIST-1 Red Dwarf Exosystem • Andromeda (M31) 3D Spiral Galaxy
-// Earth Satellites (ISS) • Hyperbolic Comet C/2026 • Meteor Showers & Bolides
+// 2-Tier HUD Architecture • Hierarchical Cosmic Step-Zoom (Satellite ⇌ Planet ⇌ System ⇌ Galaxy)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState, useCallback } from 'react'
@@ -174,6 +174,7 @@ const PLANET_CONFIG = [
 export default function SolarSystem3D({ onReturn }) {
   const mountRef = useRef(null)
   const [activeRealm, setActiveRealm] = useState('sol') // 'sol' | 'exosystem' | 'andromeda'
+  const activeRealmRef = useRef('sol')
   const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [simSpeed, setSimSpeed] = useState(1.0)
   const [isWarpingOut, setIsWarpingOut] = useState(false)
@@ -181,6 +182,10 @@ export default function SolarSystem3D({ onReturn }) {
   const [arrivalTelemetry, setArrivalTelemetry] = useState(
     '✦ HYPERSPACE DROP-OUT // COMPLETED 4D WORMHOLE TRANSIT // ORBITAL INSERTION CONFIRMED'
   )
+
+  useEffect(() => {
+    activeRealmRef.current = activeRealm
+  }, [activeRealm])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -233,9 +238,9 @@ export default function SolarSystem3D({ onReturn }) {
       } else if (e.key === '3') {
         mountRef.current?.switchRealm?.('andromeda')
       } else if (e.key === '-' || e.key === '_') {
-        mountRef.current?.zoomBy?.(1.35)
+        mountRef.current?.stepZoom?.(-1)
       } else if (e.key === '=' || e.key === '+') {
-        mountRef.current?.zoomBy?.(0.75)
+        mountRef.current?.stepZoom?.(1)
       }
     }
     window.addEventListener('keydown', handleKey)
@@ -308,10 +313,10 @@ export default function SolarSystem3D({ onReturn }) {
     const starColors = new Float32Array(starCount * 3)
 
     const SPECTRAL_COLORS = [
-      new THREE.Color(0xa5f3fc), // O/B blue
-      new THREE.Color(0xf8fafc), // A white
-      new THREE.Color(0xfef08a), // G yellow
-      new THREE.Color(0xfca5a5), // M red
+      new THREE.Color(0xa5f3fc),
+      new THREE.Color(0xf8fafc),
+      new THREE.Color(0xfef08a),
+      new THREE.Color(0xfca5a5),
     ]
 
     for (let i = 0; i < starCount; i++) {
@@ -706,6 +711,7 @@ export default function SolarSystem3D({ onReturn }) {
 
     // Expose Realm Switcher to HUD
     container.switchRealm = (realm) => {
+      activeRealmRef.current = realm
       setActiveRealm(realm)
       setSelectedPlanet(null)
       focusedTargetRef.current = null
@@ -713,14 +719,18 @@ export default function SolarSystem3D({ onReturn }) {
       if (realm === 'sol') {
         targetCamPosRef.current = new THREE.Vector3(0, 340, 720)
         targetLookAtRef.current = new THREE.Vector3(0, 0, 0)
+        setArrivalTelemetry('✦ REALM FOCUS // SOL PLANETARY SYSTEM')
       } else if (realm === 'exosystem') {
         targetLookAtRef.current = exosystem.position.clone()
         targetCamPosRef.current = exosystem.position.clone().add(new THREE.Vector3(0, 260, 540))
+        setArrivalTelemetry('✦ REALM FOCUS // TRAPPIST-1 RED DWARF EXOSYSTEM')
       } else if (realm === 'andromeda') {
         targetLookAtRef.current = andromeda.group.position.clone()
         targetCamPosRef.current = andromeda.group.position.clone().add(new THREE.Vector3(0, 4800, 10500))
         setSelectedPlanet('Andromeda Galaxy (M31)')
+        setArrivalTelemetry('✦ REALM FOCUS // ANDROMEDA GALAXY (M31) MACRO FIELD')
       }
+      setTimeout(() => setArrivalTelemetry(''), 2500)
     }
 
     // Expose Planet Focus to HUD
@@ -752,7 +762,106 @@ export default function SolarSystem3D({ onReturn }) {
       }
     }
 
-    // Expose Zoom Step to HUD and keyboard
+    // ── 14. Hierarchical Cosmic Step-Zoom Engine ────────────────────────────
+    // Moves logically across astronomical scales:
+    // Satellite/Moon ⇌ Planet ⇌ System Overview ⇌ Intergalactic Macro Field
+    container.stepZoom = (direction) => {
+      if (direction < 0) {
+        // ── STEP BACK (ZOOM OUT 1 TIER) ──
+        if (focusedTargetRef.current) {
+          const cur = focusedTargetRef.current
+          if (cur.id === 'iss' || cur.isSatellite) {
+            // Satellite -> Step back to parent Earth
+            const earth = planetObjects.find(p => p.data.id === 'earth')
+            if (earth) focusOnTarget(earth.mesh.userData)
+            setArrivalTelemetry('✦ STEP ZOOM OUT // ORBITAL REFERENCE: EARTH')
+          } else if (cur.isMoon) {
+            // Moon -> Step back to parent planet
+            const parentMesh = cur.mesh?.parent
+            if (parentMesh?.userData?.name) {
+              focusOnTarget(parentMesh.userData)
+              setArrivalTelemetry(`✦ STEP ZOOM OUT // ORBITAL REFERENCE: ${parentMesh.userData.name.toUpperCase()}`)
+            } else {
+              container.switchRealm(activeRealmRef.current || 'sol')
+            }
+          } else {
+            // Planet / Star / Comet -> Step back to System Overview
+            if (activeRealmRef.current === 'exosystem') {
+              container.switchRealm('exosystem')
+            } else {
+              container.switchRealm('sol')
+            }
+            setArrivalTelemetry('✦ STEP ZOOM OUT // STELLAR SYSTEM OVERVIEW')
+          }
+        } else if (activeRealmRef.current === 'sol' || activeRealmRef.current === 'exosystem') {
+          // System Overview -> Step back to Intergalactic Macro Field (Andromeda)
+          container.switchRealm('andromeda')
+          setArrivalTelemetry('✦ STEP ZOOM OUT // INTERGALACTIC DEEP FIELD')
+        } else {
+          // Already at Intergalactic View -> Zoom further back into void
+          const offset = camera.position.clone().sub(controls.target)
+          const newLen = Math.min(controls.maxDistance, offset.length() * 1.4)
+          offset.setLength(newLen)
+          camera.position.copy(controls.target).add(offset)
+          controls.update()
+        }
+      } else {
+        // ── STEP FORWARD (ZOOM IN 1 TIER) ──
+        if (activeRealmRef.current === 'andromeda') {
+          // Intergalactic -> Step into closest system (Sol)
+          container.switchRealm('sol')
+          setArrivalTelemetry('✦ STEP ZOOM IN // SOL SYSTEM ORBIT')
+        } else if (!focusedTargetRef.current) {
+          // System Overview -> Step into primary habitable planet
+          if (activeRealmRef.current === 'exosystem') {
+            container.focusPlanet('aethelgard')
+            setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: AETHELGARD (HABITABLE)')
+          } else {
+            container.focusPlanet('earth')
+            setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: EARTH')
+          }
+        } else {
+          const cur = focusedTargetRef.current
+          if (cur.id === 'earth') {
+            // Earth -> Step into ISS Space Station
+            container.focusPlanet('iss')
+            setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: ISS (LOW EARTH ORBIT)')
+          } else if (cur.id === 'jupiter') {
+            const europa = cur.mesh?.children?.find(c => c.userData?.id === 'europa')
+            if (europa) {
+              focusOnTarget(europa.userData)
+              setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: EUROPA (ICE OCEAN)')
+            }
+          } else if (cur.id === 'saturn') {
+            const titan = cur.mesh?.children?.find(c => c.userData?.id === 'titan')
+            if (titan) {
+              focusOnTarget(titan.userData)
+              setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: TITAN (METHANE HAZE)')
+            }
+          } else if (cur.id === 'aethelgard') {
+            const solis = cur.mesh?.children?.find(c => c.userData?.id === 'solis')
+            if (solis) {
+              focusOnTarget(solis.userData)
+              setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: SOLIS (EXOMOON)')
+            }
+          } else {
+            // Zoom closer to current object
+            if (targetCamPosRef.current) {
+              targetCamPosRef.current.multiplyScalar(0.7)
+            } else {
+              const offset = camera.position.clone().sub(controls.target)
+              const newLen = Math.max(controls.minDistance, offset.length() * 0.7)
+              offset.setLength(newLen)
+              camera.position.copy(controls.target).add(offset)
+              controls.update()
+            }
+          }
+        }
+      }
+      setTimeout(() => setArrivalTelemetry(''), 2200)
+    }
+
+    // Continuous Zoom for trackpad or slider
     container.zoomBy = (factor) => {
       const offset = camera.position.clone().sub(controls.target)
       const currentLen = offset.length()
@@ -762,7 +871,7 @@ export default function SolarSystem3D({ onReturn }) {
       controls.update()
     }
 
-    // ── 14. Render & Physics Loop ───────────────────────────────────────────
+    // ── 15. Render & Physics Loop ───────────────────────────────────────────
     let animationFrameId
     const clock = new THREE.Clock()
     let lastAltitudeCheck = 0
@@ -881,7 +990,7 @@ export default function SolarSystem3D({ onReturn }) {
     }
     animate()
 
-    // ── 15. Viewport Resize ─────────────────────────────────────────────────
+    // ── 16. Viewport Resize ─────────────────────────────────────────────────
     const handleResize = () => {
       const w = container.clientWidth
       const h = container.clientHeight
@@ -912,7 +1021,7 @@ export default function SolarSystem3D({ onReturn }) {
 
   return (
     <div className={`solar-3d-container ${isWarpingOut ? 'warp-out' : ''}`} ref={mountRef}>
-      {/* 3D HUD Navigation Bar */}
+      {/* ── TIER 1: TOP SCI-FI OBSERVATORY HUD ─────────────────────────────── */}
       <div className="solar-3d-hud">
         {/* Brand & Target Lock */}
         <div className="hud-brand">
@@ -946,96 +1055,7 @@ export default function SolarSystem3D({ onReturn }) {
           </button>
         </div>
 
-        {/* Dynamic Contextual Quick-Nav Strip */}
-        <div className="planet-nav-strip">
-          {activeRealm === 'sol' && (
-            <>
-              <button
-                className={`nav-chip ${!selectedPlanet ? 'active' : ''}`}
-                onClick={() => mountRef.current?.focusPlanet?.('overview')}
-              >
-                ⊚ SYSTEM
-              </button>
-              <button
-                className={`nav-chip ${selectedPlanet === 'Sol (The Sun)' ? 'active' : ''}`}
-                onClick={() => mountRef.current?.focusPlanet?.('sun')}
-              >
-                ☉ SOL
-              </button>
-              {PLANET_CONFIG.map(p => (
-                <button
-                  key={p.id}
-                  className={`nav-chip ${selectedPlanet === p.name ? 'active' : ''}`}
-                  onClick={() => mountRef.current?.focusPlanet?.(p.id)}
-                >
-                  {p.id === 'earth' ? '🌍 EARTH' : p.id === 'pluto' ? '♇ PLUTO' : p.name.toUpperCase()}
-                </button>
-              ))}
-              <button
-                className={`nav-chip ${selectedPlanet === 'ISS (International Space Station)' ? 'active' : ''}`}
-                onClick={() => mountRef.current?.focusPlanet?.('iss')}
-                title="Lock on International Space Station in LEO orbit"
-              >
-                🛰️ ISS
-              </button>
-              <button
-                className={`nav-chip ${selectedPlanet === 'Comet C/2026 (Hyperbolic Visitor)' ? 'active' : ''}`}
-                onClick={() => mountRef.current?.focusPlanet?.('comet_c2026')}
-                title="Lock on Hyperbolic Interplanetary Comet C/2026"
-              >
-                ☄️ COMET
-              </button>
-            </>
-          )}
-
-          {activeRealm === 'exosystem' && (
-            <>
-              <button
-                className={`nav-chip ${!selectedPlanet ? 'active' : ''}`}
-                onClick={() => mountRef.current?.focusPlanet?.('exosystem_overview')}
-              >
-                ✦ SYSTEM
-              </button>
-              <button
-                className={`nav-chip ${selectedPlanet === 'Astraeus (TRAPPIST-1 Star)' ? 'active' : ''}`}
-                onClick={() => mountRef.current?.focusPlanet?.('trappist_star')}
-              >
-                🔴 ASTRAEUS
-              </button>
-              {EXOPLANET_CONFIG.map(p => (
-                <button
-                  key={p.id}
-                  className={`nav-chip ${selectedPlanet === p.name ? 'active' : ''}`}
-                  onClick={() => mountRef.current?.focusPlanet?.(p.id)}
-                >
-                  {p.id === 'pyroclast' ? '🌋 PYROCLAST' :
-                   p.id === 'aethelgard' ? '🌊 AETHELGARD' :
-                   p.id === 'zephyrus' ? '🌀 ZEPHYRUS' :
-                   p.id === 'chronos' ? '🪐 CHRONOS' : '❄️ NIX'}
-                </button>
-              ))}
-            </>
-          )}
-
-          {activeRealm === 'andromeda' && (
-            <>
-              <button
-                className="nav-chip active"
-                onClick={() => mountRef.current?.focusPlanet?.('andromeda_overview')}
-              >
-                🌌 ANDROMEDA SPIRAL DISK
-              </button>
-              <button
-                className="nav-chip"
-                onClick={() => mountRef.current?.focusPlanet?.('andromeda_core')}
-              >
-                ✨ NUCLEUS & SMBH
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Action controls */}
+        {/* Global Action controls */}
         <div className="hud-actions-strip">
           <button
             className="meteor-storm-btn"
@@ -1070,19 +1090,20 @@ export default function SolarSystem3D({ onReturn }) {
             </button>
           )}
 
+          {/* Hierarchical Cosmic Step-Zoom Controls */}
           <div className="zoom-controls">
             <button
               className="zoom-btn"
-              onClick={() => mountRef.current?.zoomBy?.(1.4)}
-              title="Zoom Out (− key)"
+              onClick={() => mountRef.current?.stepZoom?.(-1)}
+              title="Step Back 1 Scale Level (− key)"
             >
               −
             </button>
-            <span className="zoom-label">ZOOM</span>
+            <span className="zoom-label">STEP ZOOM</span>
             <button
               className="zoom-btn"
-              onClick={() => mountRef.current?.zoomBy?.(0.7)}
-              title="Zoom In (+ key)"
+              onClick={() => mountRef.current?.stepZoom?.(1)}
+              title="Step In 1 Scale Level (+ key)"
             >
               +
             </button>
@@ -1109,6 +1130,95 @@ export default function SolarSystem3D({ onReturn }) {
             ⦿ RETURN TO STARDUST (W)
           </button>
         </div>
+      </div>
+
+      {/* ── TIER 2: FLOATING BOTTOM CELESTIAL DOCK ──────────────────────────── */}
+      <div className="celestial-dock">
+        {activeRealm === 'sol' && (
+          <div className="dock-strip">
+            <button
+              className={`nav-chip ${!selectedPlanet ? 'active' : ''}`}
+              onClick={() => mountRef.current?.focusPlanet?.('overview')}
+            >
+              ⊚ SYSTEM
+            </button>
+            <button
+              className={`nav-chip ${selectedPlanet === 'Sol (The Sun)' ? 'active' : ''}`}
+              onClick={() => mountRef.current?.focusPlanet?.('sun')}
+            >
+              ☉ SOL
+            </button>
+            {PLANET_CONFIG.map(p => (
+              <button
+                key={p.id}
+                className={`nav-chip ${selectedPlanet === p.name ? 'active' : ''}`}
+                onClick={() => mountRef.current?.focusPlanet?.(p.id)}
+              >
+                {p.id === 'earth' ? '🌍 EARTH' : p.id === 'pluto' ? '♇ PLUTO' : p.name.toUpperCase()}
+              </button>
+            ))}
+            <button
+              className={`nav-chip ${selectedPlanet === 'ISS (International Space Station)' ? 'active' : ''}`}
+              onClick={() => mountRef.current?.focusPlanet?.('iss')}
+              title="Lock on International Space Station in LEO orbit"
+            >
+              🛰️ ISS
+            </button>
+            <button
+              className={`nav-chip ${selectedPlanet === 'Comet C/2026 (Hyperbolic Visitor)' ? 'active' : ''}`}
+              onClick={() => mountRef.current?.focusPlanet?.('comet_c2026')}
+              title="Lock on Hyperbolic Interplanetary Comet C/2026"
+            >
+              ☄️ COMET
+            </button>
+          </div>
+        )}
+
+        {activeRealm === 'exosystem' && (
+          <div className="dock-strip">
+            <button
+              className={`nav-chip ${!selectedPlanet ? 'active' : ''}`}
+              onClick={() => mountRef.current?.focusPlanet?.('exosystem_overview')}
+            >
+              ✦ SYSTEM
+            </button>
+            <button
+              className={`nav-chip ${selectedPlanet === 'Astraeus (TRAPPIST-1 Star)' ? 'active' : ''}`}
+              onClick={() => mountRef.current?.focusPlanet?.('trappist_star')}
+            >
+              🔴 ASTRAEUS
+            </button>
+            {EXOPLANET_CONFIG.map(p => (
+              <button
+                key={p.id}
+                className={`nav-chip ${selectedPlanet === p.name ? 'active' : ''}`}
+                onClick={() => mountRef.current?.focusPlanet?.(p.id)}
+              >
+                {p.id === 'pyroclast' ? '🌋 PYROCLAST' :
+                 p.id === 'aethelgard' ? '🌊 AETHELGARD' :
+                 p.id === 'zephyrus' ? '🌀 ZEPHYRUS' :
+                 p.id === 'chronos' ? '🪐 CHRONOS' : '❄️ NIX'}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {activeRealm === 'andromeda' && (
+          <div className="dock-strip">
+            <button
+              className="nav-chip active"
+              onClick={() => mountRef.current?.focusPlanet?.('andromeda_overview')}
+            >
+              🌌 ANDROMEDA SPIRAL DISK
+            </button>
+            <button
+              className="nav-chip"
+              onClick={() => mountRef.current?.focusPlanet?.('andromeda_core')}
+            >
+              ✨ NUCLEUS & SMBH
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Cosmic Macro Field Altitude Gauge */}
