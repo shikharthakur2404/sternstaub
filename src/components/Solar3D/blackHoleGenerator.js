@@ -1,18 +1,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// blackHoleGenerator.js — Photorealistic Supermassive Black Hole & Accretion Disk
-// Physically-inspired general relativity simulation:
-// 1. Pristine event horizon gravitational shadow
-// 2. Ultra-bright razor-thin photon sphere ring
-// 3. Relativistic Doppler-beamed accretion disk with turbulent plasma filaments
-// 4. Gravitational lensing Einstein halo arc curving over the shadow
-// 5. Zero hard geometric boundaries — pure mathematical exponential falloffs
+// blackHoleGenerator.js — Volumetric Relativistic Singularity & Accretion Swarm
+// Physically-inspired general relativity & volumetric particle visualization:
+// 1. Pristine event horizon gravitational shadow sphere (depth-occluded)
+// 2. Razor-thin ultra-brilliant photon sphere ring
+// 3. Volumetric 3D Keplerian plasma particle accretion swarm (7,500 GPU sparks)
+// 4. Relativistic Doppler beaming (approaching stream blueshifted & boosted)
+// 5. Polar gravitational lensing arc (warped light cone curving over poles)
+// 6. Volumetric 3D galactic stellar nucleus (6,000 ancient Pop II stars)
+// ZERO flat 2D billboards • ZERO harsh geometric cuts • Pure 3D depth
 // ─────────────────────────────────────────────────────────────────────────────
 
 import * as THREE from 'three'
 
 /**
- * Creates a photorealistic Supermassive Black Hole (M31* SMBH) assembly.
- * Designed to eliminate harsh elliptical clipping and synthetic gradient steps.
+ * Creates a photorealistic, fully volumetric 3D Supermassive Black Hole assembly.
  */
 export function createSupermassiveBlackHole() {
   const holeGroup = new THREE.Group()
@@ -24,7 +25,7 @@ export function createSupermassiveBlackHole() {
 
   const HORIZON_RADIUS = 35.0
   const DISK_INNER_RADIUS = 36.5
-  const DISK_OUTER_RADIUS = 220.0
+  const DISK_OUTER_RADIUS = 230.0
 
   // ── 1. Pitch-Black Event Horizon (Gravitational Shadow) ─────────────────────
   const shadowGeo = new THREE.SphereGeometry(HORIZON_RADIUS, 64, 64)
@@ -41,7 +42,7 @@ export function createSupermassiveBlackHole() {
   shadowMesh.userData = {
     id: 'andromeda_smbh',
     name: 'M31* Supermassive Black Hole (Andromeda Core)',
-    desc: 'Mass: ~1.4×10⁸ M☉ • Relativistic Kerr Black Hole with Doppler-beamed Accretion Disk & Photon Ring',
+    desc: 'Mass: ~1.4×10⁸ M☉ • Relativistic Kerr Black Hole with 3D Volumetric Accretion Swarm & Gravitational Lens',
     radius: 42,
     mesh: holeGroup,
     isBlackHole: true,
@@ -78,13 +79,13 @@ export function createSupermassiveBlackHole() {
         float theta = atan(p.y, p.x);
         float doppler = 1.0 + 0.35 * sin(theta + uTime * 0.8);
 
-        vec3 ringColor = mix(vec3(1.0, 0.95, 0.82), vec3(0.55, 0.88, 1.0), 0.25) * doppler;
+        vec3 ringColor = mix(vec3(1.0, 0.96, 0.85), vec3(0.55, 0.90, 1.0), 0.30) * doppler;
         float innerEdge = smoothstep(0.905, 0.93, r);
         float outerEdge = smoothstep(0.998, 0.96, r);
         float alpha = ring * innerEdge * outerEdge * 0.95;
 
         if (alpha <= 0.005) discard;
-        gl_FragColor = vec4(ringColor * 2.0, alpha);
+        gl_FragColor = vec4(ringColor * 2.2, alpha);
       }
     `,
     transparent: true,
@@ -99,212 +100,350 @@ export function createSupermassiveBlackHole() {
   photonRing.rotation.x = Math.PI / 2.35
   holeGroup.add(photonRing)
 
-  // ── 3. Relativistic Doppler-Beamed Accretion Disk (Equatorial Plane) ─────────
-  const diskGeo = new THREE.RingGeometry(DISK_INNER_RADIUS, DISK_OUTER_RADIUS, 128, 32)
-  geometriesToDispose.push(diskGeo)
+  // ── Helper: Soft Circular Glow Texture for Points ─────────────────────────
+  const createSoftPointTexture = () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 32
+    canvas.height = 32
+    const ctx = canvas.getContext('2d')
+    const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16)
+    grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)')
+    grad.addColorStop(0.25, 'rgba(255, 245, 220, 0.85)')
+    grad.addColorStop(0.65, 'rgba(255, 160, 60, 0.25)')
+    grad.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)')
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, 32, 32)
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.colorSpace = THREE.SRGBColorSpace
+    texturesToDispose.push(tex)
+    return tex
+  }
+  const sparkTexture = createSoftPointTexture()
+
+  // ── 3. Volumetric 3D Keplerian Particle Accretion Disk (7,500 GPU Sparks) ───
+  const SWARM_COUNT = 7500
+  const swarmGeo = new THREE.BufferGeometry()
+  const sPositions = new Float32Array(SWARM_COUNT * 3)
+  const aRadius = new Float32Array(SWARM_COUNT)
+  const aBaseAngle = new Float32Array(SWARM_COUNT)
+  const aHeight = new Float32Array(SWARM_COUNT)
+  const aSpeed = new Float32Array(SWARM_COUNT)
+  const aSize = new Float32Array(SWARM_COUNT)
+  const aBaseColor = new Float32Array(SWARM_COUNT * 3)
+
+  // Gaussian random helper
+  const randGaussian = () => {
+    let u = 0, v = 0
+    while (u === 0) u = Math.random()
+    while (v === 0) v = Math.random()
+    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)
+  }
+
+  for (let i = 0; i < SWARM_COUNT; i++) {
+    const i3 = i * 3
+
+    // Radial power distribution (denser toward inner ISCO rim)
+    const u = Math.random()
+    const r = DISK_INNER_RADIUS + Math.pow(u, 1.65) * (DISK_OUTER_RADIUS - DISK_INNER_RADIUS)
+    const angle = Math.random() * Math.PI * 2
+
+    // Disk thickness increases outward:
+    const diskThickness = 1.2 + (r - DISK_INNER_RADIUS) * 0.065
+    const h = randGaussian() * diskThickness
+
+    // Keplerian angular orbital speed: omega ~ r^-1.35
+    const speed = 1.85 * Math.pow(60.0 / Math.max(r, 36.5), 1.35)
+    const size = 2.4 + Math.random() * 3.2
+
+    // Color based on temperature gradient:
+    // Inner ISCO (12,000K white/cyan) -> Mid (6,000K golden amber) -> Outer (2,500K deep infrared ember)
+    const rNorm = (r - DISK_INNER_RADIUS) / (DISK_OUTER_RADIUS - DISK_INNER_RADIUS)
+    let cr, cg, cb
+    if (rNorm < 0.20) {
+      const t = rNorm / 0.20
+      cr = 1.0
+      cg = 0.96 - t * 0.15
+      cb = 0.98 - t * 0.55
+    } else if (rNorm < 0.60) {
+      const t = (rNorm - 0.20) / 0.40
+      cr = 1.0 - t * 0.10
+      cg = 0.81 - t * 0.45
+      cb = 0.43 - t * 0.35
+    } else {
+      const t = (rNorm - 0.60) / 0.40
+      cr = 0.90 - t * 0.45
+      cg = 0.36 - t * 0.25
+      cb = 0.08 - t * 0.05
+    }
+
+    sPositions[i3]     = r * Math.cos(angle)
+    sPositions[i3 + 1] = h
+    sPositions[i3 + 2] = r * Math.sin(angle)
+
+    aRadius[i] = r
+    aBaseAngle[i] = angle
+    aHeight[i] = h
+    aSpeed[i] = speed
+    aSize[i] = size
+
+    aBaseColor[i3]     = cr
+    aBaseColor[i3 + 1] = cg
+    aBaseColor[i3 + 2] = cb
+  }
+
+  swarmGeo.setAttribute('position', new THREE.BufferAttribute(sPositions, 3))
+  swarmGeo.setAttribute('aRadius', new THREE.BufferAttribute(aRadius, 1))
+  swarmGeo.setAttribute('aBaseAngle', new THREE.BufferAttribute(aBaseAngle, 1))
+  swarmGeo.setAttribute('aHeight', new THREE.BufferAttribute(aHeight, 1))
+  swarmGeo.setAttribute('aSpeed', new THREE.BufferAttribute(aSpeed, 1))
+  swarmGeo.setAttribute('aSize', new THREE.BufferAttribute(aSize, 1))
+  swarmGeo.setAttribute('aBaseColor', new THREE.BufferAttribute(aBaseColor, 3))
+  geometriesToDispose.push(swarmGeo)
 
   const diskUniforms = {
     uTime: { value: 0 },
+    uSparkMap: { value: sparkTexture },
   }
 
-  const diskMat = new THREE.ShaderMaterial({
+  const swarmMat = new THREE.ShaderMaterial({
     uniforms: diskUniforms,
     vertexShader: `
-      varying vec3 vLocalPos;
-      void main() {
-        vLocalPos = position;
-        gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      varying vec3 vLocalPos;
-      uniform float uTime;
+      attribute float aRadius;
+      attribute float aBaseAngle;
+      attribute float aHeight;
+      attribute float aSpeed;
+      attribute float aSize;
+      attribute vec3 aBaseColor;
 
-      // Pseudo-random hash
-      float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-      }
+      varying vec3 vColor;
+      varying float vAlpha;
 
-      void main() {
-        float r = length(vLocalPos.xy);
-        float theta = atan(vLocalPos.y, vLocalPos.x);
-
-        // Normalized radial coordinate [0.0 at ISCO .. 1.0 at outer boundary]
-        float rNorm = (r - 36.5) / (220.0 - 36.5);
-        if (rNorm < 0.0 || rNorm > 1.0) {
-          discard;
-        }
-
-        // Keplerian differential orbital velocity (omega ~ r^-1.5)
-        float omega = 1.8 * pow(60.0 / max(r, 36.5), 1.35);
-        float advectedTheta = theta - uTime * omega;
-
-        // Multi-frequency spiral turbulent plasma filaments
-        float f1 = sin(7.0 * advectedTheta + 6.0 * log(max(r, 1.0)));
-        float f2 = cos(14.0 * advectedTheta - 3.5 * log(max(r, 1.0)));
-        float f3 = sin(28.0 * advectedTheta + 9.0 * log(max(r, 1.0)));
-        float turbulence = 0.55 + 0.30 * f1 + 0.12 * f2 + 0.06 * f3;
-
-        // Relativistic Doppler Beaming factor:
-        // Plasma revolving toward observer (sin(theta) > 0) is boosted & bluer;
-        // receding plasma is redshifted and dimmer.
-        float dopplerBeaming = 1.0 + 0.62 * sin(theta);
-        dopplerBeaming = max(0.25, dopplerBeaming);
-
-        // Smooth continuous radial color transition:
-        // Ultra-hot inner ISCO rim -> Golden-yellow accretion mid-disk -> Deep ember outer smoke
-        vec3 cInner = vec3(1.0, 0.96, 0.88);  // 12,000K white-hot inner boundary
-        vec3 cMid   = vec3(1.0, 0.65, 0.18);  // 6,000K golden amber
-        vec3 cOuter = vec3(0.85, 0.22, 0.04); // 2,500K deep infrared ember
-        vec3 cEdge  = vec3(0.20, 0.05, 0.02); // Cool gas fringe
-
-        vec3 plasmaColor;
-        if (rNorm < 0.22) {
-          plasmaColor = mix(cInner, cMid, rNorm / 0.22);
-        } else if (rNorm < 0.65) {
-          plasmaColor = mix(cMid, cOuter, (rNorm - 0.22) / 0.43);
-        } else {
-          plasmaColor = mix(cOuter, cEdge, (rNorm - 0.65) / 0.35);
-        }
-
-        // Apply Doppler color temperature modulation
-        plasmaColor *= dopplerBeaming;
-
-        // ZERO HARSH EDGES: Mathematical smoothstep falloff at both inner and outer bounds
-        // Inner cutoff: rises smoothly from 0 at rNorm=0.0 to 1 at rNorm=0.06
-        float innerFade = smoothstep(0.0, 0.05, rNorm);
-        // Outer cutoff: smoothly fades to exactly 0.0 well before geometry boundary (by rNorm=0.88)
-        float outerFade = smoothstep(0.92, 0.40, rNorm);
-        // Exponential radial density attenuation
-        float radialDensity = exp(-rNorm * 2.8);
-
-        float alpha = innerFade * outerFade * radialDensity * turbulence * 0.95;
-
-        // Doppler intensity boost on approaching side
-        alpha *= pow(dopplerBeaming, 1.3);
-
-        if (alpha <= 0.003) {
-          discard;
-        }
-
-        gl_FragColor = vec4(plasmaColor * alpha * 1.5, alpha);
-      }
-    `,
-    transparent: true,
-    side: THREE.DoubleSide,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  })
-  materialsToDispose.push(diskMat)
-
-  const diskMesh = new THREE.Mesh(diskGeo, diskMat)
-  diskMesh.name = 'equatorial-accretion-disk'
-  // Aligned with the galactic plane
-  diskMesh.rotation.x = Math.PI / 2.35
-  holeGroup.add(diskMesh)
-
-  // ── 4. Gravitational Lensing Halo (The Bent Light Arc) ─────────────────────
-  // Simulates light from the rear of the accretion disk warped over the poles
-  const haloGeo = new THREE.RingGeometry(DISK_INNER_RADIUS, 155.0, 128, 24)
-  geometriesToDispose.push(haloGeo)
-
-  const haloMat = new THREE.ShaderMaterial({
-    uniforms: diskUniforms,
-    vertexShader: `
-      varying vec3 vLocalPos;
-      void main() {
-        vLocalPos = position;
-        gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      varying vec3 vLocalPos;
       uniform float uTime;
 
       void main() {
-        float r = length(vLocalPos.xy);
-        float theta = atan(vLocalPos.y, vLocalPos.x);
+        // Continuous Keplerian differential orbital propagation
+        float currentAngle = aBaseAngle + uTime * aSpeed;
 
-        float rNorm = (r - 36.5) / (155.0 - 36.5);
-        if (rNorm < 0.0 || rNorm > 1.0) {
-          discard;
-        }
+        float x = aRadius * cos(currentAngle);
+        float z = aRadius * sin(currentAngle);
+        float y = aHeight * (1.0 + 0.15 * sin(currentAngle * 3.0));
 
-        // Arched vertical Einstein ring profile: strongest near top and bottom poles
-        float polarArc = pow(abs(sin(theta)), 1.8);
+        vec4 mvPosition = modelViewMatrix * vec4(x, y, z, 1.0);
 
-        // Relativistic Doppler beaming
-        float doppler = 1.0 + 0.45 * cos(theta + uTime * 0.5);
+        // Relativistic Doppler Beaming:
+        // Plasma moving toward the observer is boosted in intensity and bluer;
+        // receding stream is dimmer and redshifted.
+        vec3 viewDir = normalize(-mvPosition.xyz);
+        vec3 velDir = normalize(vec3(-sin(currentAngle), 0.0, cos(currentAngle)));
+        float dopplerFactor = 1.0 + 0.58 * dot(velDir, viewDir);
+        dopplerFactor = max(0.25, dopplerFactor);
 
-        // Smooth radial Gaussian falloff
-        float ringProfile = exp(-pow((rNorm - 0.12) * 5.5, 2.0));
-        float innerFade = smoothstep(0.0, 0.04, rNorm);
-        float outerFade = smoothstep(0.85, 0.35, rNorm);
+        vColor = aBaseColor * dopplerFactor;
 
-        vec3 haloColor = mix(
-          vec3(1.0, 0.72, 0.25),
-          vec3(0.45, 0.75, 1.0),
-          smoothstep(0.1, 0.7, rNorm) * 0.35
-        ) * doppler;
+        // Smooth radial edge attenuation: ZERO hard geometric boundary
+        float rNorm = (aRadius - 36.5) / (230.0 - 36.5);
+        float innerFade = smoothstep(0.0, 0.06, rNorm);
+        float outerFade = smoothstep(0.95, 0.50, rNorm);
 
-        float alpha = polarArc * ringProfile * innerFade * outerFade * 0.65;
-        if (alpha <= 0.003) {
-          discard;
-        }
+        vAlpha = innerFade * outerFade * (0.65 + 0.35 * dopplerFactor);
 
-        gl_FragColor = vec4(haloColor * alpha * 1.4, alpha);
+        gl_PointSize = aSize * (200.0 / -mvPosition.z) * (0.75 + 0.35 * dopplerFactor);
+        gl_PointSize = clamp(gl_PointSize, 1.0, 36.0);
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vAlpha;
+      uniform sampler2D uSparkMap;
+
+      void main() {
+        vec4 tex = texture2D(uSparkMap, gl_PointCoord);
+        float alpha = tex.a * vAlpha;
+        if (alpha <= 0.008) discard;
+
+        gl_FragColor = vec4(vColor * tex.rgb * 1.8, alpha);
       }
     `,
     transparent: true,
-    side: THREE.DoubleSide,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   })
-  materialsToDispose.push(haloMat)
+  materialsToDispose.push(swarmMat)
 
-  const haloMesh = new THREE.Mesh(haloGeo, haloMat)
-  haloMesh.name = 'lensing-halo-arc'
-  // Perpendicular warped Einstein ring light cone
-  haloMesh.rotation.x = Math.PI / 2.35 + Math.PI / 2.0
-  holeGroup.add(haloMesh)
+  const swarmPoints = new THREE.Points(swarmGeo, swarmMat)
+  swarmPoints.name = 'volumetric-accretion-swarm'
+  swarmPoints.rotation.x = Math.PI / 2.35
+  holeGroup.add(swarmPoints)
 
-  // ── 5. Photometrically Seamless Galactic Core Bulge (High-Res 512×512) ─────
-  // Smooth, continuous exponential Gaussian gradient with ZERO hard boundaries
-  const coreCanvas = document.createElement('canvas')
-  coreCanvas.width = 512
-  coreCanvas.height = 512
-  const ctx = coreCanvas.getContext('2d')
+  // ── 4. Polar Gravitational Lensing Halo (2,500 Bent-Light Photons) ──────────
+  const LENS_COUNT = 2500
+  const lensGeo = new THREE.BufferGeometry()
+  const lPositions = new Float32Array(LENS_COUNT * 3)
+  const lRadius = new Float32Array(LENS_COUNT)
+  const lBaseAngle = new Float32Array(LENS_COUNT)
+  const lSpeed = new Float32Array(LENS_COUNT)
+  const lSize = new Float32Array(LENS_COUNT)
+  const lBaseColor = new Float32Array(LENS_COUNT * 3)
 
-  // Pristine exponential radial glow
-  const grad = ctx.createRadialGradient(256, 256, 0, 256, 256, 256)
-  grad.addColorStop(0.00, 'rgba(255, 250, 235, 1.0)')
-  grad.addColorStop(0.08, 'rgba(254, 240, 138, 0.75)')
-  grad.addColorStop(0.22, 'rgba(251, 191, 36, 0.32)')
-  grad.addColorStop(0.45, 'rgba(217, 119, 6, 0.10)')
-  grad.addColorStop(0.72, 'rgba(180, 83, 9, 0.025)')
-  grad.addColorStop(1.00, 'rgba(0, 0, 0, 0.0)')
+  for (let i = 0; i < LENS_COUNT; i++) {
+    const i3 = i * 3
+    const u = Math.random()
+    const r = DISK_INNER_RADIUS + Math.pow(u, 1.4) * 110.0
+    const angle = Math.random() * Math.PI * 2
+    const speed = 1.4 * Math.pow(60.0 / Math.max(r, 36.5), 1.2)
+    const size = 1.8 + Math.random() * 2.6
 
-  ctx.fillStyle = grad
-  ctx.fillRect(0, 0, 512, 512)
+    lPositions[i3]     = r * Math.cos(angle)
+    lPositions[i3 + 1] = (Math.random() - 0.5) * 4.0
+    lPositions[i3 + 2] = r * Math.sin(angle)
 
-  const coreTex = new THREE.CanvasTexture(coreCanvas)
-  coreTex.colorSpace = THREE.SRGBColorSpace
-  texturesToDispose.push(coreTex)
+    lRadius[i] = r
+    lBaseAngle[i] = angle
+    lSpeed[i] = speed
+    lSize[i] = size
 
-  const coreSpriteMat = new THREE.SpriteMaterial({
-    map: coreTex,
-    color: 0xfffae6,
+    // Golden-amber warped light with subtle cyan edge
+    lBaseColor[i3]     = 1.0
+    lBaseColor[i3 + 1] = 0.78 + Math.random() * 0.15
+    lBaseColor[i3 + 2] = 0.35 + Math.random() * 0.35
+  }
+
+  lensGeo.setAttribute('position', new THREE.BufferAttribute(lPositions, 3))
+  lensGeo.setAttribute('aRadius', new THREE.BufferAttribute(lRadius, 1))
+  lensGeo.setAttribute('aBaseAngle', new THREE.BufferAttribute(lBaseAngle, 1))
+  lensGeo.setAttribute('aSpeed', new THREE.BufferAttribute(lSpeed, 1))
+  lensGeo.setAttribute('aSize', new THREE.BufferAttribute(lSize, 1))
+  lensGeo.setAttribute('aBaseColor', new THREE.BufferAttribute(lBaseColor, 3))
+  geometriesToDispose.push(lensGeo)
+
+  const lensMat = new THREE.ShaderMaterial({
+    uniforms: diskUniforms,
+    vertexShader: `
+      attribute float aRadius;
+      attribute float aBaseAngle;
+      attribute float aSpeed;
+      attribute float aSize;
+      attribute vec3 aBaseColor;
+
+      varying vec3 vColor;
+      varying float vAlpha;
+
+      uniform float uTime;
+
+      void main() {
+        float angle = aBaseAngle + uTime * aSpeed;
+        
+        // Curved polar Einstein arc: warped upward and downward over poles
+        float x = aRadius * cos(angle);
+        float z = aRadius * sin(angle);
+        float polarArc = pow(abs(sin(angle)), 1.6);
+        float y = (sin(angle) > 0.0 ? 1.0 : -1.0) * (aRadius * 0.32 * polarArc);
+
+        vec4 mvPosition = modelViewMatrix * vec4(x, y, z, 1.0);
+
+        float rNorm = (aRadius - 36.5) / 110.0;
+        float innerFade = smoothstep(0.0, 0.08, rNorm);
+        float outerFade = smoothstep(0.92, 0.45, rNorm);
+
+        vColor = aBaseColor * (0.8 + 0.4 * polarArc);
+        vAlpha = innerFade * outerFade * polarArc * 0.72;
+
+        gl_PointSize = aSize * (170.0 / -mvPosition.z);
+        gl_PointSize = clamp(gl_PointSize, 1.0, 28.0);
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vAlpha;
+      uniform sampler2D uSparkMap;
+
+      void main() {
+        vec4 tex = texture2D(uSparkMap, gl_PointCoord);
+        float alpha = tex.a * vAlpha;
+        if (alpha <= 0.008) discard;
+
+        gl_FragColor = vec4(vColor * tex.rgb * 1.5, alpha);
+      }
+    `,
     transparent: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   })
-  materialsToDispose.push(coreSpriteMat)
+  materialsToDispose.push(lensMat)
 
-  // Perfectly symmetrical spherical core glow (No non-uniform stretching!)
-  const coreSprite = new THREE.Sprite(coreSpriteMat)
-  coreSprite.name = 'galactic-core-bulge-sprite'
-  coreSprite.scale.set(1500, 1500, 1)
-  holeGroup.add(coreSprite)
+  const lensPoints = new THREE.Points(lensGeo, lensMat)
+  lensPoints.name = 'polar-gravitational-lens-arc'
+  lensPoints.rotation.x = Math.PI / 2.35 + Math.PI / 2.0
+  holeGroup.add(lensPoints)
+
+  // ── 5. Volumetric 3D Galactic Stellar Nucleus (6,000 Ancient Pop II Stars) ───
+  // Replaces the 2D canvas billboard with a genuine 3D spherical stellar bulge
+  const NUCLEUS_COUNT = 6000
+  const nucGeo = new THREE.BufferGeometry()
+  const nPositions = new Float32Array(NUCLEUS_COUNT * 3)
+  const nColors = new Float32Array(NUCLEUS_COUNT * 3)
+  const nSizes = new Float32Array(NUCLEUS_COUNT)
+
+  for (let i = 0; i < NUCLEUS_COUNT; i++) {
+    const i3 = i * 3
+
+    // de Vaucouleurs / Plummer spherical density distribution (dense core, soft outer envelope)
+    const u = Math.random()
+    const r = 45.0 + Math.pow(u, 2.2) * 620.0
+    const theta = Math.random() * Math.PI * 2
+    const phi = Math.acos((Math.random() * 2) - 1)
+
+    // Slightly oblate bulge
+    const x = r * Math.sin(phi) * Math.cos(theta)
+    const y = r * Math.cos(phi) * 0.65
+    const z = r * Math.sin(phi) * Math.sin(theta)
+
+    nPositions[i3]     = x
+    nPositions[i3 + 1] = y
+    nPositions[i3 + 2] = z
+
+    // Ancient Population II stellar spectra: 4500K - 6000K warm peach, ivory, golden amber
+    const pop = Math.random()
+    if (pop < 0.55) {
+      // Warm ivory K-giants
+      nColors[i3]     = 1.0
+      nColors[i3 + 1] = 0.92
+      nColors[i3 + 2] = 0.74
+    } else if (pop < 0.85) {
+      // Golden peach solar-type stars
+      nColors[i3]     = 1.0
+      nColors[i3 + 1] = 0.78
+      nColors[i3 + 2] = 0.48
+    } else {
+      // Hotter intermediate stars
+      nColors[i3]     = 0.95
+      nColors[i3 + 1] = 0.95
+      nColors[i3 + 2] = 1.0
+    }
+
+    nSizes[i] = 1.4 + Math.random() * 1.8
+  }
+
+  nucGeo.setAttribute('position', new THREE.BufferAttribute(nPositions, 3))
+  nucGeo.setAttribute('color', new THREE.BufferAttribute(nColors, 3))
+  geometriesToDispose.push(nucGeo)
+
+  const nucMat = new THREE.PointsMaterial({
+    size: 2.2,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.88,
+    map: sparkTexture,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  })
+  materialsToDispose.push(nucMat)
+
+  const nucleusPoints = new THREE.Points(nucGeo, nucMat)
+  nucleusPoints.name = 'volumetric-galactic-core-nucleus'
+  holeGroup.add(nucleusPoints)
 
   // ── 6. Physics Animation Loop Handler ──────────────────────────────────────
   const updateBlackHole = (delta, simSpeed, cameraPos) => {
@@ -313,18 +452,19 @@ export function createSupermassiveBlackHole() {
     photonRingMat.uniforms.uTime.value += elapsedDelta
 
     // Subtle counter-rotation of accretion plasma
-    diskMesh.rotation.z += 0.0008 * simSpeed
-    haloMesh.rotation.z += 0.0004 * simSpeed
+    swarmPoints.rotation.z += 0.0006 * simSpeed
+    lensPoints.rotation.z += 0.0003 * simSpeed
+    nucleusPoints.rotation.y += 0.00008 * simSpeed
 
-    // Proximity fade: when camera approaches the SMBH, fade out the background
-    // galactic core sprite so the accretion disk and event horizon shadow are
-    // crisp and pristine against deep space with ZERO washed-out oval gradient.
+    // Proximity fade of nucleus stars: when viewing the SMBH close-up (dist < 400),
+    // softly reduce nucleus star opacity so the accretion disk and event horizon
+    // are viewed with crystalline clarity against deep space.
     if (cameraPos) {
       const worldPos = new THREE.Vector3()
       holeGroup.getWorldPosition(worldPos)
       const dist = cameraPos.distanceTo(worldPos)
-      const coreAlpha = THREE.MathUtils.clamp((dist - 350) / 850, 0.0, 1.0)
-      coreSpriteMat.opacity = coreAlpha * 0.85
+      const nucAlpha = THREE.MathUtils.clamp((dist - 250) / 750, 0.15, 0.88)
+      nucMat.opacity = nucAlpha
     }
   }
 
@@ -337,7 +477,6 @@ export function createSupermassiveBlackHole() {
   return {
     group: holeGroup,
     shadowMesh,
-    coreSprite,
     updateBlackHole,
     dispose,
   }
