@@ -1,14 +1,17 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// SolarSystem3D.jsx — Super-Realistic Keplerian 3D Planetary Engine (Three.js)
-// Real NASA/ESA Equirectangular Textures • Authentic Moons • Atmosphere Glows
+// SolarSystem3D.jsx — Super-Realistic Keplerian 3D Multi-Cosmic Engine (Three.js)
+// Sol System • TRAPPIST-1 Red Dwarf Exosystem • Andromeda (M31) 3D Spiral Galaxy
+// Logarithmic Depth Buffer • Deep Intergalactic Macro Zoom • Seamless Navigation
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { createAndromedaGalaxy } from './galaxyGenerator.js'
+import { createExosystem, EXOPLANET_CONFIG } from './exosystemGenerator.js'
 import './SolarSystem3D.css'
 
-// ── Planetary & Lunar Astronomical Configuration ─────────────────────────────
+// ── Sol Planetary Astronomical Configuration ────────────────────────────────
 const PLANET_CONFIG = [
   {
     id: 'mercury',
@@ -21,7 +24,7 @@ const PLANET_CONFIG = [
     rot: 0.008,
     roughness: 0.9,
     metalness: 0.05,
-    moons: [], // Mercury has no moons
+    moons: [],
   },
   {
     id: 'venus',
@@ -30,14 +33,14 @@ const PLANET_CONFIG = [
     r: 6.8,
     dist: 105,
     speed: 0.018,
-    tilt: 3.10, // Retrograde spin
+    tilt: 3.10,
     rot: -0.004,
     roughness: 0.55,
     metalness: 0.0,
     hasAtmosphere: true,
     atmoColor: 0xfef08a,
     atmoOpacity: 0.16,
-    moons: [], // Venus has no moons
+    moons: [],
   },
   {
     id: 'earth',
@@ -118,7 +121,7 @@ const PLANET_CONFIG = [
     r: 9.5,
     dist: 560,
     speed: 0.0028,
-    tilt: 1.70, // 98 deg axial tilt (rolling on side)
+    tilt: 1.70,
     rot: -0.018,
     roughness: 0.6,
     metalness: 0.0,
@@ -143,7 +146,7 @@ const PLANET_CONFIG = [
     metalness: 0.0,
     moons: [
       { id: 'proteus', name: 'Proteus',                  r: 0.8, dist: 18, speed: 2.3, color: 0x57534e, scale: [1.2, 0.8, 0.9] },
-      { id: 'triton',  name: 'Triton (Retrograde Frost)', r: 1.6, dist: 27, speed: -1.4, color: 0xfbcfe8, roughness: 0.35, metalness: 0.1 }, // Retrograde orbit
+      { id: 'triton',  name: 'Triton (Retrograde Frost)', r: 1.6, dist: 27, speed: -1.4, color: 0xfbcfe8, roughness: 0.35, metalness: 0.1 },
     ],
   },
   {
@@ -153,11 +156,11 @@ const PLANET_CONFIG = [
     r: 3.2,
     dist: 760,
     speed: 0.0014,
-    tilt: 2.05, // 120 deg axial tilt
-    rot: -0.012, // Retrograde spin
+    tilt: 2.05,
+    rot: -0.012,
     roughness: 0.85,
     metalness: 0.05,
-    inclination: 0.30, // 17 deg orbital inclination out of ecliptic plane
+    inclination: 0.30,
     moons: [
       { id: 'charon', name: 'Charon (Binary Moon)', r: 1.6, dist: 13, speed: 1.8, color: 0xc4b5fd, roughness: 0.8 },
       { id: 'hydra',  name: 'Hydra',                r: 0.5, dist: 20, speed: 1.1, color: 0xe5e7eb, roughness: 0.9 },
@@ -167,9 +170,11 @@ const PLANET_CONFIG = [
 
 export default function SolarSystem3D({ onReturn }) {
   const mountRef = useRef(null)
+  const [activeRealm, setActiveRealm] = useState('sol') // 'sol' | 'exosystem' | 'andromeda'
   const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [simSpeed, setSimSpeed] = useState(1.0)
   const [isWarpingOut, setIsWarpingOut] = useState(false)
+  const [cosmicAltitude, setCosmicAltitude] = useState('')
   const [arrivalTelemetry, setArrivalTelemetry] = useState(
     '✦ HYPERSPACE DROP-OUT // COMPLETED 4D WORMHOLE TRANSIT // ORBITAL INSERTION CONFIRMED'
   )
@@ -189,7 +194,7 @@ export default function SolarSystem3D({ onReturn }) {
     cityLightsRef.current = cityLights
   }, [cityLights])
 
-  // Shared references for animation loop
+  // Shared animation references
   const targetCamPosRef = useRef(null)
   const targetLookAtRef = useRef(new THREE.Vector3(0, 0, 0))
   const focusedTargetRef = useRef(null)
@@ -213,6 +218,12 @@ export default function SolarSystem3D({ onReturn }) {
         handleReturnTrigger()
       } else if (e.key === 'd' || e.key === 'D') {
         setCityLights(prev => !prev)
+      } else if (e.key === '1') {
+        mountRef.current?.switchRealm?.('sol')
+      } else if (e.key === '2') {
+        mountRef.current?.switchRealm?.('exosystem')
+      } else if (e.key === '3') {
+        mountRef.current?.switchRealm?.('andromeda')
       }
     }
     window.addEventListener('keydown', handleKey)
@@ -226,15 +237,19 @@ export default function SolarSystem3D({ onReturn }) {
     const width = container.clientWidth
     const height = container.clientHeight
 
-    // ── 1. Scene, Camera, Renderer ──────────────────────────────────────────
+    // ── 1. Scene, Camera, Renderer with Logarithmic Depth Buffer ────────────
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x02050b)
 
-    const camera = new THREE.PerspectiveCamera(60, width / height, 1, 8000)
-    // Start at superluminal deep space coordinates with wide warped perspective
+    // Logarithmic depth buffer enables precision from 1 unit to 120,000 units
+    const camera = new THREE.PerspectiveCamera(60, width / height, 1, 120000)
     camera.position.set(0, 1200, 1800)
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      logarithmicDepthBuffer: true,
+      powerPreference: 'high-performance',
+    })
     renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -244,7 +259,8 @@ export default function SolarSystem3D({ onReturn }) {
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
     controls.dampingFactor = 0.05
-    controls.maxDistance = 2600
+    // Extended maxDistance allows zooming out to view both systems and Andromeda
+    controls.maxDistance = 36000
     controls.minDistance = 12
 
     // ── 2. Texture Loader & Base Resolution ─────────────────────────────────
@@ -266,19 +282,17 @@ export default function SolarSystem3D({ onReturn }) {
     const arrivalStartTime = performance.now()
     const arrivalDuration = 2400
 
-    // ── 3. Lighting Architecture ────────────────────────────────────────────
-    // Central Sol PointLight for realistic daytime illumination & terminator shadows
+    // ── 3. Sol System Lighting ──────────────────────────────────────────────
     const sunLight = new THREE.PointLight(0xfffdf5, 3.4, 4500, 0.3)
     sunLight.position.set(0, 0, 0)
     scene.add(sunLight)
 
-    // Gentle deep-space ambient light so the night-side retains subtle planetary contour
     const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.12)
     scene.add(ambientLight)
 
-    // ── 4. Deep-Cosmic Astronomical Starfield ────────────────────────────────
+    // ── 4. Deep-Cosmic Astronomical Starfield (Extended Intergalactic Sphere) ──
     const starGeo = new THREE.BufferGeometry()
-    const starCount = 4200
+    const starCount = 6500
     const starPos = new Float32Array(starCount * 3)
     const starColors = new Float32Array(starCount * 3)
 
@@ -291,7 +305,7 @@ export default function SolarSystem3D({ onReturn }) {
 
     for (let i = 0; i < starCount; i++) {
       const i3 = i * 3
-      const r = 2600 + Math.random() * 900
+      const r = 38000 + Math.random() * 22000
       const theta = Math.random() * Math.PI * 2
       const phi = Math.acos((Math.random() * 2) - 1)
       starPos[i3]     = r * Math.sin(phi) * Math.cos(theta)
@@ -307,20 +321,27 @@ export default function SolarSystem3D({ onReturn }) {
     starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3))
 
     const starMat = new THREE.PointsMaterial({
-      size: 1.6,
+      size: 1.8,
       vertexColors: true,
       transparent: true,
       opacity: 0.85,
     })
     scene.add(new THREE.Points(starGeo, starMat))
 
-    // ── 5. The Sun (Sol Core & Multi-Stage Plasma Corona) ───────────────────
+    // ── 5. Andromeda Galaxy (M31) 3D Spiral ──────────────────────────────────
+    const andromeda = createAndromedaGalaxy()
+    scene.add(andromeda.group)
+
+    // ── 6. Secondary Exosystem (TRAPPIST-1 Red Dwarf System) ────────────────
+    const exosystem = createExosystem()
+    scene.add(exosystem.group)
+
+    // ── 7. Sol Mesh & Plasma Corona ─────────────────────────────────────────
     const sunGeo = new THREE.SphereGeometry(32, 64, 64)
     const sunMat = new THREE.MeshBasicMaterial({ map: sunTexture })
     const sunMesh = new THREE.Mesh(sunGeo, sunMat)
     scene.add(sunMesh)
 
-    // Inner fiery corona
     const coronaInnerGeo = new THREE.SphereGeometry(34.2, 36, 36)
     const coronaInnerMat = new THREE.MeshBasicMaterial({
       color: 0xf59e0b,
@@ -332,7 +353,6 @@ export default function SolarSystem3D({ onReturn }) {
     const coronaInnerMesh = new THREE.Mesh(coronaInnerGeo, coronaInnerMat)
     sunMesh.add(coronaInnerMesh)
 
-    // Outer golden halo
     const coronaOuterGeo = new THREE.SphereGeometry(38.0, 32, 32)
     const coronaOuterMat = new THREE.MeshBasicMaterial({
       color: 0xd97706,
@@ -344,15 +364,13 @@ export default function SolarSystem3D({ onReturn }) {
     const coronaOuterMesh = new THREE.Mesh(coronaOuterGeo, coronaOuterMat)
     sunMesh.add(coronaOuterMesh)
 
-    const raycastTargets = [sunMesh]
+    const raycastTargets = [sunMesh, andromeda.coreMesh, ...exosystem.raycastTargets]
     sunMesh.userData = { id: 'sun', name: 'Sol (The Sun)', radius: 32, mesh: sunMesh }
 
-    // ── 6. Planetary Systems & Authentic Lunar Satellites ───────────────────
+    // ── 8. Sol Planetary Systems ────────────────────────────────────────────
     const planetObjects = []
-    const allMoonObjects = []
 
     PLANET_CONFIG.forEach(p => {
-      // Orbital Track Line
       const orbitCurve = new THREE.EllipseCurve(0, 0, p.dist, p.dist, 0, 2 * Math.PI, false, 0)
       const points = orbitCurve.getPoints(140)
       const orbitGeo = new THREE.BufferGeometry().setFromPoints(
@@ -364,19 +382,13 @@ export default function SolarSystem3D({ onReturn }) {
         opacity: p.id === 'earth' ? 0.30 : p.id === 'pluto' ? 0.28 : 0.12,
       })
       const orbitLine = new THREE.Line(orbitGeo, orbitMat)
-      if (p.inclination) {
-        orbitLine.rotation.x = p.inclination
-      }
+      if (p.inclination) orbitLine.rotation.x = p.inclination
       scene.add(orbitLine)
 
-      // Orbital Pivot Group
       const pivot = new THREE.Group()
-      if (p.inclination) {
-        pivot.rotation.x = p.inclination
-      }
+      if (p.inclination) pivot.rotation.x = p.inclination
       scene.add(pivot)
 
-      // Photorealistic Planet Sphere with NASA Equirectangular Map
       const pGeo = new THREE.SphereGeometry(p.r, 64, 64)
       const pMat = new THREE.MeshStandardMaterial({
         map: loadTex(p.texture),
@@ -390,7 +402,6 @@ export default function SolarSystem3D({ onReturn }) {
       pivot.add(pMesh)
       raycastTargets.push(pMesh)
 
-      // Atmospheric Rayleigh Scattering Glow
       if (p.hasAtmosphere) {
         const atmoGeo = new THREE.SphereGeometry(p.r * 1.025, 48, 48)
         const atmoMat = new THREE.MeshBasicMaterial({
@@ -403,7 +414,6 @@ export default function SolarSystem3D({ onReturn }) {
         pMesh.add(new THREE.Mesh(atmoGeo, atmoMat))
       }
 
-      // Earth Rotating Cloud Sphere
       let cloudMesh = null
       if (p.hasClouds) {
         const cGeo = new THREE.SphereGeometry(p.r * 1.014, 64, 64)
@@ -417,7 +427,6 @@ export default function SolarSystem3D({ onReturn }) {
         pMesh.add(cloudMesh)
       }
 
-      // Earth Real Glowing Night Lights & Diwali / New Year Festival Illumination
       if (p.id === 'earth') {
         const nightGeo = new THREE.SphereGeometry(p.r * 1.018, 64, 64)
         const nightMat = new THREE.ShaderMaterial({
@@ -426,7 +435,6 @@ export default function SolarSystem3D({ onReturn }) {
             uSunPosition: { value: new THREE.Vector3(0, 0, 0) },
             uTime: { value: 0.0 },
             uFestiveMode: { value: 1.0 },
-            uFestiveBoost: { value: 2.6 },
           },
           vertexShader: `
             varying vec2 vUv;
@@ -446,7 +454,6 @@ export default function SolarSystem3D({ onReturn }) {
             uniform vec3 uSunPosition;
             uniform float uTime;
             uniform float uFestiveMode;
-            uniform float uFestiveBoost;
 
             varying vec2 vUv;
             varying vec3 vWorldNormal;
@@ -456,7 +463,6 @@ export default function SolarSystem3D({ onReturn }) {
               vec3 sunDir = normalize(uSunPosition - vWorldPosition);
               float sunDot = dot(vWorldNormal, sunDir);
 
-              // Smooth transition across twilight terminator
               float nightFactor = smoothstep(0.04, -0.15, sunDot);
               if (nightFactor <= 0.001) {
                 discard;
@@ -468,43 +474,10 @@ export default function SolarSystem3D({ onReturn }) {
                 discard;
               }
 
-              // Realistic NASA city lights base (warm incandescent gold)
               vec3 baseCity = texColor.rgb * vec3(1.3, 1.15, 0.9);
-
-              // ── Diwali & New Year Festival Illumination ──
-              // Coordinates for Indian Subcontinent & South Asia
-              float dU = (vUv.x - 0.722) * 2.8;
-              float dV = (vUv.y - 0.608) * 2.2;
-              float distIndia = sqrt(dU * dU + dV * dV);
-              float indiaEpicenter = smoothstep(0.32, 0.0, distIndia);
-
-              // Shimmering Diya micro-twinkle across populated lands
-              float twinkle = 1.0 
-                + 0.32 * sin(uTime * 4.2 + vUv.x * 260.0 + vUv.y * 180.0)
-                + 0.18 * cos(uTime * 7.1 + vUv.x * 520.0)
-                + 0.12 * sin(uTime * 9.8 + vUv.y * 340.0);
-
-              // Celebration Fireworks: Periodic sparkling bursts across nocturnal cities
-              float burstSeed = sin(uTime * 4.6 + vUv.x * 740.0) * cos(uTime * 3.8 + vUv.y * 580.0);
-              float fireworkBurst = pow(max(0.0, burstSeed), 10.0) * 3.5;
-
-              // Firework burst chromatic dispersion (festive crimson, emerald, saffron gold)
-              vec3 fireworkColor = mix(
-                vec3(1.0, 0.3, 0.18),
-                vec3(0.25, 1.0, 0.55),
-                sin(vUv.x * 85.0 + uTime * 2.2) * 0.5 + 0.5
-              );
-
-              // Rich Saffron / Amber Diya Flame Tone (Warm incandescent 2400K)
-              vec3 diyaGoldenTone = vec3(1.45, 1.02, 0.44) * (1.0 + indiaEpicenter * 1.6);
-              vec3 festiveIllumination = texColor.rgb * (diyaGoldenTone * twinkle + fireworkColor * fireworkBurst);
-
-              // Soft incandescent atmospheric halo on intense light clusters
-              float halo = pow(lum, 1.6) * 0.65 * (1.0 + indiaEpicenter * 1.0);
-              vec3 haloColor = vec3(1.0, 0.82, 0.36) * halo;
-
-              // Blend realistic mode vs festive celebration mode
-              vec3 result = mix(baseCity, festiveIllumination * uFestiveBoost + haloColor, uFestiveMode);
+              float twinkle = 1.0 + 0.25 * sin(uTime * 3.5 + vUv.x * 280.0 + vUv.y * 190.0);
+              vec3 activeCity = baseCity * twinkle;
+              vec3 result = mix(baseCity, activeCity, uFestiveMode);
 
               gl_FragColor = vec4(result * nightFactor, lum * nightFactor);
             }
@@ -518,7 +491,6 @@ export default function SolarSystem3D({ onReturn }) {
         pMesh.add(new THREE.Mesh(nightGeo, nightMat))
       }
 
-      // Saturn 3D Rings with Radial Mapping & Cassini Division
       if (p.hasRings) {
         const innerR = p.r * 1.38
         const outerR = p.r * 2.52
@@ -540,39 +512,32 @@ export default function SolarSystem3D({ onReturn }) {
           opacity: 0.96,
           roughness: 0.6,
         })
-        const ringMesh = new THREE.Mesh(rGeo, rMat)
-        pMesh.add(ringMesh)
+        pMesh.add(new THREE.Mesh(rGeo, rMat))
       }
 
-      // Uranus Tilted Rings
       if (p.hasUranusRing) {
         const uRingGeo = new THREE.RingGeometry(p.r * 1.35, p.r * 1.55, 64)
         uRingGeo.rotateX(Math.PI / 2)
-        const uRingMat = new THREE.MeshBasicMaterial({
+        pMesh.add(new THREE.Mesh(uRingGeo, new THREE.MeshBasicMaterial({
           color: 0xbae6fd,
           side: THREE.DoubleSide,
           transparent: true,
           opacity: 0.45,
-        })
-        pMesh.add(new THREE.Mesh(uRingGeo, uRingMat))
+        })))
       }
 
-      // Moons Hierarchy (Orbiting around parent planet)
       const moonObjectsForPlanet = []
       p.moons.forEach(m => {
-        // Moon orbital guide trace
         const mOrbitGeo = new THREE.BufferGeometry().setFromPoints(
           new THREE.EllipseCurve(0, 0, m.dist, m.dist, 0, Math.PI * 2)
             .getPoints(48)
             .map(pt => new THREE.Vector3(pt.x, 0, pt.y))
         )
-        const mOrbitLine = new THREE.Line(
+        pMesh.add(new THREE.Line(
           mOrbitGeo,
           new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.14 })
-        )
-        pMesh.add(mOrbitLine)
+        ))
 
-        // Moon Sphere Mesh
         const mGeo = new THREE.SphereGeometry(m.r, 28, 28)
         const mMat = new THREE.MeshStandardMaterial({
           map: m.useMoonMap ? moonTexture : (m.color ? null : moonTexture),
@@ -596,13 +561,11 @@ export default function SolarSystem3D({ onReturn }) {
         pMesh.add(mMesh)
         raycastTargets.push(mMesh)
 
-        const moonObj = {
+        moonObjectsForPlanet.push({
           data: m,
           mesh: mMesh,
           angle: initialAngle,
-        }
-        moonObjectsForPlanet.push(moonObj)
-        allMoonObjects.push(moonObj)
+        })
       })
 
       planetObjects.push({
@@ -615,7 +578,7 @@ export default function SolarSystem3D({ onReturn }) {
       })
     })
 
-    // ── 7. Main Asteroid Belt (InstancedMesh) ────────────────────────────────
+    // ── 9. Main Asteroid Belt (InstancedMesh) ────────────────────────────────
     const asteroidGeo = new THREE.DodecahedronGeometry(0.75, 1)
     const asteroidMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.92 })
     const asteroidCount = 480
@@ -636,7 +599,7 @@ export default function SolarSystem3D({ onReturn }) {
     asteroidMesh.instanceMatrix.needsUpdate = true
     scene.add(asteroidMesh)
 
-    // ── 8. Quantum Singularity Gateway (Return Beacon) ──────────────────────
+    // ── 10. Quantum Singularity Gateway (Return Beacon) ─────────────────────
     const gatewayGroup = new THREE.Group()
     gatewayGroup.position.set(410, 55, -310)
     scene.add(gatewayGroup)
@@ -653,22 +616,35 @@ export default function SolarSystem3D({ onReturn }) {
     gateHole.userData = { id: 'gateway', name: 'Quantum Singularity Gate' }
     raycastTargets.push(gateHole)
 
-    // ── 9. Raycaster Pointer Interaction ────────────────────────────────────
+    // ── 11. Raycaster & Navigation Mechanics ────────────────────────────────
     const raycaster = new THREE.Raycaster()
     const mouse = new THREE.Vector2()
 
     const focusOnTarget = (targetData) => {
       setSelectedPlanet(targetData.name)
       focusedTargetRef.current = targetData
+
+      if (targetData.isGalaxy) {
+        setActiveRealm('andromeda')
+        targetLookAtRef.current.copy(andromeda.group.position)
+        targetCamPosRef.current = andromeda.group.position.clone().add(new THREE.Vector3(0, 4800, 10500))
+        return
+      }
+
+      if (targetData.systemGroup) {
+        setActiveRealm('exosystem')
+      } else if (targetData.id !== 'gateway') {
+        setActiveRealm('sol')
+      }
+
       const targetRadius = targetData.radius || 10
       if (targetData.id === 'earth') {
-        // Dramatic view of Earth's twilight terminator and glowing night cities
         const dist = targetRadius * 3.2 + 8
         targetCamPosRef.current = new THREE.Vector3(dist * 0.72, dist * 0.38, dist * 0.72)
       } else {
         const offset = targetData.isMoon
           ? targetRadius * 5.0 + 8
-          : targetRadius * 3.8 + 12
+          : targetRadius * 3.8 + 14
         targetCamPosRef.current = new THREE.Vector3(offset, offset * 0.45, offset)
       }
     }
@@ -693,74 +669,104 @@ export default function SolarSystem3D({ onReturn }) {
     }
     container.addEventListener('pointerdown', handlePointerDown)
 
-    // Expose focus setter to HUD
-    container.focusPlanet = (id) => {
-      if (id === 'overview') {
-        setSelectedPlanet(null)
-        focusedTargetRef.current = null
+    // Expose Realm Switcher to HUD
+    container.switchRealm = (realm) => {
+      setActiveRealm(realm)
+      setSelectedPlanet(null)
+      focusedTargetRef.current = null
+
+      if (realm === 'sol') {
         targetCamPosRef.current = new THREE.Vector3(0, 340, 720)
         targetLookAtRef.current = new THREE.Vector3(0, 0, 0)
-      } else if (id === 'sun') {
-        focusOnTarget(sunMesh.userData)
-      } else {
-        const found = planetObjects.find(p => p.data.id === id)
-        if (found) focusOnTarget(found.mesh.userData)
+      } else if (realm === 'exosystem') {
+        targetLookAtRef.current = exosystem.position.clone()
+        targetCamPosRef.current = exosystem.position.clone().add(new THREE.Vector3(0, 260, 540))
+      } else if (realm === 'andromeda') {
+        targetLookAtRef.current = andromeda.group.position.clone()
+        targetCamPosRef.current = andromeda.group.position.clone().add(new THREE.Vector3(0, 4800, 10500))
+        setSelectedPlanet('Andromeda Galaxy (M31)')
       }
     }
 
-    // ── 10. Render & Physics Loop ───────────────────────────────────────────
+    // Expose Planet Focus to HUD
+    container.focusPlanet = (id) => {
+      if (id === 'overview') {
+        container.switchRealm('sol')
+      } else if (id === 'sun') {
+        focusOnTarget(sunMesh.userData)
+      } else if (id === 'exosystem_overview') {
+        container.switchRealm('exosystem')
+      } else if (id === 'trappist_star') {
+        focusOnTarget(exosystem.starMesh.userData)
+      } else if (id === 'andromeda_overview' || id === 'andromeda_core') {
+        container.switchRealm('andromeda')
+      } else {
+        const solFound = planetObjects.find(p => p.data.id === id)
+        if (solFound) {
+          focusOnTarget(solFound.mesh.userData)
+          return
+        }
+        const exoFound = exosystem.exoplanetObjects.find(p => p.data.id === id)
+        if (exoFound) {
+          focusOnTarget(exoFound.mesh.userData)
+        }
+      }
+    }
+
+    // ── 12. Render & Physics Loop ───────────────────────────────────────────
     let animationFrameId
     const clock = new THREE.Clock()
+    let lastAltitudeCheck = 0
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate)
       const delta = clock.getDelta()
       const speedMult = simSpeedRef.current
 
-      // Superluminal Orbital Insertion Swoop & Dynamic FOV Decompression
+      // Superluminal Orbital Insertion Swoop
       const nowTime = performance.now()
       const arrivalElapsed = nowTime - arrivalStartTime
       if (arrivalElapsed < arrivalDuration) {
         const prog = arrivalElapsed / arrivalDuration
-        const ease = 1 - Math.pow(1 - prog, 4) // Quartic hyper-deceleration
+        const ease = 1 - Math.pow(1 - prog, 4)
 
         camera.position.set(
           0,
           1200 + (340 - 1200) * ease,
           1800 + (720 - 1800) * ease
         )
-        // Optical FOV decompression: wide warp perspective (60 deg) relaxes into standard cinematic view (45 deg)
         camera.fov = 60 - 15 * ease
         camera.updateProjectionMatrix()
         controls.target.set(0, 0, 0)
       }
 
-      // Rotate Sun and Corona
+      // Rotate Sol & Corona
       sunMesh.rotation.y += 0.003 * speedMult
       coronaInnerMesh.rotation.y -= 0.002 * speedMult
       coronaOuterMesh.rotation.y += 0.001 * speedMult
 
-      // Rotate Singularity Gateway
+      // Rotate Gateway & Asteroids
       gateTorus.rotation.x += 0.02 * speedMult
       gateTorus.rotation.y += 0.03 * speedMult
-
-      // Orbit Asteroids
       asteroidMesh.rotation.y += 0.0007 * speedMult
 
-      // Advance Planets & Moons
+      // Update Andromeda Galaxy Rotation
+      andromeda.updateGalaxy(delta, speedMult)
+
+      // Update TRAPPIST-1 Exosystem
+      exosystem.updateExosystem(delta, speedMult)
+
+      // Advance Sol Planets & Moons
       planetObjects.forEach(po => {
         po.angle += po.data.speed * delta * 2.2 * speedMult
         po.mesh.position.x = Math.cos(po.angle) * po.data.dist
         po.mesh.position.z = Math.sin(po.angle) * po.data.dist
-
-        // Planet self-rotation on axial tilt
         po.mesh.rotation.y += po.data.rot * speedMult
 
         if (po.cloudMesh) {
           po.cloudMesh.rotation.y += po.data.rot * 1.25 * speedMult
         }
 
-        // Orbit each moon around this planet
         po.moons.forEach(mo => {
           mo.angle += mo.data.speed * delta * 2.2 * speedMult
           mo.mesh.position.x = Math.cos(mo.angle) * mo.data.dist
@@ -769,7 +775,7 @@ export default function SolarSystem3D({ onReturn }) {
         })
       })
 
-      // Smooth Camera Lerp when targeting a planet or moon
+      // Smooth Camera Lerp
       if (focusedTargetRef.current) {
         const targetWorldPos = new THREE.Vector3()
         if (focusedTargetRef.current.id === 'sun') {
@@ -787,12 +793,24 @@ export default function SolarSystem3D({ onReturn }) {
       } else if (targetCamPosRef.current) {
         camera.position.lerp(targetCamPosRef.current, 0.05)
         controls.target.lerp(targetLookAtRef.current, 0.05)
-        if (camera.position.distanceTo(targetCamPosRef.current) < 5) {
+        if (camera.position.distanceTo(targetCamPosRef.current) < 10) {
           targetCamPosRef.current = null
         }
       }
 
-      // Update Earth Night Lights Shader Uniforms
+      // Real-Time Cosmic Altitude Telemetry
+      if (nowTime - lastAltitudeCheck > 350) {
+        lastAltitudeCheck = nowTime
+        const distFromSol = camera.position.length()
+        if (distFromSol > 2100) {
+          const ly = Math.round(distFromSol * 1.85)
+          setCosmicAltitude(`ALTITUDE: ${ly.toLocaleString()} LIGHT-YEARS // INTERGALACTIC DEEP FIELD // ANDROMEDA M31 VISIBLE`)
+        } else {
+          setCosmicAltitude('')
+        }
+      }
+
+      // Update Earth Night Lights Shader
       if (earthNightMatRef.current) {
         earthNightMatRef.current.uniforms.uTime.value = clock.getElapsedTime()
         earthNightMatRef.current.uniforms.uFestiveMode.value = cityLightsRef.current ? 1.0 : 0.0
@@ -803,7 +821,7 @@ export default function SolarSystem3D({ onReturn }) {
     }
     animate()
 
-    // ── 11. Viewport Resize Handler ─────────────────────────────────────────
+    // ── 13. Viewport Resize ─────────────────────────────────────────────────
     const handleResize = () => {
       const w = container.clientWidth
       const h = container.clientHeight
@@ -817,6 +835,7 @@ export default function SolarSystem3D({ onReturn }) {
       cancelAnimationFrame(animationFrameId)
       window.removeEventListener('resize', handleResize)
       container.removeEventListener('pointerdown', handlePointerDown)
+      exosystem.dispose()
       if (earthNightMatRef.current) {
         earthNightMatRef.current.dispose()
       }
@@ -832,56 +851,134 @@ export default function SolarSystem3D({ onReturn }) {
     <div className={`solar-3d-container ${isWarpingOut ? 'warp-out' : ''}`} ref={mountRef}>
       {/* 3D HUD Navigation Bar */}
       <div className="solar-3d-hud">
+        {/* Brand & Target Lock */}
         <div className="hud-brand">
           <span className="hud-pulse-dot" />
-          <span className="hud-system-title">☉ KEPLERIAN 3D SOLAR SYSTEM</span>
+          <span className="hud-system-title">✦ MULTI-COSMIC 3D OBSERVATORY</span>
           {selectedPlanet && <span className="hud-planet-focus">LOCKED: {selectedPlanet.toUpperCase()}</span>}
         </div>
 
-        {/* Planet Quick-Nav Selector */}
+        {/* Macro Realm Switcher Tabs */}
+        <div className="realm-selector-strip">
+          <button
+            className={`realm-tab ${activeRealm === 'sol' ? 'active' : ''}`}
+            onClick={() => mountRef.current?.switchRealm?.('sol')}
+            title="Focus Sol Planetary System (Key 1)"
+          >
+            ☉ SOL SYSTEM
+          </button>
+          <button
+            className={`realm-tab ${activeRealm === 'exosystem' ? 'active' : ''}`}
+            onClick={() => mountRef.current?.switchRealm?.('exosystem')}
+            title="Traverse to TRAPPIST-1 Red Dwarf Exosystem (Key 2)"
+          >
+            ✦ TRAPPIST-1 EXOSYSTEM
+          </button>
+          <button
+            className={`realm-tab ${activeRealm === 'andromeda' ? 'active' : ''}`}
+            onClick={() => mountRef.current?.switchRealm?.('andromeda')}
+            title="Frame Andromeda Galaxy M31 (Key 3)"
+          >
+            🌌 ANDROMEDA M31
+          </button>
+        </div>
+
+        {/* Dynamic Contextual Quick-Nav Strip */}
         <div className="planet-nav-strip">
-          <button
-            className={`nav-chip ${!selectedPlanet ? 'active' : ''}`}
-            onClick={() => mountRef.current?.focusPlanet?.('overview')}
-          >
-            ⊚ SYSTEM
-          </button>
-          <button
-            className={`nav-chip ${selectedPlanet === 'Sol (The Sun)' ? 'active' : ''}`}
-            onClick={() => mountRef.current?.focusPlanet?.('sun')}
-          >
-            ☉ SOL
-          </button>
-          {PLANET_CONFIG.map(p => (
-            <button
-              key={p.id}
-              className={`nav-chip ${selectedPlanet === p.name ? 'active' : ''}`}
-              onClick={() => mountRef.current?.focusPlanet?.(p.id)}
-            >
-              {p.id === 'earth' ? '🌍 EARTH' : p.id === 'pluto' ? '♇ PLUTO' : p.name.toUpperCase()}
-            </button>
-          ))}
+          {activeRealm === 'sol' && (
+            <>
+              <button
+                className={`nav-chip ${!selectedPlanet ? 'active' : ''}`}
+                onClick={() => mountRef.current?.focusPlanet?.('overview')}
+              >
+                ⊚ SYSTEM
+              </button>
+              <button
+                className={`nav-chip ${selectedPlanet === 'Sol (The Sun)' ? 'active' : ''}`}
+                onClick={() => mountRef.current?.focusPlanet?.('sun')}
+              >
+                ☉ SOL
+              </button>
+              {PLANET_CONFIG.map(p => (
+                <button
+                  key={p.id}
+                  className={`nav-chip ${selectedPlanet === p.name ? 'active' : ''}`}
+                  onClick={() => mountRef.current?.focusPlanet?.(p.id)}
+                >
+                  {p.id === 'earth' ? '🌍 EARTH' : p.id === 'pluto' ? '♇ PLUTO' : p.name.toUpperCase()}
+                </button>
+              ))}
+            </>
+          )}
+
+          {activeRealm === 'exosystem' && (
+            <>
+              <button
+                className={`nav-chip ${!selectedPlanet ? 'active' : ''}`}
+                onClick={() => mountRef.current?.focusPlanet?.('exosystem_overview')}
+              >
+                ✦ SYSTEM
+              </button>
+              <button
+                className={`nav-chip ${selectedPlanet === 'Astraeus (TRAPPIST-1 Star)' ? 'active' : ''}`}
+                onClick={() => mountRef.current?.focusPlanet?.('trappist_star')}
+              >
+                🔴 ASTRAEUS
+              </button>
+              {EXOPLANET_CONFIG.map(p => (
+                <button
+                  key={p.id}
+                  className={`nav-chip ${selectedPlanet === p.name ? 'active' : ''}`}
+                  onClick={() => mountRef.current?.focusPlanet?.(p.id)}
+                >
+                  {p.id === 'pyroclast' ? '🌋 PYROCLAST' :
+                   p.id === 'aethelgard' ? '🌊 AETHELGARD' :
+                   p.id === 'zephyrus' ? '🌀 ZEPHYRUS' :
+                   p.id === 'chronos' ? '🪐 CHRONOS' : '❄️ NIX'}
+                </button>
+              ))}
+            </>
+          )}
+
+          {activeRealm === 'andromeda' && (
+            <>
+              <button
+                className="nav-chip active"
+                onClick={() => mountRef.current?.focusPlanet?.('andromeda_overview')}
+              >
+                🌌 ANDROMEDA SPIRAL DISK
+              </button>
+              <button
+                className="nav-chip"
+                onClick={() => mountRef.current?.focusPlanet?.('andromeda_core')}
+              >
+                ✨ NUCLEUS & SMBH
+              </button>
+            </>
+          )}
         </div>
 
         {/* Action controls */}
         <div className="hud-actions-strip">
-          <button
-            className={`city-lights-btn ${cityLights ? 'active' : ''}`}
-            onClick={() => {
-              const next = !cityLights
-              setCityLights(next)
-              setArrivalTelemetry(
-                next
-                  ? '✦ NOCTURNAL CITY LIGHTS: ACTIVE // TERMINATOR ILLUMINATION ON'
-                  : '✦ NOCTURNAL CITY LIGHTS: INACTIVE'
-              )
-              setTimeout(() => setArrivalTelemetry(''), 2800)
-            }}
-            title="Toggle Earth Nocturnal City Lights (D)"
-          >
-            <span className="city-lights-icon">🌃</span>
-            <span>{cityLights ? 'CITY LIGHTS: ON' : 'CITY LIGHTS: OFF'}</span>
-          </button>
+          {activeRealm === 'sol' && (
+            <button
+              className={`city-lights-btn ${cityLights ? 'active' : ''}`}
+              onClick={() => {
+                const next = !cityLights
+                setCityLights(next)
+                setArrivalTelemetry(
+                  next
+                    ? '✦ NOCTURNAL CITY LIGHTS: ACTIVE // TERMINATOR ILLUMINATION ON'
+                    : '✦ NOCTURNAL CITY LIGHTS: INACTIVE'
+                )
+                setTimeout(() => setArrivalTelemetry(''), 2800)
+              }}
+              title="Toggle Earth Nocturnal City Lights (D)"
+            >
+              <span className="city-lights-icon">🌃</span>
+              <span>{cityLights ? 'CITY LIGHTS: ON' : 'CITY LIGHTS: OFF'}</span>
+            </button>
+          )}
 
           <div className="speed-controller">
             <span className="speed-label">TIME WARP</span>
@@ -905,6 +1002,14 @@ export default function SolarSystem3D({ onReturn }) {
           </button>
         </div>
       </div>
+
+      {/* Cosmic Macro Field Altitude Gauge */}
+      {cosmicAltitude && (
+        <div className="cosmic-altitude-hud">
+          <span className="altitude-pulse" />
+          <span className="altitude-text">{cosmicAltitude}</span>
+        </div>
+      )}
 
       {/* Superluminal Arrival Telemetry Banner */}
       {arrivalTelemetry && (

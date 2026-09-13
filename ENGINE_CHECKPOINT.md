@@ -1,9 +1,9 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `fa4d64f`  
+> Git Commit Reference: `fa4d64f` (Advancing to multi-cosmic release)  
 > Live Public Deployment: https://shikharthakur2404.github.io/sternstaub/  
-> Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Rotatable Keplerian Solar System). Modern astrophysical wormhole transition: volumetric Gargantua black hole with soft Doppler accretion disk, laser-thin photon ring, and 3D relativistic starfield throat traversal (1,200 depth-scaled star streaks, optical Einstein ring, soft aperture flare — zero 80s wireframe polygons). Smooth 3D orbital insertion with optical FOV decompression (60 deg to 45 deg). Earth features photorealistic daytime terrain + nocturnal city lights (NASA Black Marble 2K map via custom WebGL GLSL shader), dynamic solar terminator day/night demarcation, and HUD toggle keybind 'D'. Complete 9-planet Solar System with Pluto, authentic moons, Earth clouds, Saturn rings, and Asteroid Belt.
+> Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Multi-Cosmic Observatory). Deep intergalactic zoom scale enabled by WebGL `logarithmicDepthBuffer: true` (camera altitude from 12 units up to 36,000 units). Features: (1) Complete 9-planet Keplerian Sol System with Earth night city lights, clouds, rings, moons, and Asteroid Belt; (2) Andromeda (M31) 3D Spiral Galaxy rendered via 18,000 volumetric density-wave stars with 5000K core bulge, hot blue OB spiral arms, H-alpha emission nebulae, and differential rotation; (3) TRAPPIST-1 Red Dwarf Exosystem located across the interstellar gulf with an ultra-cool M-dwarf host star and 5 scientifically authentic procedural exoplanets (Pyroclast lava world, Aethelgard habitable eyeball ocean world, Zephyrus banded methane super-earth, Chronos ringed giant, Nix cryo-ice dwarf); (4) Macro HUD Realm Switcher and real-time Cosmic Altitude light-year gauge.
 
 ---
 
@@ -58,8 +58,11 @@ Follow these non-negotiable architectural rules:
 | `src/components/ControlPanel.jsx` | Glassmorphic HUD | Controls Geometry (5 shapes), Exposure slider, Dispersion, Drift, Particles, Gravity toggle, Nova pulse, Palettes (6 themes), Presets. |
 | `src/components/ControlPanel.css` | HUD Styling | Promoted to GPU layer via `transform: translateZ(0); will-change: transform;`. |
 | `src/config/palettes.js` | Color Themes | Ethereal Gold (Default), Hyperion Blue, Borealis Emerald, Supernova Iris, Solar Flare, Cosmic Amethyst. |
-| `src/components/Solar3D/SolarSystem3D.jsx` | 3D Planetary Engine | Three.js WebGL scene with OrbitControls, 9 rotatable planets (incl. Pluto & Charon), authentic moon systems, Earth clouds & Moon, Earth dynamic night city lights shader, Saturn 3D rings, Asteroid belt, camera lerp, and Singularity Gate. |
-| `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, planet nav chips, City Lights button, time warp slider, arrival telemetry banner, reverse plunge singularity vortex overlay. |
+| `src/components/Solar3D/SolarSystem3D.jsx` | 3D Multi-Cosmic Observatory | Three.js WebGL scene with OrbitControls, logarithmic depth buffer, Sol system, TRAPPIST-1 exosystem, Andromeda M31 spiral galaxy, realm switcher, and cosmic altitude gauge. |
+| `src/components/Solar3D/galaxyGenerator.js` | Andromeda M31 3D Spiral Galaxy | 18,000 volumetric density-wave stars, 5000K golden bulge, hot blue OB arms, H-alpha nebulae, SMBH void, and differential rotation. |
+| `src/components/Solar3D/exosystemGenerator.js` | TRAPPIST-1 Red Dwarf Exosystem | Ultra-cool M-dwarf host star with 5 procedural exoplanets (Pyroclast, Aethelgard, Zephyrus, Chronos, Nix), exorings, and exomoons. |
+| `src/components/Solar3D/proceduralTextures.js` | Procedural Texture Synthesizers | Canvas2D equirectangular map generators for red dwarf granules/sunspots, lava fissures, eyeball oceans, methane bands, and exorings. |
+| `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, realm switcher tabs, contextual planet chips, cosmic altitude gauge, time warp slider, and singularity vortex. |
 | `public/textures/planets/` | Authentic NASA Equirectangular Maps | Real photographic 1K/2K maps for Sun, Mercury, Venus, Earth, Earth clouds, Earth night lights (2048x1024), Moon, Mars, Jupiter, Saturn, Saturn rings, Uranus, Neptune, Pluto. |
 
 ---
