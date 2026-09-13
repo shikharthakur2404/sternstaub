@@ -34,6 +34,7 @@ export function createAtmosphereMesh({
     uSunsetTint: { value: new THREE.Color(sunsetTint) },
     uDensity: { value: density },
     uRimPower: { value: rimPower },
+    uStarSpectrum: { value: new THREE.Color(1.0, 1.0, 1.0) },
   }
 
   const atmoMat = new THREE.ShaderMaterial({
@@ -57,6 +58,7 @@ export function createAtmosphereMesh({
       uniform vec3 uSunsetTint;
       uniform float uDensity;
       uniform float uRimPower;
+      uniform vec3 uStarSpectrum;
 
       varying vec3 vWorldNormal;
       varying vec3 vWorldPosition;
@@ -88,6 +90,9 @@ export function createAtmosphereMesh({
         // Terminator sunset reddening: light passes through maximum airmass at twilight
         float sunsetFactor = smoothstep(0.40, -0.15, cosSun) * smoothstep(-0.35, 0.10, cosSun);
         vec3 scatterColor = mix(uDayColor, uSunsetTint, sunsetFactor * 1.6);
+        
+        // Weight scattering coefficients by the host star's spectral radiance
+        scatterColor *= uStarSpectrum;
 
         // Composite atmospheric optical emission
         float intensity = (rayleighPhase + miePhase) * limbFactor * dayFactor * uDensity;

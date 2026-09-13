@@ -161,14 +161,22 @@ export default function App() {
       wasPanelOpenRef.current = prev
       return false
     })
-    workerRef.current?.postMessage({ type: 'wormhole', targetShape: target })
+    
+    if (target === 'solar') {
+      workerRef.current?.postMessage({ type: 'pause' })
+      setSceneMode('solar3d')
+      setWormholeBanner('')
+    } else {
+      workerRef.current?.postMessage({ type: 'wormhole', targetShape: target })
+    }
   }, [])
 
   const handleReturnFromSolar3D = useCallback(() => {
     setSceneMode('stardust')
     setShape('silhouette')
-    workerRef.current?.postMessage({ type: 'returnWormhole', targetShape: 'silhouette' })
-    setWormholeBanner('☉ WHITE HOLE SINGULARITY EMERGENCE // RETURNING TO STARDUST DIMENSION')
+    // Instantly return without wormhole reverse plunge
+    workerRef.current?.postMessage({ type: 'resume' })
+    setWormholeBanner('')
   }, [])
 
   // Each setter updates both React state (for HUD) and the worker

@@ -180,7 +180,6 @@ export default function SolarSystem3D({ onReturn }) {
   const activeRealmRef = useRef('sol')
   const [selectedPlanet, setSelectedPlanet] = useState(null)
   const [simSpeed, setSimSpeed] = useState(1.0)
-  const [isWarpingOut, setIsWarpingOut] = useState(false)
   const [cosmicAltitude, setCosmicAltitude] = useState('')
   const [showSourcesModal, setShowSourcesModal] = useState(false)
   const [arrivalTelemetry, setArrivalTelemetry] = useState(
@@ -226,12 +225,8 @@ export default function SolarSystem3D({ onReturn }) {
   }, [simSpeed])
 
   const handleReturnTrigger = useCallback(() => {
-    if (isWarpingOut) return
-    setIsWarpingOut(true)
-    setTimeout(() => {
-      onReturn?.()
-    }, 1200)
-  }, [isWarpingOut, onReturn])
+    onReturn?.()
+  }, [onReturn])
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -277,14 +272,15 @@ export default function SolarSystem3D({ onReturn }) {
     camera.position.set(0, 1200, 1800)
 
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: false,
       logarithmicDepthBuffer: true,
-      powerPreference: 'high-performance',
+      powerPreference: 'low-power',
     })
     renderer.setSize(width, height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.25
+    renderer.outputColorSpace = THREE.SRGBColorSpace
     container.appendChild(renderer.domElement)
 
     const controls = new OrbitControls(camera, renderer.domElement)
@@ -760,30 +756,18 @@ export default function SolarSystem3D({ onReturn }) {
 
       targetFovRef.current = targetData.isMoon ? 44 : 46
 
-      // Terminator-biased celestial camera framing (45°-55° terminator meridian, 35° elevation)
-      // Displays day-side surface details, twilight relief, atmospheric scattering limbs & night city lights
       const targetWorldPos = new THREE.Vector3()
       if (targetData.mesh) {
         targetData.mesh.getWorldPosition(targetWorldPos)
       }
 
-      const starPos = realm === 'exosystem' ? exosystem.position : new THREE.Vector3(0, 0, 0)
-      const toStar = starPos.clone().sub(targetWorldPos)
-      let uStar = new THREE.Vector3(toStar.x, 0, toStar.z)
-      if (uStar.lengthSq() > 0.001) {
-        uStar.normalize()
-      } else {
-        uStar.set(0, 0, 1)
+      // Instead of forcing a hardcoded terminator angle (which causes wild camera swings),
+      // we calculate an approach vector based on the current camera position, ensuring a smooth zoom-in.
+      const toCamera = camera.position.clone().sub(targetWorldPos)
+      if (toCamera.lengthSq() < 0.001) {
+        toCamera.set(0, 1, 1)
       }
-
-      // Perpendicular vector along the planetary orbit plane (terminator meridian)
-      const uTerm = new THREE.Vector3(-uStar.z, 0, uStar.x)
-
-      // 48° azimuth bias toward terminator, 35° elevation angle
-      const biasDir = new THREE.Vector3()
-        .addScaledVector(uStar, 0.669) // cos(48°)
-        .addScaledVector(uTerm, 0.743) // sin(48°)
-        .normalize()
+      toCamera.normalize()
 
       const dist = targetData.id === 'earth'
         ? (targetRadius * 3.2 + 8)
@@ -791,17 +775,17 @@ export default function SolarSystem3D({ onReturn }) {
           ? (targetRadius * 5.0 + 8)
           : (targetRadius * 3.8 + 14)
 
-      const horizDist = dist * Math.cos(35 * Math.PI / 180)
-      const vertDist = dist * Math.sin(35 * Math.PI / 180)
+      // Add a slight elevation if we are too flat
+      if (toCamera.y < 0.2) toCamera.y = 0.2
+      toCamera.normalize()
 
-      targetCamPosRef.current = new THREE.Vector3(
-        biasDir.x * horizDist,
-        vertDist,
-        biasDir.z * horizDist
-      )
+      targetCamPosRef.current = toCamera.multiplyScalar(dist)
     }
 
     const handlePointerDown = (e) => {
+      // Release programmatic camera lock so the user can orbit manually
+      targetCamPosRef.current = null
+
       const rect = container.getBoundingClientRect()
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
@@ -820,7 +804,13 @@ export default function SolarSystem3D({ onReturn }) {
         }
       }
     }
+    
+    const handleWheel = () => {
+      targetCamPosRef.current = null
+    }
+
     container.addEventListener('pointerdown', handlePointerDown)
+    container.addEventListener('wheel', handleWheel)
 
     // Expose Realm Switcher to HUD
     container.switchRealm = (realm) => {
@@ -1019,6 +1009,9 @@ export default function SolarSystem3D({ onReturn }) {
     const clock = new THREE.Clock()
     let lastAltitudeCheck = 0
 
+    const _scratchWorldPos = new THREE.Vector3()
+    const _scratchDesiredPos = new THREE.Vector3()
+
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate)
       const delta = clock.getDelta()
@@ -1122,18 +1115,17 @@ export default function SolarSystem3D({ onReturn }) {
 
       // Smooth Camera Lerp
       if (focusedTargetRef.current) {
-        const targetWorldPos = new THREE.Vector3()
         if (focusedTargetRef.current.id === 'sun') {
-          targetWorldPos.set(0, 0, 0)
+          _scratchWorldPos.set(0, 0, 0)
         } else {
-          focusedTargetRef.current.mesh.getWorldPosition(targetWorldPos)
+          focusedTargetRef.current.mesh.getWorldPosition(_scratchWorldPos)
         }
-        targetLookAtRef.current.lerp(targetWorldPos, 0.06)
+        targetLookAtRef.current.lerp(_scratchWorldPos, 0.06)
         controls.target.copy(targetLookAtRef.current)
 
         if (targetCamPosRef.current) {
-          const desiredPos = targetWorldPos.clone().add(targetCamPosRef.current)
-          camera.position.lerp(desiredPos, 0.06)
+          _scratchDesiredPos.copy(_scratchWorldPos).add(targetCamPosRef.current)
+          camera.position.lerp(_scratchDesiredPos, 0.06)
         }
       } else if (targetCamPosRef.current) {
         camera.position.lerp(targetCamPosRef.current, 0.05)
@@ -1176,21 +1168,49 @@ export default function SolarSystem3D({ onReturn }) {
     }
     window.addEventListener('resize', handleResize)
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animationFrameId)
+      } else {
+        animationFrameId = requestAnimationFrame(animate)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    if (import.meta.hot) {
+      import.meta.hot.dispose(() => cancelAnimationFrame(animationFrameId))
+    }
+
     return () => {
       cancelAnimationFrame(animationFrameId)
       window.removeEventListener('resize', handleResize)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       container.removeEventListener('pointerdown', handlePointerDown)
+      container.removeEventListener('wheel', handleWheel)
+      
+      scene.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose()
+        if (obj.material) {
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach(m => m.dispose())
+          } else {
+            obj.material.dispose()
+          }
+        }
+      })
+
       exosystem.dispose()
       meteorShower.dispose()
       comet.dispose()
       if (earthSatellites) earthSatellites.dispose()
       if (torusStation) torusStation.dispose()
       asteroidBelt.dispose()
-      if (earthNightMatRef.current) {
-        earthNightMatRef.current.dispose()
-      }
+      
+      if (earthNightMatRef.current) earthNightMatRef.current.dispose()
       earthLightsTexture.dispose()
+      
       renderer.dispose()
+      renderer.forceContextLoss()
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement)
       }
@@ -1198,7 +1218,7 @@ export default function SolarSystem3D({ onReturn }) {
   }, [handleReturnTrigger])
 
   return (
-    <div className={`solar-3d-container ${isWarpingOut ? 'warp-out' : ''}`} ref={mountRef}>
+    <div className="solar-3d-container" ref={mountRef}>
       {/* ── TIER 1: TOP SCI-FI OBSERVATORY HUD ─────────────────────────────── */}
       <div className="solar-3d-hud" ref={hudRef} onWheel={handleHorizontalScrollWheel}>
         {/* Brand & Target Lock */}
@@ -1460,15 +1480,7 @@ export default function SolarSystem3D({ onReturn }) {
         </div>
       )}
 
-      {/* Cinematic Warp Collapse Overlay during departure */}
-      {isWarpingOut && (
-        <div className="warp-out-overlay">
-          <div className="warp-singularity-vortex" />
-          <div className="warp-hud-telemetry">
-            ✦ REVERSE EINSTEIN-ROSEN PLUNGE ENGAGED // TRAVERSING BACK TO STARDUST DIMENSION
-          </div>
-        </div>
-      )}
+
 
       {/* ── TIER 3: SCIENTIFIC DATA & SOURCES OBSERVATORY MODAL ──────────────── */}
       {showSourcesModal && (

@@ -20,6 +20,17 @@ import {
   createTrappist1hTexture,
 } from './proceduralTextures.js'
 
+// Tanner Helland-style blackbody approximation
+function blackbodyToRGB(kelvin) {
+  const t = kelvin / 100;
+  const r = t <= 66 ? 255 : 329.7 * Math.pow(t - 60, -0.133);
+  const g = t <= 66 ? 99.47 * Math.log(t) - 161.12 : 288.12 * Math.pow(t - 60, -0.0755);
+  const b = t >= 66 ? 255 : t <= 19 ? 0 : 138.5 * Math.log(t - 10) - 305.04;
+  return [r, g, b].map(v => Math.min(255, Math.max(0, v)) / 255);
+}
+
+const TRAPPIST_QUIESCENT_K = 2566;
+
 export const EXOPLANET_CONFIG = [
   {
     id: 'trappist_1b',
@@ -177,10 +188,11 @@ export function createExosystem() {
     uniforms: {
       uTime: { value: 0 },
       uTexture: { value: starTexture },
-      uBaseColor: { value: new THREE.Color(0xef4444) },
-      uLimbU1: { value: 0.62 },
-      uLimbU2: { value: 0.18 },
+      uBaseColor: { value: new THREE.Color().fromArray(blackbodyToRGB(TRAPPIST_QUIESCENT_K)) },
+      uLimbU1: { value: new THREE.Vector3(0.55, 0.72, 0.85) }, // Stronger darkening in blue/green
+      uLimbU2: { value: new THREE.Vector3(0.12, 0.20, 0.25) },
       uFlareIntensity: { value: 0.0 },
+      uFlareColor: { value: new THREE.Color().fromArray(blackbodyToRGB(TRAPPIST_QUIESCENT_K)) },
     },
     vertexShader: `
       varying vec2 vUv;
@@ -199,9 +211,10 @@ export function createExosystem() {
       uniform float uTime;
       uniform sampler2D uTexture;
       uniform vec3 uBaseColor;
-      uniform float uLimbU1;
-      uniform float uLimbU2;
+      uniform vec3 uLimbU1;
+      uniform vec3 uLimbU2;
       uniform float uFlareIntensity;
+      uniform vec3 uFlareColor;
 
       varying vec2 vUv;
       varying vec3 vNormal;
@@ -214,17 +227,17 @@ export function createExosystem() {
         // mu = cos(theta) where 1.0 is disk center, 0.0 is limb
         float mu = max(0.0, dot(normal, viewDir));
 
-        // Quadratic limb darkening law: I(mu) = I(0) * [1 - u1*(1-mu) - u2*(1-mu)^2]
+        // Quadratic limb darkening law (per-channel for warm-to-cool disk gradient)
         float oneMinusMu = 1.0 - mu;
-        float limbProfile = 1.0 - uLimbU1 * oneMinusMu - uLimbU2 * oneMinusMu * oneMinusMu;
+        vec3 limbProfile = vec3(1.0) - uLimbU1 * oneMinusMu - uLimbU2 * oneMinusMu * oneMinusMu;
 
         vec4 texColor = texture2D(uTexture, vUv);
 
-        // Photospheric granulation & starspot tinting
+        // Photospheric granulation
         vec3 starColor = texColor.rgb * uBaseColor * limbProfile * 1.5;
 
-        // Flare brightening burst
-        starColor += vec3(1.0, 0.85, 0.6) * uFlareIntensity * 2.5;
+        // Flare brightening burst shifts to white-blue spectrum
+        starColor += uFlareColor * uFlareIntensity * 2.5;
 
         gl_FragColor = vec4(starColor, 1.0);
       }
@@ -375,6 +388,7 @@ export function createExosystem() {
         density: p.id === 'trappist_1e' ? 1.5 : 1.1,
         rimPower: 3.0,
       })
+      atmoObj.uniforms.uStarSpectrum.value.fromArray(blackbodyToRGB(TRAPPIST_QUIESCENT_K))
       atmoObj.updateSunPosition(EXOSYSTEM_POS)
       materialsToDispose.push(atmoObj.material)
       geometriesToDispose.push(atmoObj.mesh.geometry)
@@ -482,6 +496,7 @@ export function createExosystem() {
 
   // ── 6. Physics Animation Loop Handler ────────────────────────────────────
   let flareTimer = 0
+  let smoothedFlare = 0
 
   const updateExosystem = (delta, speedMult) => {
     // 1. Advance Numerical Simulation Core
@@ -489,18 +504,23 @@ export function createExosystem() {
     const { stellarState, planetStates } = simResult
 
     // 2. Star Convection, Limb Darkening & Flares
+    smoothedFlare = THREE.MathUtils.lerp(smoothedFlare, stellarState.totalFlareIntensity, 0.08)
+
     starMesh.rotation.y += 0.0015 * speedMult
     starShaderMat.uniforms.uTime.value += delta * speedMult
-    starShaderMat.uniforms.uFlareIntensity.value = stellarState.totalFlareIntensity
+    starShaderMat.uniforms.uFlareIntensity.value = smoothedFlare
+    
+    const currentFlareTemp = TRAPPIST_QUIESCENT_K + (smoothedFlare * 6934); // Peaks at 9500K
+    starShaderMat.uniforms.uFlareColor.value.fromArray(blackbodyToRGB(currentFlareTemp));
 
     // Corona & Prominences respond to flare events
-    const flareGain = 1.0 + stellarState.totalFlareIntensity * 3.0
+    const flareGain = 1.0 + smoothedFlare * 3.0
     innerCoronaMat.opacity = Math.min(0.85, 0.40 * flareGain)
     outerCoronaMat.opacity = Math.min(0.65, 0.22 * flareGain)
 
     flareTimer += delta * speedMult
     prominenceLoops.forEach(l => {
-      l.group.rotation.x = Math.sin(flareTimer * l.speed) * (0.12 + stellarState.totalFlareIntensity * 0.25)
+      l.group.rotation.x = Math.sin(flareTimer * l.speed) * (0.12 + smoothedFlare * 0.25)
     })
 
     // 3. Update Planets from Keplerian State Vectors
@@ -520,6 +540,8 @@ export function createExosystem() {
       if (po.atmoObj && pState.atmo) {
         const atmoScale = pState.atmo.visualAtmosphereScale || 1.04
         po.atmoObj.mesh.scale.set(atmoScale, atmoScale, atmoScale)
+        // Also apply the flare color to the planetary atmosphere scattering
+        po.atmoObj.uniforms.uStarSpectrum.value.copy(starShaderMat.uniforms.uFlareColor.value)
       }
 
       // Auroral intensity spikes during stellar flares:
