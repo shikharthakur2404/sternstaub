@@ -307,10 +307,14 @@ export default function SolarSystem3D({ onReturn }) {
     const arrivalStartTime = performance.now()
     const arrivalDuration = 2400
 
-    // ── 3. Sol System Lighting ──────────────────────────────────────────────
+    // ── 3. Sol System Root Group & Lighting ──────────────────────────────────
+    const solGroup = new THREE.Group()
+    solGroup.name = 'sol-system-root-group'
+    scene.add(solGroup)
+
     const sunLight = new THREE.PointLight(0xfffdf5, 3.4, 4500, 0.3)
     sunLight.position.set(0, 0, 0)
-    scene.add(sunLight)
+    solGroup.add(sunLight)
 
     const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.12)
     scene.add(ambientLight)
@@ -363,18 +367,18 @@ export default function SolarSystem3D({ onReturn }) {
 
     // ── 7. Interplanetary Meteor Shower Engine ──────────────────────────────
     const meteorShower = createMeteorShower()
-    scene.add(meteorShower.group)
+    solGroup.add(meteorShower.group)
     meteorShowerRef.current = meteorShower
 
-    // ── 8. Hyperbolic Interplanetary Comet C/2026 ───────────────────────────
+    // ── 8. Hyperbolic Interplanetary Comet C/2026 P1 (Sternstaub) ────────────
     const comet = createComet()
-    scene.add(comet.group)
+    solGroup.add(comet.group)
 
     // ── 9. Sol Mesh & Plasma Corona ─────────────────────────────────────────
     const sunGeo = new THREE.SphereGeometry(32, 64, 64)
     const sunMat = new THREE.MeshBasicMaterial({ map: sunTexture })
     const sunMesh = new THREE.Mesh(sunGeo, sunMat)
-    scene.add(sunMesh)
+    solGroup.add(sunMesh)
 
     const coronaInnerGeo = new THREE.SphereGeometry(34.2, 36, 36)
     const coronaInnerMat = new THREE.MeshBasicMaterial({
@@ -424,11 +428,11 @@ export default function SolarSystem3D({ onReturn }) {
       })
       const orbitLine = new THREE.Line(orbitGeo, orbitMat)
       if (p.inclination) orbitLine.rotation.x = p.inclination
-      scene.add(orbitLine)
+      solGroup.add(orbitLine)
 
       const pivot = new THREE.Group()
       if (p.inclination) pivot.rotation.x = p.inclination
-      scene.add(pivot)
+      solGroup.add(pivot)
 
       const pGeo = new THREE.SphereGeometry(p.r, 64, 64)
       const pMat = new THREE.MeshStandardMaterial({
@@ -630,13 +634,13 @@ export default function SolarSystem3D({ onReturn }) {
 
     // ── 11. Photorealistic Main Asteroid Belt (Ceres, Vesta & 2,800 bodies) ──
     const asteroidBelt = createAsteroidBelt()
-    scene.add(asteroidBelt.group)
+    solGroup.add(asteroidBelt.group)
     raycastTargets.push(...asteroidBelt.raycastTargets)
 
     // ── 12. Quantum Singularity Gateway (Return Beacon) ─────────────────────
     const gatewayGroup = new THREE.Group()
     gatewayGroup.position.set(410, 55, -310)
-    scene.add(gatewayGroup)
+    solGroup.add(gatewayGroup)
 
     const gateTorusGeo = new THREE.TorusGeometry(16, 2.0, 16, 64)
     const gateTorusMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 })
@@ -650,49 +654,123 @@ export default function SolarSystem3D({ onReturn }) {
     gateHole.userData = { id: 'gateway', name: 'Quantum Singularity Gate' }
     raycastTargets.push(gateHole)
 
-    // ── 13. Raycaster & Navigation Mechanics ────────────────────────────────
+    // ── 13. Subsystem Lifecycle & Realm Visibility Sync ──────────────────────
+    const syncRealmVisibility = (realm) => {
+      const isSol = realm === 'sol'
+      const isExo = realm === 'exosystem'
+      const isAndromeda = realm === 'andromeda'
+
+      solGroup.visible = isSol
+      exosystem.group.visible = isExo
+      andromeda.group.visible = isAndromeda
+    }
+    // Initialize root realm visibility
+    syncRealmVisibility('sol')
+
+    // ── 14. Raycaster & Navigation Mechanics ────────────────────────────────
     const raycaster = new THREE.Raycaster()
     const mouse = new THREE.Vector2()
+
+    const isHierarchyVisible = (obj) => {
+      let curr = obj
+      while (curr) {
+        if (curr.visible === false) return false
+        curr = curr.parent
+      }
+      return true
+    }
 
     const focusOnTarget = (targetData) => {
       setSelectedPlanet(targetData.name)
       focusedTargetRef.current = targetData
 
+      let realm = 'sol'
       if (targetData.isGalaxy) {
-        setActiveRealm('andromeda')
+        realm = 'andromeda'
+      } else if (targetData.systemGroup || targetData.id?.startsWith('trappist')) {
+        realm = 'exosystem'
+      } else if (targetData.id === 'gateway') {
+        realm = 'sol'
+      }
+
+      activeRealmRef.current = realm
+      setActiveRealm(realm)
+      syncRealmVisibility(realm)
+
+      if (realm === 'andromeda') {
         targetLookAtRef.current.copy(andromeda.group.position)
         targetCamPosRef.current = andromeda.group.position.clone().add(new THREE.Vector3(0, 4800, 10500))
         return
       }
 
-      if (targetData.systemGroup) {
-        setActiveRealm('exosystem')
-      } else if (targetData.id !== 'gateway') {
-        setActiveRealm('sol')
-      }
-
       const targetRadius = targetData.radius || 10
-      if (targetData.id === 'earth') {
-        const dist = targetRadius * 3.2 + 8
-        targetCamPosRef.current = new THREE.Vector3(dist * 0.72, dist * 0.38, dist * 0.72)
-      } else if (targetData.id === 'iss') {
+
+      // Specialized close-up vantage vectors for spacecraft & minor bodies
+      if (targetData.id === 'iss') {
         targetCamPosRef.current = new THREE.Vector3(2.4, 1.2, 2.4)
+        return
       } else if (targetData.id === 'hubble') {
         targetCamPosRef.current = new THREE.Vector3(2.0, 1.0, 2.0)
+        return
       } else if (targetData.id === 'torus_station') {
         targetCamPosRef.current = new THREE.Vector3(5.2, 2.6, 5.2)
+        return
       } else if (targetData.id === 'comet_c2026') {
         targetCamPosRef.current = new THREE.Vector3(18, 8, 18)
+        return
       } else if (targetData.id === 'ceres') {
         targetCamPosRef.current = new THREE.Vector3(7.2, 3.6, 7.2)
+        return
       } else if (targetData.id === 'vesta') {
         targetCamPosRef.current = new THREE.Vector3(6.2, 3.1, 6.2)
-      } else {
-        const offset = targetData.isMoon
-          ? targetRadius * 5.0 + 8
-          : targetRadius * 3.8 + 14
-        targetCamPosRef.current = new THREE.Vector3(offset, offset * 0.45, offset)
+        return
+      } else if (targetData.id === 'sun') {
+        targetCamPosRef.current = new THREE.Vector3(0, 110, 220)
+        return
+      } else if (targetData.id === 'trappist_star') {
+        targetCamPosRef.current = new THREE.Vector3(0, 80, 170)
+        return
       }
+
+      // Terminator-biased celestial camera framing (45°-55° terminator meridian, 35° elevation)
+      // Displays day-side surface details, twilight relief, atmospheric scattering limbs & night city lights
+      const targetWorldPos = new THREE.Vector3()
+      if (targetData.mesh) {
+        targetData.mesh.getWorldPosition(targetWorldPos)
+      }
+
+      const starPos = realm === 'exosystem' ? exosystem.position : new THREE.Vector3(0, 0, 0)
+      const toStar = starPos.clone().sub(targetWorldPos)
+      let uStar = new THREE.Vector3(toStar.x, 0, toStar.z)
+      if (uStar.lengthSq() > 0.001) {
+        uStar.normalize()
+      } else {
+        uStar.set(0, 0, 1)
+      }
+
+      // Perpendicular vector along the planetary orbit plane (terminator meridian)
+      const uTerm = new THREE.Vector3(-uStar.z, 0, uStar.x)
+
+      // 48° azimuth bias toward terminator, 35° elevation angle
+      const biasDir = new THREE.Vector3()
+        .addScaledVector(uStar, 0.669) // cos(48°)
+        .addScaledVector(uTerm, 0.743) // sin(48°)
+        .normalize()
+
+      const dist = targetData.id === 'earth'
+        ? (targetRadius * 3.2 + 8)
+        : targetData.isMoon
+          ? (targetRadius * 5.0 + 8)
+          : (targetRadius * 3.8 + 14)
+
+      const horizDist = dist * Math.cos(35 * Math.PI / 180)
+      const vertDist = dist * Math.sin(35 * Math.PI / 180)
+
+      targetCamPosRef.current = new THREE.Vector3(
+        biasDir.x * horizDist,
+        vertDist,
+        biasDir.z * horizDist
+      )
     }
 
     const handlePointerDown = (e) => {
@@ -700,7 +778,8 @@ export default function SolarSystem3D({ onReturn }) {
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
       raycaster.setFromCamera(mouse, camera)
-      const intersects = raycaster.intersectObjects(raycastTargets, true)
+      const rawIntersects = raycaster.intersectObjects(raycastTargets, true)
+      const intersects = rawIntersects.filter(hit => isHierarchyVisible(hit.object))
       if (intersects.length > 0) {
         let hitObj = intersects[0].object
         while (hitObj && !hitObj.userData?.name) hitObj = hitObj.parent
@@ -721,6 +800,7 @@ export default function SolarSystem3D({ onReturn }) {
       setActiveRealm(realm)
       setSelectedPlanet(null)
       focusedTargetRef.current = null
+      syncRealmVisibility(realm)
 
       if (realm === 'sol') {
         targetCamPosRef.current = new THREE.Vector3(0, 340, 720)
@@ -828,8 +908,8 @@ export default function SolarSystem3D({ onReturn }) {
         } else if (!focusedTargetRef.current) {
           // System Overview -> Step into primary habitable planet
           if (activeRealmRef.current === 'exosystem') {
-            container.focusPlanet('aethelgard')
-            setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: AETHELGARD (HABITABLE)')
+            container.focusPlanet('trappist_1e')
+            setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: TRAPPIST-1e (HABITABLE EYEBALL WORLD)')
           } else {
             container.focusPlanet('earth')
             setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: EARTH')
@@ -920,58 +1000,77 @@ export default function SolarSystem3D({ onReturn }) {
         controls.target.set(0, 0, 0)
       }
 
-      // Rotate Sol & Corona
-      sunMesh.rotation.y += 0.003 * speedMult
-      coronaInnerMesh.rotation.y -= 0.002 * speedMult
-      coronaOuterMesh.rotation.y += 0.001 * speedMult
+      // Subsystem Lifecycle & CPU Loop Gating
+      const curRealm = activeRealmRef.current || 'sol'
 
-      // Rotate Gateway
-      gateTorus.rotation.x += 0.02 * speedMult
-      gateTorus.rotation.y += 0.03 * speedMult
+      if (curRealm === 'sol') {
+        // Rotate Sol & Corona
+        sunMesh.rotation.y += 0.003 * speedMult
+        coronaInnerMesh.rotation.y -= 0.002 * speedMult
+        coronaOuterMesh.rotation.y += 0.001 * speedMult
 
-      // Update Andromeda Galaxy Rotation
-      andromeda.updateGalaxy(delta, speedMult)
+        // Rotate Gateway
+        gateTorus.rotation.x += 0.02 * speedMult
+        gateTorus.rotation.y += 0.03 * speedMult
 
-      // Update TRAPPIST-1 Exosystem
-      exosystem.updateExosystem(delta, speedMult)
+        // Interplanetary Meteor Shower Wave
+        meteorShower.updateMeteors(delta, speedMult)
 
-      // Update Meteor Shower Trails
-      meteorShower.updateMeteors(delta, speedMult)
+        // LEO Proximity Throttling: When inspecting Earth fleet (ISS, Hubble, Torus Station),
+        // throttle distant Asteroid Belt (2,800 bodies) & Comet simulation to dedicate 100% frame budget to orbital fleet
+        const isLEO = focusedTargetRef.current && (
+          focusedTargetRef.current.id === 'iss' ||
+          focusedTargetRef.current.id === 'hubble' ||
+          focusedTargetRef.current.id === 'torus_station' ||
+          focusedTargetRef.current.isSatellite ||
+          focusedTargetRef.current.isStation
+        )
 
-      // Update Hyperbolic Comet
-      comet.updateComet(delta, speedMult)
-
-      // Update Photorealistic Main Asteroid Belt (Ceres, Vesta, 2,800 bodies)
-      asteroidBelt.updateAsteroidBelt(delta, speedMult)
-
-      // Update Earth Satellites (ISS & HST)
-      if (earthSatellites) {
-        earthSatellites.updateSatellites(delta, speedMult)
-      }
-
-      // Update Olympus Torus Space Station
-      if (torusStation) {
-        torusStation.updateStation(delta, speedMult)
-      }
-
-      // Advance Sol Planets & Moons
-      planetObjects.forEach(po => {
-        po.angle += po.data.speed * delta * 2.2 * speedMult
-        po.mesh.position.x = Math.cos(po.angle) * po.data.dist
-        po.mesh.position.z = Math.sin(po.angle) * po.data.dist
-        po.mesh.rotation.y += po.data.rot * speedMult
-
-        if (po.cloudMesh) {
-          po.cloudMesh.rotation.y += po.data.rot * 1.25 * speedMult
+        if (!isLEO) {
+          asteroidBelt.group.visible = true
+          comet.group.visible = true
+          asteroidBelt.updateAsteroidBelt(delta, speedMult)
+          comet.updateComet(delta, speedMult)
+        } else {
+          asteroidBelt.group.visible = false
+          comet.group.visible = false
         }
 
-        po.moons.forEach(mo => {
-          mo.angle += mo.data.speed * delta * 2.2 * speedMult
-          mo.mesh.position.x = Math.cos(mo.angle) * mo.data.dist
-          mo.mesh.position.z = Math.sin(mo.angle) * mo.data.dist
-          mo.mesh.rotation.y += 0.015 * speedMult
+        // Earth Satellites (ISS & HST)
+        if (earthSatellites) {
+          earthSatellites.updateSatellites(delta, speedMult)
+        }
+
+        // Olympus Torus Space Station
+        if (torusStation) {
+          torusStation.updateStation(delta, speedMult)
+        }
+
+        // Advance Sol Planets & Moons
+        planetObjects.forEach(po => {
+          po.angle += po.data.speed * delta * 2.2 * speedMult
+          po.mesh.position.x = Math.cos(po.angle) * po.data.dist
+          po.mesh.position.z = Math.sin(po.angle) * po.data.dist
+          po.mesh.rotation.y += po.data.rot * speedMult
+
+          if (po.cloudMesh) {
+            po.cloudMesh.rotation.y += po.data.rot * 1.25 * speedMult
+          }
+
+          po.moons.forEach(mo => {
+            mo.angle += mo.data.speed * delta * 2.2 * speedMult
+            mo.mesh.position.x = Math.cos(mo.angle) * mo.data.dist
+            mo.mesh.position.z = Math.sin(mo.angle) * mo.data.dist
+            mo.mesh.rotation.y += 0.015 * speedMult
+          })
         })
-      })
+      } else if (curRealm === 'exosystem') {
+        // Update TRAPPIST-1 Exosystem
+        exosystem.updateExosystem(delta, speedMult)
+      } else if (curRealm === 'andromeda') {
+        // Update Andromeda Galaxy Rotation
+        andromeda.updateGalaxy(delta, speedMult)
+      }
 
       // Smooth Camera Lerp
       if (focusedTargetRef.current) {
@@ -1214,11 +1313,11 @@ export default function SolarSystem3D({ onReturn }) {
               🛞 TORUS
             </button>
             <button
-              className={`nav-chip ${selectedPlanet === 'Comet C/2026 (Hyperbolic Visitor)' ? 'active' : ''}`}
+              className={`nav-chip ${selectedPlanet === 'Comet C/2026 P1 (Sternstaub)' || selectedPlanet === 'Comet C/2026 (Hyperbolic Visitor)' ? 'active' : ''}`}
               onClick={() => mountRef.current?.focusPlanet?.('comet_c2026')}
-              title="Lock on Hyperbolic Interplanetary Comet C/2026"
+              title="Lock on Hyperbolic Visitor Comet C/2026 P1 (Sternstaub)"
             >
-              ☄️ COMET
+              ☄️ C/2026 P1
             </button>
             <button
               className={`nav-chip ${selectedPlanet === 'Ceres (Dwarf Planet)' ? 'active' : ''}`}
@@ -1246,10 +1345,11 @@ export default function SolarSystem3D({ onReturn }) {
               ✦ SYSTEM
             </button>
             <button
-              className={`nav-chip ${selectedPlanet === 'Astraeus (TRAPPIST-1 Star)' ? 'active' : ''}`}
+              className={`nav-chip ${selectedPlanet === '2MASS J23062928-0502285 (TRAPPIST-1)' || selectedPlanet === 'TRAPPIST-1 Host Star (M8V Red Dwarf)' ? 'active' : ''}`}
               onClick={() => mountRef.current?.focusPlanet?.('trappist_star')}
+              title="Lock on Ultra-cool Red Dwarf 2MASS J23062928-0502285 (TRAPPIST-1)"
             >
-              🔴 ASTRAEUS
+              🔴 TRAPPIST-1
             </button>
             {EXOPLANET_CONFIG.map(p => (
               <button
@@ -1257,10 +1357,12 @@ export default function SolarSystem3D({ onReturn }) {
                 className={`nav-chip ${selectedPlanet === p.name ? 'active' : ''}`}
                 onClick={() => mountRef.current?.focusPlanet?.(p.id)}
               >
-                {p.id === 'pyroclast' ? '🌋 PYROCLAST' :
-                 p.id === 'aethelgard' ? '🌊 AETHELGARD' :
-                 p.id === 'zephyrus' ? '🌀 ZEPHYRUS' :
-                 p.id === 'chronos' ? '🪐 CHRONOS' : '❄️ NIX'}
+                {p.id === 'trappist_1b' ? '🌋 1b (LAVA)' :
+                 p.id === 'trappist_1c' ? '🏜️ 1c (DESERT)' :
+                 p.id === 'trappist_1d' ? '🌅 1d (TWILIGHT)' :
+                 p.id === 'trappist_1e' ? '🌍 1e (EYEBALL EARTH)' :
+                 p.id === 'trappist_1f' ? '🌊 1f (OCEAN)' :
+                 p.id === 'trappist_1g' ? '🌫️ 1g (GLACIAL)' : '❄️ 1h (SNOWBALL)'}
               </button>
             ))}
           </div>

@@ -341,13 +341,13 @@ export function createComet() {
   // ── 8. Raycast Target & User Data Metadata ────────────────────────────────
   const cometUserData = {
     id: 'comet_c2026',
-    name: 'Comet C/2026 (Hyperbolic Visitor)',
+    name: 'Comet C/2026 P1 (Sternstaub)',
+    desc: 'IAU Hyperbolic Visitor • Dual-Lobed Nucleus • Outgassing Ion & Dust Tails',
     radius: 4.8,
     mesh: cometVessel,
     isComet: true,
   }
   cometVessel.userData = cometUserData
-  headMesh.userData = cometUserData
   bodyMesh.userData = cometUserData
 
   // ── 9. Orbital Physics & Heliocentric Alignment Loop ──────────────────────

@@ -332,50 +332,217 @@ export function createEarthSatellites(earthMesh, earthRadius) {
   hstVessel.position.x = hstOrbitRadius
   hstOrbitPivot.add(hstVessel)
 
-  // Telescope Optical Barrel (Polished Silver cylinder)
-  const barrelGeo = new THREE.CylinderGeometry(0.18, 0.22, 0.95, 16)
-  barrelGeo.rotateZ(Math.PI / 2)
-  geometriesToDispose.push(barrelGeo)
-  const barrelMat = new THREE.MeshStandardMaterial({
-    color: 0xf1f5f9,
-    metalness: 0.95,
-    roughness: 0.12,
+  // ── A. Forward Light Shield (OTA) & Black Interior Baffle ──
+  const lightShieldGeo = new THREE.CylinderGeometry(0.20, 0.20, 0.62, 24)
+  lightShieldGeo.rotateZ(Math.PI / 2)
+  geometriesToDispose.push(lightShieldGeo)
+  const shieldMat = new THREE.MeshStandardMaterial({
+    map: mliTexture,
+    metalness: 0.92,
+    roughness: 0.18,
   })
-  materialsToDispose.push(barrelMat)
-  const barrelMesh = new THREE.Mesh(barrelGeo, barrelMat)
-  hstVessel.add(barrelMesh)
+  materialsToDispose.push(shieldMat)
+  const lightShield = new THREE.Mesh(lightShieldGeo, shieldMat)
+  lightShield.position.x = 0.08
+  hstVessel.add(lightShield)
 
-  // Open Aperture Door
-  const doorGeo = new THREE.CircleGeometry(0.18, 16)
-  doorGeo.rotateY(Math.PI / 2)
+  // Black anti-reflective interior optical baffle
+  const baffleGeo = new THREE.CylinderGeometry(0.185, 0.185, 0.60, 24)
+  baffleGeo.rotateZ(Math.PI / 2)
+  geometriesToDispose.push(baffleGeo)
+  const baffleMat = new THREE.MeshStandardMaterial({
+    color: 0x050505,
+    roughness: 0.98,
+    side: THREE.BackSide,
+  })
+  materialsToDispose.push(baffleMat)
+  const baffle = new THREE.Mesh(baffleGeo, baffleMat)
+  lightShield.add(baffle)
+
+  // Secondary Mirror Spider Support (4-vane cross spider inside aperture)
+  const spiderMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 })
+  materialsToDispose.push(spiderMat)
+  const spiderVaneGeo = new THREE.BoxGeometry(0.008, 0.36, 0.008)
+  geometriesToDispose.push(spiderVaneGeo)
+  const vane1 = new THREE.Mesh(spiderVaneGeo, spiderMat)
+  vane1.position.x = 0.22
+  lightShield.add(vane1)
+
+  const vane2 = new THREE.Mesh(spiderVaneGeo, spiderMat)
+  vane2.position.x = 0.22
+  vane2.rotation.x = Math.PI / 2
+  lightShield.add(vane2)
+
+  // Central Secondary Mirror Baffle Housing
+  const secMirrorGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.08, 16)
+  secMirrorGeo.rotateZ(Math.PI / 2)
+  geometriesToDispose.push(secMirrorGeo)
+  const secMirrorMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.15 })
+  materialsToDispose.push(secMirrorMat)
+  const secMirror = new THREE.Mesh(secMirrorGeo, secMirrorMat)
+  secMirror.position.x = 0.22
+  lightShield.add(secMirror)
+
+  // ── B. Articulated Aperture Door ──
+  const doorGroup = new THREE.Group()
+  doorGroup.position.set(0.39, 0.19, 0)
+  doorGroup.rotation.z = Math.PI / 2.2 // Tilted open ~82 degrees
+  hstVessel.add(doorGroup)
+
+  const doorGeo = new THREE.CylinderGeometry(0.205, 0.205, 0.018, 24)
+  doorGeo.rotateZ(Math.PI / 2)
   geometriesToDispose.push(doorGeo)
-  const doorMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, side: THREE.DoubleSide })
+  const doorMat = new THREE.MeshStandardMaterial({
+    color: 0xe2e8f0,
+    metalness: 0.88,
+    roughness: 0.22,
+  })
   materialsToDispose.push(doorMat)
-  const doorMesh = new THREE.Mesh(doorGeo, doorMat)
-  doorMesh.position.set(0.52, 0.12, 0)
-  doorMesh.rotation.z = Math.PI / 3
-  hstVessel.add(doorMesh)
+  const door = new THREE.Mesh(doorGeo, doorMat)
+  doorGroup.add(door)
 
-  // Dual Hubble Solar Array Wings
-  const hstWingGeo = new THREE.BoxGeometry(0.18, 0.02, 0.65)
+  // Door hinge bracket
+  const hingeGeo = new THREE.BoxGeometry(0.06, 0.04, 0.12)
+  geometriesToDispose.push(hingeGeo)
+  const hinge = new THREE.Mesh(hingeGeo, spiderMat)
+  doorGroup.add(hinge)
+
+  // ── C. Aft Shroud (Primary Mirror & Science Instrument Bay) ──
+  const aftShroudGeo = new THREE.CylinderGeometry(0.265, 0.265, 0.68, 24)
+  aftShroudGeo.rotateZ(Math.PI / 2)
+  geometriesToDispose.push(aftShroudGeo)
+  const aftShroudMat = new THREE.MeshStandardMaterial({
+    color: 0xf1f5f9,
+    metalness: 0.88,
+    roughness: 0.25,
+  })
+  materialsToDispose.push(aftShroudMat)
+  const aftShroud = new THREE.Mesh(aftShroudGeo, aftShroudMat)
+  aftShroud.position.x = -0.38
+  hstVessel.add(aftShroud)
+
+  // Transition Collar Ring between Light Shield and Aft Shroud
+  const collarGeo = new THREE.TorusGeometry(0.268, 0.015, 8, 32)
+  collarGeo.rotateY(Math.PI / 2)
+  geometriesToDispose.push(collarGeo)
+  const collar = new THREE.Mesh(collarGeo, spiderMat)
+  collar.position.x = -0.04
+  hstVessel.add(collar)
+
+  // ── D. Yellow EVA Handrails & Shuttle Berthing Hardware ──
+  const handrailMat = new THREE.MeshStandardMaterial({
+    color: 0xfacc15, // Authentic NASA EVA yellow
+    metalness: 0.2,
+    roughness: 0.4,
+  })
+  materialsToDispose.push(handrailMat)
+  const railGeo = new THREE.BoxGeometry(0.35, 0.012, 0.012)
+  geometriesToDispose.push(railGeo)
+
+  for (let r = 0; r < 4; r++) {
+    const rAngle = (r * Math.PI) / 2
+    const rail = new THREE.Mesh(railGeo, handrailMat)
+    rail.position.set(-0.38, Math.cos(rAngle) * 0.28, Math.sin(rAngle) * 0.28)
+    hstVessel.add(rail)
+  }
+
+  // Shuttle Berthing Trunnion Pins
+  const pinGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.16, 8)
+  geometriesToDispose.push(pinGeo)
+  const pin1 = new THREE.Mesh(pinGeo, spiderMat)
+  pin1.position.set(-0.35, 0, 0.34)
+  pin1.rotation.x = Math.PI / 2
+  hstVessel.add(pin1)
+
+  const pin2 = new THREE.Mesh(pinGeo, spiderMat)
+  pin2.position.set(-0.35, 0, -0.34)
+  pin2.rotation.x = Math.PI / 2
+  hstVessel.add(pin2)
+
+  // ── E. Dual Rigid Solar Array Wings on Articulated Booms ──
+  const hstWingGeo = new THREE.PlaneGeometry(0.26, 0.95)
   geometriesToDispose.push(hstWingGeo)
+
+  const boomGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.32, 8)
+  geometriesToDispose.push(boomGeo)
+
+  // Port Solar Wing
+  const portBoom = new THREE.Mesh(boomGeo, spiderMat)
+  portBoom.position.set(-0.06, 0, 0.42)
+  portBoom.rotation.x = Math.PI / 2
+  hstVessel.add(portBoom)
+
   const hstWing1 = new THREE.Mesh(hstWingGeo, solarMat)
-  hstWing1.position.set(0, 0, 0.52)
+  hstWing1.position.set(-0.06, 0, 0.88)
+  hstWing1.rotation.x = Math.PI / 2
   hstVessel.add(hstWing1)
 
+  // Starboard Solar Wing
+  const stbdBoom = new THREE.Mesh(boomGeo, spiderMat)
+  stbdBoom.position.set(-0.06, 0, -0.42)
+  stbdBoom.rotation.x = Math.PI / 2
+  hstVessel.add(stbdBoom)
+
   const hstWing2 = new THREE.Mesh(hstWingGeo, solarMat)
-  hstWing2.position.set(0, 0, -0.52)
+  hstWing2.position.set(-0.06, 0, -0.88)
+  hstWing2.rotation.x = Math.PI / 2
   hstVessel.add(hstWing2)
 
-  // High-Gain Communication Dish
-  const dishGeo = new THREE.SphereGeometry(0.09, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2)
+  // ── F. Dual Steerable High-Gain Antenna Dishes (HGA) ──
+  const dishGeo = new THREE.ConeGeometry(0.14, 0.06, 20, 1, true)
   geometriesToDispose.push(dishGeo)
-  const dishMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 })
+  const dishMat = new THREE.MeshStandardMaterial({
+    color: 0xf8fafc,
+    metalness: 0.9,
+    roughness: 0.2,
+    side: THREE.DoubleSide,
+  })
   materialsToDispose.push(dishMat)
-  const dishMesh = new THREE.Mesh(dishGeo, dishMat)
-  dishMesh.position.set(-0.25, 0.22, 0)
-  dishMesh.rotation.x = Math.PI
-  hstVessel.add(dishMesh)
+
+  const mastGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.38, 8)
+  geometriesToDispose.push(mastGeo)
+
+  // Top HGA
+  const mast1 = new THREE.Mesh(mastGeo, spiderMat)
+  mast1.position.set(-0.45, 0.38, 0)
+  mast1.rotation.z = Math.PI / 4
+  hstVessel.add(mast1)
+
+  const dish1 = new THREE.Mesh(dishGeo, dishMat)
+  dish1.position.set(-0.58, 0.52, 0)
+  dish1.rotation.z = -Math.PI / 3
+  hstVessel.add(dish1)
+
+  // Bottom HGA
+  const mast2 = new THREE.Mesh(mastGeo, spiderMat)
+  mast2.position.set(-0.45, -0.38, 0)
+  mast2.rotation.z = -Math.PI / 4
+  hstVessel.add(mast2)
+
+  const dish2 = new THREE.Mesh(dishGeo, dishMat)
+  dish2.position.set(-0.58, -0.52, 0)
+  dish2.rotation.z = Math.PI / 3
+  hstVessel.add(dish2)
+
+  // ── G. 4 Magnetic Torquer Tubes along Forward Shield ──
+  const torquerGeo = new THREE.CylinderGeometry(0.01, 0.01, 0.58, 8)
+  torquerGeo.rotateZ(Math.PI / 2)
+  geometriesToDispose.push(torquerGeo)
+  for (let t = 0; t < 4; t++) {
+    const tAngle = (t * Math.PI) / 2 + Math.PI / 4
+    const torquer = new THREE.Mesh(torquerGeo, spiderMat)
+    torquer.position.set(0.08, Math.cos(tAngle) * 0.21, Math.sin(tAngle) * 0.21)
+    hstVessel.add(torquer)
+  }
+
+  // Aft Bulkhead Avionics Status LED
+  const ledGeo = new THREE.SphereGeometry(0.035, 8, 8)
+  geometriesToDispose.push(ledGeo)
+  const ledMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+  materialsToDispose.push(ledMat)
+  const aftLed = new THREE.Mesh(ledGeo, ledMat)
+  aftLed.position.set(-0.73, 0, 0)
+  hstVessel.add(aftLed)
 
   hstVessel.userData = {
     id: 'hubble',
