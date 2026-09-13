@@ -15,6 +15,7 @@ import { createTorusStation } from './torusStation.js'
 import { createComet } from './cometGenerator.js'
 import { createAsteroidBelt } from './asteroidBelt.js'
 import { createAtmosphereMesh } from './atmosphereShader.js'
+import TrappistObservatoryHUD from './TrappistObservatoryHUD.jsx'
 import './SolarSystem3D.css'
 
 // ── Sol Planetary Astronomical Configuration ────────────────────────────────
@@ -214,6 +215,44 @@ export default function SolarSystem3D({ onReturn }) {
     cityLightsRef.current = cityLights
   }, [cityLights])
 
+  // TRAPPIST-1 Numerical Simulation Core & Virtual Observatory state
+  const exosystemRef = useRef(null)
+  const [exosystemCore, setExosystemCore] = useState(null)
+  const [selectedExoPlanetId, setSelectedExoPlanetId] = useState('trappist_1e')
+  const [isObservatoryMode, setIsObservatoryMode] = useState(false)
+
+  const handleSelect1eModel = useCallback((modelKey) => {
+    exosystemRef.current?.apply1eModel(modelKey)
+  }, [])
+
+  const handleSetEccentricityExaggeration = useCallback((factor) => {
+    exosystemRef.current?.updateOrbitExaggeration(factor)
+  }, [])
+
+  const handleSetSpectralBand = useCallback((bandKey) => {
+    exosystemRef.current?.applySpectralBand(bandKey)
+  }, [])
+
+  const handleToggleObservatoryMode = useCallback(() => {
+    setIsObservatoryMode(prev => {
+      const next = !prev
+      if (exosystemRef.current) {
+        if (next) {
+          targetLookAtRef.current.copy(exosystemRef.current.position)
+          targetCamPosRef.current = new THREE.Vector3(0, 0, 520)
+          targetFovRef.current = 32
+          setArrivalTelemetry('✦ OBSERVATORY ACTIVE // TELESCOPIC TRANSIT & SPECTRAL ALIGNMENT')
+        } else {
+          targetCamPosRef.current = new THREE.Vector3(0, 260, 540)
+          targetFovRef.current = 50
+          setArrivalTelemetry('✦ CINEMATIC 3D MODE // ORBITAL COMPOSITION RESTORED')
+        }
+        setTimeout(() => setArrivalTelemetry(''), 2500)
+      }
+      return next
+    })
+  }, [])
+
   // Shared animation references
   const targetCamPosRef = useRef(null)
   const targetLookAtRef = useRef(new THREE.Vector3(0, 0, 0))
@@ -370,6 +409,9 @@ export default function SolarSystem3D({ onReturn }) {
     // ── 6. Secondary Exosystem (TRAPPIST-1 Red Dwarf System) ────────────────
     const exosystem = createExosystem()
     scene.add(exosystem.group)
+    exosystemRef.current = exosystem
+    container.exosystem = exosystem
+    setExosystemCore(exosystem.simulationCore)
 
     // ── 7. Interplanetary Meteor Shower Engine ──────────────────────────────
     const meteorShower = createMeteorShower()
@@ -696,6 +738,9 @@ export default function SolarSystem3D({ onReturn }) {
         realm = 'andromeda'
       } else if (targetData.systemGroup || targetData.id?.startsWith('trappist')) {
         realm = 'exosystem'
+        if (targetData.id?.startsWith('trappist_1')) {
+          setSelectedExoPlanetId(targetData.id)
+        }
       } else if (targetData.id === 'gateway') {
         realm = 'sol'
       }
@@ -838,7 +883,9 @@ export default function SolarSystem3D({ onReturn }) {
         targetFovRef.current = 50
         targetLookAtRef.current = exosystem.position.clone()
         targetCamPosRef.current = exosystem.position.clone().add(new THREE.Vector3(0, 260, 540))
-        setArrivalTelemetry('✦ REALM FOCUS // TRAPPIST-1 RED DWARF EXOSYSTEM')
+        setSelectedPlanet('2MASS J23062928-0502285 (TRAPPIST-1)')
+        setSelectedExoPlanetId('trappist_1e')
+        setArrivalTelemetry('✦ REALM FOCUS // TRAPPIST-1 NUMERICAL EXOSYSTEM & OBSERVATORY')
       } else if (realm === 'andromeda') {
         targetFovRef.current = 58
         targetLookAtRef.current = andromeda.group.position.clone()
@@ -871,6 +918,7 @@ export default function SolarSystem3D({ onReturn }) {
         container.switchRealm('exosystem')
       } else if (id === 'trappist_star') {
         focusOnTarget(exosystem.starMesh.userData)
+        setSelectedExoPlanetId('trappist_1e')
       } else if (id === 'andromeda_overview') {
         container.switchRealm('andromeda')
       } else if (id === 'andromeda_core') {
@@ -883,6 +931,7 @@ export default function SolarSystem3D({ onReturn }) {
         }
         const exoFound = exosystem.exoplanetObjects.find(p => p.data.id === id)
         if (exoFound) {
+          setSelectedExoPlanetId(id)
           focusOnTarget(exoFound.mesh.userData)
         }
       }
@@ -1415,7 +1464,7 @@ export default function SolarSystem3D({ onReturn }) {
                 {p.id === 'trappist_1b' ? '🌋 1b (LAVA)' :
                  p.id === 'trappist_1c' ? '🏜️ 1c (DESERT)' :
                  p.id === 'trappist_1d' ? '🌅 1d (TWILIGHT)' :
-                 p.id === 'trappist_1e' ? '🌍 1e (EYEBALL EARTH)' :
+                 p.id === 'trappist_1e' ? '🌍 1e (HABITABLE CANDIDATE)' :
                  p.id === 'trappist_1f' ? '🌊 1f (OCEAN)' :
                  p.id === 'trappist_1g' ? '🌫️ 1g (GLACIAL)' : '❄️ 1h (SNOWBALL)'}
               </button>
@@ -1440,6 +1489,19 @@ export default function SolarSystem3D({ onReturn }) {
           </div>
         )}
       </div>
+
+      {/* TRAPPIST-1 Numerical Simulation Core & Virtual Observatory Dashboard */}
+      {activeRealm === 'exosystem' && exosystemCore && (
+        <TrappistObservatoryHUD
+          simulationCore={exosystemCore}
+          selectedPlanetId={selectedExoPlanetId}
+          onSelect1eModel={handleSelect1eModel}
+          onSetEccentricityExaggeration={handleSetEccentricityExaggeration}
+          onSetSpectralBand={handleSetSpectralBand}
+          isObservatoryMode={isObservatoryMode}
+          onToggleObservatoryMode={handleToggleObservatoryMode}
+        />
+      )}
 
       {/* Cosmic Macro Field Altitude Gauge */}
       {cosmicAltitude && (

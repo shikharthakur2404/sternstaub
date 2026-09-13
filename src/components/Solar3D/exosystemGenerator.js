@@ -1,11 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// exosystemGenerator.js — TRAPPIST-1 Red Dwarf Exoplanetary System
-// Authentic astrophysical simulation of the famous 7 Earth-sized rocky planets
-// (b, c, d, e, f, g, h) in Laplace orbital resonance orbiting an ultra-cool
-// M8V red dwarf host star featuring magnetic coronal prominence loops.
+// exosystemGenerator.js — TRAPPIST-1 Numerical Simulation & Observational System
+// Driven by the underlying SimulationCore: Keplerian state vectors, Laplace
+// resonance chain, quadratic limb darkening, stochastic flares, and scale heights.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import * as THREE from 'three'
+import { SimulationCore } from '../../simulation/SimulationCore.js'
 import { createAtmosphereMesh } from './atmosphereShader.js'
 import {
   createRedDwarfTexture,
@@ -13,6 +13,8 @@ import {
   createTrappist1cTexture,
   createTrappist1dTexture,
   createTrappist1eTexture,
+  createTrappist1eModelATexture,
+  createTrappist1eModelBTexture,
   createTrappist1fTexture,
   createTrappist1gTexture,
   createTrappist1hTexture,
@@ -21,9 +23,9 @@ import {
 export const EXOPLANET_CONFIG = [
   {
     id: 'trappist_1b',
-    name: 'TRAPPIST-1b (Molten Furnace)',
+    name: 'TRAPPIST-1b',
     type: 'Ultra-Hot Volcanic Basalt',
-    desc: 'Period: 1.51 d • Temp: 750 K • Tidally locked volcanic lava caldera & magma fissures',
+    desc: 'Period: 1.511 d • Temp: ~400K (750K Sub-stellar) • Tidally locked volcanic lava caldera & magma fissures',
     r: 3.6,
     dist: 44,
     speed: 0.046,
@@ -37,9 +39,9 @@ export const EXOPLANET_CONFIG = [
   },
   {
     id: 'trappist_1c',
-    name: 'TRAPPIST-1c (Scorched Desert)',
+    name: 'TRAPPIST-1c',
     type: 'Super-Venusian Regolith',
-    desc: 'Period: 2.42 d • Temp: 580 K • Scorched silicate crust, deep tectonic rifts & dust dunes',
+    desc: 'Period: 2.422 d • Temp: ~340K (580K Sub-stellar) • Scorched silicate crust, deep tectonic rifts & dust dunes',
     r: 3.5,
     dist: 60,
     speed: 0.034,
@@ -55,9 +57,9 @@ export const EXOPLANET_CONFIG = [
   },
   {
     id: 'trappist_1d',
-    name: 'TRAPPIST-1d (Twilight Borderland)',
+    name: 'TRAPPIST-1d',
     type: 'Habitable Zone Inner Transition',
-    desc: 'Period: 4.05 d • Temp: 288 K • Sub-stellar desert, narrow twilight ocean & dark-side frost',
+    desc: 'Period: 4.049 d • Temp: ~286K • Sub-stellar desert, narrow twilight ocean & dark-side frost',
     r: 2.8,
     dist: 84,
     speed: 0.024,
@@ -73,9 +75,9 @@ export const EXOPLANET_CONFIG = [
   },
   {
     id: 'trappist_1e',
-    name: 'TRAPPIST-1e (Habitable Eyeball Earth)',
-    type: 'Prime Habitable Eyeball World',
-    desc: 'Period: 6.10 d • Temp: 251 K • Deep liquid ocean, infrared crimson flora, hurricane & ice shield',
+    name: 'TRAPPIST-1e',
+    type: 'Habitable Eyeball Candidate',
+    desc: 'Period: 6.101 d • Temp: ~249K • Earth-sized rocky world, tidal libration ±0.58°, multi-model climate testbed',
     r: 3.2,
     dist: 114,
     speed: 0.018,
@@ -92,9 +94,9 @@ export const EXOPLANET_CONFIG = [
   },
   {
     id: 'trappist_1f',
-    name: 'TRAPPIST-1f (Volatile Oceanus)',
+    name: 'TRAPPIST-1f',
     type: 'Habitable Zone Ocean World',
-    desc: 'Period: 9.21 d • Temp: 219 K • Deep global sapphire ocean, island archipelagos & creeping ice caps',
+    desc: 'Period: 9.208 d • Temp: ~217K • Deep global sapphire ocean, island archipelagos & creeping ice caps',
     r: 3.4,
     dist: 152,
     speed: 0.013,
@@ -111,9 +113,9 @@ export const EXOPLANET_CONFIG = [
   },
   {
     id: 'trappist_1g',
-    name: 'TRAPPIST-1g (Glacial Super-Earth)',
-    type: 'Glacial Ocean / Sub-Neptune Border',
-    desc: 'Period: 12.35 d • Temp: 198 K • Pack-ice shelves, slush waterways, cryo-rifts & cyan haze',
+    name: 'TRAPPIST-1g',
+    type: 'Glacial Super-Earth',
+    desc: 'Period: 12.352 d • Temp: ~197K • Pack-ice shelves, slush waterways, cryo-rifts & cyan haze',
     r: 3.7,
     dist: 194,
     speed: 0.010,
@@ -129,9 +131,9 @@ export const EXOPLANET_CONFIG = [
   },
   {
     id: 'trappist_1h',
-    name: 'TRAPPIST-1h (Frigid Snowball)',
+    name: 'TRAPPIST-1h',
     type: 'Outer Nitrogen Ice Dwarf',
-    desc: 'Period: 20.00 d • Temp: 173 K • Perpetual nitrogen/methane ice sheets & cryo-frost dunes',
+    desc: 'Period: 18.77 d (NASA Archive) • Temp: ~171K • Resonant 7-body chain terminus, nitrogen/methane ice sheets',
     r: 2.6,
     dist: 242,
     speed: 0.007,
@@ -146,13 +148,14 @@ export const EXOPLANET_CONFIG = [
 ]
 
 /**
- * Constructs the authentic TRAPPIST-1 Exoplanetary System.
+ * Constructs the authentic numerical TRAPPIST-1 Exoplanetary System.
  */
 export function createExosystem() {
+  const simulationCore = new SimulationCore()
+
   const exosystemGroup = new THREE.Group()
   exosystemGroup.name = 'trappist-exosystem'
 
-  // Positioned across the local interstellar gulf
   const EXOSYSTEM_POS = new THREE.Vector3(-6500, 600, 5800)
   exosystemGroup.position.copy(EXOSYSTEM_POS)
 
@@ -162,15 +165,74 @@ export function createExosystem() {
   const geometriesToDispose = []
   const materialsToDispose = []
 
-  // ── 1. Central Host Star (TRAPPIST-1 M8V Ultra-Cool Red Dwarf) ────────────
+  // ── 1. Host Star with Quadratic Limb Darkening & Starspots ────────────────
   const starTexture = createRedDwarfTexture()
   texturesToDispose.push(starTexture)
 
-  const starGeo = new THREE.SphereGeometry(16, 48, 48)
+  const starGeo = new THREE.SphereGeometry(16, 64, 64)
   geometriesToDispose.push(starGeo)
-  const starMat = new THREE.MeshBasicMaterial({ map: starTexture })
-  materialsToDispose.push(starMat)
-  const starMesh = new THREE.Mesh(starGeo, starMat)
+
+  // Custom Limb-Darkening Shader for M8V Photosphere
+  const starShaderMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uTexture: { value: starTexture },
+      uBaseColor: { value: new THREE.Color(0xef4444) },
+      uLimbU1: { value: 0.62 },
+      uLimbU2: { value: 0.18 },
+      uFlareIntensity: { value: 0.0 },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+
+      void main() {
+        vUv = uv;
+        vNormal = normalize(normalMatrix * normal);
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vViewPosition = -mvPosition.xyz;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform sampler2D uTexture;
+      uniform vec3 uBaseColor;
+      uniform float uLimbU1;
+      uniform float uLimbU2;
+      uniform float uFlareIntensity;
+
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+
+      void main() {
+        vec3 normal = normalize(vNormal);
+        vec3 viewDir = normalize(vViewPosition);
+
+        // mu = cos(theta) where 1.0 is disk center, 0.0 is limb
+        float mu = max(0.0, dot(normal, viewDir));
+
+        // Quadratic limb darkening law: I(mu) = I(0) * [1 - u1*(1-mu) - u2*(1-mu)^2]
+        float oneMinusMu = 1.0 - mu;
+        float limbProfile = 1.0 - uLimbU1 * oneMinusMu - uLimbU2 * oneMinusMu * oneMinusMu;
+
+        vec4 texColor = texture2D(uTexture, vUv);
+
+        // Photospheric granulation & starspot tinting
+        vec3 starColor = texColor.rgb * uBaseColor * limbProfile * 1.5;
+
+        // Flare brightening burst
+        starColor += vec3(1.0, 0.85, 0.6) * uFlareIntensity * 2.5;
+
+        gl_FragColor = vec4(starColor, 1.0);
+      }
+    `,
+  })
+  materialsToDispose.push(starShaderMat)
+
+  const starMesh = new THREE.Mesh(starGeo, starShaderMat)
   exosystemGroup.add(starMesh)
 
   // Inner Ruby Plasma Corona Shell
@@ -201,7 +263,7 @@ export function createExosystem() {
   const outerCoronaMesh = new THREE.Mesh(outerCoronaGeo, outerCoronaMat)
   starMesh.add(outerCoronaMesh)
 
-  // Dynamic Magnetic Coronal Prominence Loops (Arched Plasma Jets)
+  // Dynamic Magnetic Coronal Prominence Loops
   const prominenceLoops = []
   const prominenceMat = new THREE.MeshBasicMaterial({
     color: 0xff3b30,
@@ -234,7 +296,7 @@ export function createExosystem() {
   createProminenceLoop(3.4, 3.8, 2.8)
   createProminenceLoop(4.9, 4.8, 3.6)
 
-  // Local M-dwarf Red/Warm PointLight (dimmer, deep warm crimson-orange)
+  // Local M-dwarf PointLight
   const localLight = new THREE.PointLight(0xff6b6b, 3.4, 2800, 0.35)
   localLight.position.set(0, 0, 0)
   exosystemGroup.add(localLight)
@@ -242,40 +304,43 @@ export function createExosystem() {
   starMesh.userData = {
     id: 'trappist_star',
     name: '2MASS J23062928-0502285 (TRAPPIST-1)',
-    desc: 'M8V Ultra-Cool Red Dwarf • Teff: 2566 K • Intense Magnetic Prominences & Flares',
+    desc: 'M8V Ultra-Cool Red Dwarf • Teff: 2566 K • Quadratic Limb Darkening & Active Magnetic Prominences',
     radius: 16,
     mesh: starMesh,
     systemGroup: exosystemGroup,
   }
   raycastTargets.push(starMesh)
 
-  // ── 2. The 7 Terrestrial Worlds in Laplace Resonance ───────────────────────
+  // ── 2. The 7 Terrestrial Worlds Driven by Keplerian Orbital Engine ─────────
+  const orbitLines = []
+  const model1eTextures = {
+    MODEL_A: createTrappist1eModelATexture(),
+    MODEL_B: createTrappist1eModelBTexture(),
+    MODEL_C: createTrappist1eTexture(),
+  }
+  texturesToDispose.push(...Object.values(model1eTextures))
+
   EXOPLANET_CONFIG.forEach(p => {
-    // Crisp Orbital Trace Ring
-    const orbitCurve = new THREE.EllipseCurve(0, 0, p.dist, p.dist, 0, Math.PI * 2, false, 0)
-    const points = orbitCurve.getPoints(120)
+    // 1. Keplerian Orbit Path Polyline
+    const orbitPoints = simulationCore.orbitalModel.generateOrbitPath(p, 128)
     const orbitGeo = new THREE.BufferGeometry().setFromPoints(
-      points.map(pt => new THREE.Vector3(pt.x, 0, pt.y))
+      orbitPoints.map(pt => new THREE.Vector3(pt.x, pt.y, pt.z))
     )
     geometriesToDispose.push(orbitGeo)
+
     const orbitMat = new THREE.LineBasicMaterial({
       color: p.orbitColor || 0x38bdf8,
       transparent: true,
-      opacity: p.id === 'trappist_1e' ? 0.35 : 0.18,
+      opacity: p.id === 'trappist_1e' ? 0.45 : 0.22,
     })
     materialsToDispose.push(orbitMat)
     const orbitLine = new THREE.Line(orbitGeo, orbitMat)
-    if (p.inclination) orbitLine.rotation.x = p.inclination
     exosystemGroup.add(orbitLine)
+    orbitLines.push({ id: p.id, line: orbitLine, config: p })
 
-    // Orbital Pivot
-    const pivot = new THREE.Group()
-    if (p.inclination) pivot.rotation.x = p.inclination
-    exosystemGroup.add(pivot)
-
-    // Planet Sphere Mesh
-    const pTex = p.getTexture()
-    texturesToDispose.push(pTex)
+    // 2. Planet Mesh
+    const pTex = p.id === 'trappist_1e' ? model1eTextures.MODEL_C : p.getTexture()
+    if (p.id !== 'trappist_1e') texturesToDispose.push(pTex)
 
     const pGeo = new THREE.SphereGeometry(p.r, 48, 48)
     geometriesToDispose.push(pGeo)
@@ -287,7 +352,7 @@ export function createExosystem() {
     materialsToDispose.push(pMat)
     const pMesh = new THREE.Mesh(pGeo, pMat)
     pMesh.rotation.z = p.tilt
-    pMesh.position.x = p.dist
+    exosystemGroup.add(pMesh)
 
     pMesh.userData = {
       id: p.id,
@@ -297,10 +362,9 @@ export function createExosystem() {
       mesh: pMesh,
       systemGroup: exosystemGroup,
     }
-    pivot.add(pMesh)
     raycastTargets.push(pMesh)
 
-    // Physical Rayleigh + Mie Atmospheric Scattering Shell
+    // 3. Physical Rayleigh/Mie Scattering Shell
     let atmoObj = null
     if (p.hasAtmosphere) {
       atmoObj = createAtmosphereMesh({
@@ -317,7 +381,7 @@ export function createExosystem() {
       pMesh.add(atmoObj.mesh)
     }
 
-    // Swirling Cloud Shell for Habitable Worlds (1e & 1f)
+    // 4. Clouds (1e & 1f)
     let cloudMesh = null
     if (p.hasClouds) {
       const cloudGeo = new THREE.SphereGeometry(p.r * 1.015, 36, 36)
@@ -333,44 +397,140 @@ export function createExosystem() {
       pMesh.add(cloudMesh)
     }
 
+    // 5. Polar Auroral Arcs (1e & 1d)
+    let auroraMesh = null
+    if (p.id === 'trappist_1e' || p.id === 'trappist_1d') {
+      const auroraGeo = new THREE.RingGeometry(p.r * 0.45, p.r * 0.85, 32)
+      geometriesToDispose.push(auroraGeo)
+      const auroraMat = new THREE.MeshBasicMaterial({
+        color: 0x34d399,
+        transparent: true,
+        opacity: 0.0,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+      })
+      materialsToDispose.push(auroraMat)
+      auroraMesh = new THREE.Mesh(auroraGeo, auroraMat)
+      auroraMesh.rotation.x = Math.PI / 2
+      auroraMesh.position.y = p.r * 0.88
+      pMesh.add(auroraMesh)
+    }
+
     exoplanetObjects.push({
       data: p,
-      pivot,
       mesh: pMesh,
+      material: pMat,
+      atmoObj,
       cloudMesh,
+      auroraMesh,
       moons: [],
-      angle: Math.random() * Math.PI * 2,
     })
   })
 
-  // ── 3. Animation Loop Handler ─────────────────────────────────────────────
+  // ── 3. Redraw Orbits on Eccentricity Exaggeration Change ──────────────────
+  const updateOrbitExaggeration = (factor) => {
+    simulationCore.setEccentricityExaggeration(factor)
+    orbitLines.forEach(item => {
+      const newPts = simulationCore.orbitalModel.generateOrbitPath(item.config, 128)
+      item.line.geometry.dispose()
+      item.line.geometry = new THREE.BufferGeometry().setFromPoints(
+        newPts.map(pt => new THREE.Vector3(pt.x, pt.y, pt.z))
+      )
+    })
+  }
+
+  // ── 4. Apply Selected TRAPPIST-1e Scientific Model ────────────────────────
+  const apply1eModel = (modelKey) => {
+    simulationCore.set1eModel(modelKey)
+    const obj1e = exoplanetObjects.find(po => po.data.id === 'trappist_1e')
+    if (!obj1e) return
+
+    const tex = model1eTextures[modelKey] || model1eTextures.MODEL_C
+    obj1e.material.map = tex
+    obj1e.material.needsUpdate = true
+
+    if (modelKey === 'MODEL_A') {
+      if (obj1e.atmoObj) obj1e.atmoObj.mesh.visible = false
+      if (obj1e.cloudMesh) obj1e.cloudMesh.visible = false
+    } else if (modelKey === 'MODEL_B') {
+      if (obj1e.atmoObj) {
+        obj1e.atmoObj.mesh.visible = true
+        obj1e.atmoObj.material.uniforms.uDayColor.value.setHex(0x38bdf8)
+      }
+      if (obj1e.cloudMesh) obj1e.cloudMesh.visible = true
+    } else {
+      // Model C: Ocean Eyeball
+      if (obj1e.atmoObj) {
+        obj1e.atmoObj.mesh.visible = true
+        obj1e.atmoObj.material.uniforms.uDayColor.value.setHex(0x0284c7)
+      }
+      if (obj1e.cloudMesh) obj1e.cloudMesh.visible = true
+    }
+  }
+
+  // ── 5. Set Spectral Passband (Visible, NIR, UV, X-Ray) ───────────────────
+  const applySpectralBand = (bandKey) => {
+    simulationCore.setSpectralBand(bandKey)
+    const band = simulationCore.radiationModel.getActiveBand()
+    const color = new THREE.Color(band.baseColorHex)
+    starShaderMat.uniforms.uBaseColor.value.copy(color)
+    innerCoronaMat.color.copy(color)
+    outerCoronaMat.color.set(band.coronaColorHex)
+    localLight.color.copy(color)
+    localLight.intensity = 3.4 * band.ambientGain
+  }
+
+  // ── 6. Physics Animation Loop Handler ────────────────────────────────────
   let flareTimer = 0
 
   const updateExosystem = (delta, speedMult) => {
-    // Star Convective Rotation & Corona
-    starMesh.rotation.y += 0.002 * speedMult
-    innerCoronaMesh.rotation.y -= 0.003 * speedMult
-    outerCoronaMesh.rotation.y += 0.001 * speedMult
+    // 1. Advance Numerical Simulation Core
+    const simResult = simulationCore.tick(delta * speedMult)
+    const { stellarState, planetStates } = simResult
 
-    // Coronal Prominence Loop Flutter
+    // 2. Star Convection, Limb Darkening & Flares
+    starMesh.rotation.y += 0.0015 * speedMult
+    starShaderMat.uniforms.uTime.value += delta * speedMult
+    starShaderMat.uniforms.uFlareIntensity.value = stellarState.totalFlareIntensity
+
+    // Corona & Prominences respond to flare events
+    const flareGain = 1.0 + stellarState.totalFlareIntensity * 3.0
+    innerCoronaMat.opacity = Math.min(0.85, 0.40 * flareGain)
+    outerCoronaMat.opacity = Math.min(0.65, 0.22 * flareGain)
+
     flareTimer += delta * speedMult
     prominenceLoops.forEach(l => {
-      l.group.rotation.x = Math.sin(flareTimer * l.speed) * 0.12
+      l.group.rotation.x = Math.sin(flareTimer * l.speed) * (0.12 + stellarState.totalFlareIntensity * 0.25)
     })
 
-    // Advance 7 Resonant Terrestrial Planets
+    // 3. Update Planets from Keplerian State Vectors
     exoplanetObjects.forEach(po => {
-      // Advance Keplerian resonance orbit
-      po.angle += po.data.speed * delta * 2.2 * speedMult
-      po.mesh.position.x = Math.cos(po.angle) * po.data.dist
-      po.mesh.position.z = Math.sin(po.angle) * po.data.dist
+      const pState = planetStates.get(po.data.id)
+      if (!pState) return
 
-      // Authentic 1:1 Tidal Locking: sub-stellar hemisphere permanently faces host star
-      po.mesh.rotation.y = -po.angle + Math.PI / 2
+      // Position from true Keplerian orbit:
+      po.mesh.position.set(pState.position.x, pState.position.y, pState.position.z)
 
-      // Cloud drift relative to locked surface
+      // Authentic 1:1 Tidal Locking + Optical Libration:
+      // Star-facing meridian oscillates by delta theta = 2*e*sin(M)
+      const librationRad = (pState.opticalLibrationDeg * Math.PI) / 180.0
+      po.mesh.rotation.y = -pState.trueLongitude + Math.PI / 2.0 + librationRad
+
+      // Scale height drives atmosphere mesh expansion:
+      if (po.atmoObj && pState.atmo) {
+        const atmoScale = pState.atmo.visualAtmosphereScale || 1.04
+        po.atmoObj.mesh.scale.set(atmoScale, atmoScale, atmoScale)
+      }
+
+      // Auroral intensity spikes during stellar flares:
+      if (po.auroraMesh && pState.spaceWeather) {
+        po.auroraMesh.material.opacity = pState.spaceWeather.auroralActivity * 0.75
+        po.auroraMesh.rotation.z += 0.02 * speedMult
+      }
+
+      // Clouds move independently from tidally locked surface:
       if (po.cloudMesh) {
-        po.cloudMesh.rotation.y += 0.004 * speedMult
+        po.cloudMesh.rotation.y += 0.003 * speedMult
       }
     })
   }
@@ -386,7 +546,11 @@ export function createExosystem() {
     starMesh,
     raycastTargets,
     exoplanetObjects,
+    simulationCore,
     updateExosystem,
+    updateOrbitExaggeration,
+    apply1eModel,
+    applySpectralBand,
     dispose,
     position: EXOSYSTEM_POS,
   }

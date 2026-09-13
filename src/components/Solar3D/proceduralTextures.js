@@ -312,6 +312,94 @@ export function createTrappist1eTexture() {
 }
 
 /**
+ * Procedural Model A: Desiccated Bare Rock (TRAPPIST-1e)
+ * Airless cratered basalt, volcanic fissures, and extreme thermal day/night contrast.
+ */
+export function createTrappist1eModelATexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1024
+  canvas.height = 512
+  const ctx = canvas.getContext('2d')
+  const imgData = ctx.getImageData(0, 0, 1024, 512)
+  const data = imgData.data
+
+  for (let y = 0; y < 512; y++) {
+    const ny = y / 512
+    for (let x = 0; x < 1024; x++) {
+      const nx = x / 1024
+      const idx = (y * 1024 + x) * 4
+
+      const dx = (nx - 0.5) * 2.0
+      const dy = (ny - 0.5) * 2.0
+      const d = Math.sqrt(dx * dx + dy * dy)
+
+      // Regolith and crater noise
+      const craterNoise = Math.sin(nx * 48.0 + ny * 24.0) * Math.cos(nx * 20.0 - ny * 36.0)
+      const microCrater = Math.sin(nx * 120.0) * Math.cos(ny * 90.0) * 8.0
+
+      // Sub-stellar scorched basalt vs cold nightside regolith
+      const isDayside = d < 0.85
+      let baseVal = isDayside ? (65 - d * 30 + craterNoise * 18 + microCrater) : (30 + craterNoise * 12 + microCrater)
+      baseVal = Math.max(15, Math.min(130, baseVal))
+
+      const r = Math.floor(baseVal * 1.15)
+      const g = Math.floor(baseVal * 0.95)
+      const b = Math.floor(baseVal * 0.85)
+
+      data[idx]     = r
+      data[idx + 1] = g
+      data[idx + 2] = b
+      data[idx + 3] = 255
+    }
+  }
+  ctx.putImageData(imgData, 0, 0)
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.wrapS = THREE.RepeatWrapping
+  return texture
+}
+
+/**
+ * Procedural Model B: Dense CO2 / N2 Envelope (TRAPPIST-1e)
+ * Thick amber/cyan haze decks, high atmospheric heat advection, and twilight cloud breaks.
+ */
+export function createTrappist1eModelBTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1024
+  canvas.height = 512
+  const ctx = canvas.getContext('2d')
+  const imgData = ctx.getImageData(0, 0, 1024, 512)
+  const data = imgData.data
+
+  for (let y = 0; y < 512; y++) {
+    const ny = y / 512
+    for (let x = 0; x < 1024; x++) {
+      const nx = x / 1024
+      const idx = (y * 1024 + x) * 4
+
+      // Zonal atmospheric jet stream bands
+      const zonalWave = Math.sin(ny * 24.0 + Math.cos(nx * 8.0) * 2.0)
+      const hazeNoise = Math.sin(nx * 32.0 + ny * 16.0) * 0.2 + Math.cos(nx * 14.0 - ny * 28.0) * 0.15
+
+      // Amber/ochre sub-stellar cloud deck with cyan limb haze
+      const r = Math.floor(180 + zonalWave * 25 + hazeNoise * 40)
+      const g = Math.floor(135 + zonalWave * 20 + hazeNoise * 30)
+      const b = Math.floor(85 + zonalWave * 15 + hazeNoise * 20)
+
+      data[idx]     = Math.min(255, Math.max(0, r))
+      data[idx + 1] = Math.min(255, Math.max(0, g))
+      data[idx + 2] = Math.min(255, Math.max(0, b))
+      data[idx + 3] = 255
+    }
+  }
+  ctx.putImageData(imgData, 0, 0)
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.wrapS = THREE.RepeatWrapping
+  return texture
+}
+
+/**
  * Procedural Volatile Ocean World (TRAPPIST-1f)
  * Global turquoise ocean, archipelago chains, humid atmosphere, and polar ice shelves.
  */
