@@ -13,6 +13,7 @@ import { createMeteorShower } from './meteorShower.js'
 import { createEarthSatellites } from './earthSatellites.js'
 import { createTorusStation } from './torusStation.js'
 import { createComet } from './cometGenerator.js'
+import { createAsteroidBelt } from './asteroidBelt.js'
 import './SolarSystem3D.css'
 
 // ── Sol Planetary Astronomical Configuration ────────────────────────────────
@@ -627,26 +628,10 @@ export default function SolarSystem3D({ onReturn }) {
       })
     })
 
-    // ── 11. Main Asteroid Belt (InstancedMesh) ───────────────────────────────
-    const asteroidGeo = new THREE.DodecahedronGeometry(0.75, 1)
-    const asteroidMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.92 })
-    const asteroidCount = 480
-    const asteroidMesh = new THREE.InstancedMesh(asteroidGeo, asteroidMat, asteroidCount)
-    const dummy = new THREE.Object3D()
-
-    for (let i = 0; i < asteroidCount; i++) {
-      const dist = 245 + (Math.random() - 0.5) * 55
-      const angle = Math.random() * Math.PI * 2
-      const y = (Math.random() - 0.5) * 16
-      dummy.position.set(Math.cos(angle) * dist, y, Math.sin(angle) * dist)
-      dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0)
-      const scale = Math.random() * 1.3 + 0.4
-      dummy.scale.set(scale, scale, scale)
-      dummy.updateMatrix()
-      asteroidMesh.setMatrixAt(i, dummy.matrix)
-    }
-    asteroidMesh.instanceMatrix.needsUpdate = true
-    scene.add(asteroidMesh)
+    // ── 11. Photorealistic Main Asteroid Belt (Ceres, Vesta & 2,800 bodies) ──
+    const asteroidBelt = createAsteroidBelt()
+    scene.add(asteroidBelt.group)
+    raycastTargets.push(...asteroidBelt.raycastTargets)
 
     // ── 12. Quantum Singularity Gateway (Return Beacon) ─────────────────────
     const gatewayGroup = new THREE.Group()
@@ -698,6 +683,10 @@ export default function SolarSystem3D({ onReturn }) {
         targetCamPosRef.current = new THREE.Vector3(5.2, 2.6, 5.2)
       } else if (targetData.id === 'comet_c2026') {
         targetCamPosRef.current = new THREE.Vector3(18, 8, 18)
+      } else if (targetData.id === 'ceres') {
+        targetCamPosRef.current = new THREE.Vector3(7.2, 3.6, 7.2)
+      } else if (targetData.id === 'vesta') {
+        targetCamPosRef.current = new THREE.Vector3(6.2, 3.1, 6.2)
       } else {
         const offset = targetData.isMoon
           ? targetRadius * 5.0 + 8
@@ -764,6 +753,10 @@ export default function SolarSystem3D({ onReturn }) {
         if (torusStation) focusOnTarget(torusStation.vesselGroup.userData)
       } else if (id === 'comet_c2026') {
         focusOnTarget(comet.cometVessel.userData)
+      } else if (id === 'ceres') {
+        if (asteroidBelt) focusOnTarget(asteroidBelt.ceresVessel.userData)
+      } else if (id === 'vesta') {
+        if (asteroidBelt) focusOnTarget(asteroidBelt.vestaVessel.userData)
       } else if (id === 'exosystem_overview') {
         container.switchRealm('exosystem')
       } else if (id === 'trappist_star') {
@@ -949,6 +942,9 @@ export default function SolarSystem3D({ onReturn }) {
       // Update Hyperbolic Comet
       comet.updateComet(delta, speedMult)
 
+      // Update Photorealistic Main Asteroid Belt (Ceres, Vesta, 2,800 bodies)
+      asteroidBelt.updateAsteroidBelt(delta, speedMult)
+
       // Update Earth Satellites (ISS & HST)
       if (earthSatellites) {
         earthSatellites.updateSatellites(delta, speedMult)
@@ -1043,6 +1039,7 @@ export default function SolarSystem3D({ onReturn }) {
       comet.dispose()
       if (earthSatellites) earthSatellites.dispose()
       if (torusStation) torusStation.dispose()
+      asteroidBelt.dispose()
       if (earthNightMatRef.current) {
         earthNightMatRef.current.dispose()
       }
@@ -1223,6 +1220,20 @@ export default function SolarSystem3D({ onReturn }) {
               title="Lock on Hyperbolic Interplanetary Comet C/2026"
             >
               ☄️ COMET
+            </button>
+            <button
+              className={`nav-chip ${selectedPlanet === 'Ceres (Dwarf Planet)' ? 'active' : ''}`}
+              onClick={() => mountRef.current?.focusPlanet?.('ceres')}
+              title="Lock on Dwarf Planet Ceres with Occator Crater salt spots"
+            >
+              ⚪ CERES
+            </button>
+            <button
+              className={`nav-chip ${selectedPlanet === 'Vesta (Protoplanet)' ? 'active' : ''}`}
+              onClick={() => mountRef.current?.focusPlanet?.('vesta')}
+              title="Lock on Protoplanet Vesta with Rheasilvia impact basin"
+            >
+              🪨 VESTA
             </button>
           </div>
         )}
