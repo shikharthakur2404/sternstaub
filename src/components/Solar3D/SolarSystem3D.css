@@ -189,7 +189,7 @@
   min-width: 28px;
 }
 
-.diwali-glow-btn {
+.city-lights-btn {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -197,48 +197,48 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: #fef08a;
-  background: rgba(180, 83, 9, 0.28);
-  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #e0f2fe;
+  background: rgba(14, 116, 144, 0.25);
+  border: 1px solid rgba(56, 189, 248, 0.45);
   border-radius: 6px;
   cursor: pointer;
   box-shadow:
-    0 2px 10px rgba(245, 158, 11, 0.2),
+    0 2px 10px rgba(56, 189, 248, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
 }
 
-.diwali-glow-btn:hover {
-  background: rgba(245, 158, 11, 0.42);
-  border-color: #f59e0b;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.45);
+.city-lights-btn:hover {
+  background: rgba(14, 116, 144, 0.42);
+  border-color: #38bdf8;
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.4);
   transform: translateY(-1px);
 }
 
-.diwali-glow-btn.active {
+.city-lights-btn.active {
   color: #fffbeb;
-  background: linear-gradient(135deg, rgba(217, 119, 6, 0.72) 0%, rgba(245, 158, 11, 0.82) 100%);
-  border-color: #fde047;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.7) 0%, rgba(245, 158, 11, 0.75) 100%);
+  border-color: #fbbf24;
   box-shadow:
-    0 0 20px rgba(245, 158, 11, 0.7),
-    0 0 40px rgba(234, 88, 12, 0.4),
+    0 0 20px rgba(245, 158, 11, 0.6),
+    0 0 35px rgba(56, 189, 248, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
   text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
 }
 
-.diwali-icon {
+.city-lights-icon {
   font-size: 13px;
-  filter: drop-shadow(0 0 4px #f59e0b);
+  filter: drop-shadow(0 0 4px #fbbf24);
   display: inline-block;
 }
 
-.diwali-glow-btn.active .diwali-icon {
-  animation: diyaFlicker 1.4s infinite alternate ease-in-out;
+.city-lights-btn.active .city-lights-icon {
+  animation: lightsFlicker 1.4s infinite alternate ease-in-out;
 }
 
-@keyframes diyaFlicker {
-  0% { transform: scale(0.95); filter: drop-shadow(0 0 4px #f59e0b); }
+@keyframes lightsFlicker {
+  0% { transform: scale(0.95); filter: drop-shadow(0 0 4px #38bdf8); }
   50% { transform: scale(1.15); filter: drop-shadow(0 0 10px #fbbf24); }
   100% { transform: scale(1.0); filter: drop-shadow(0 0 6px #f59e0b); }
 }

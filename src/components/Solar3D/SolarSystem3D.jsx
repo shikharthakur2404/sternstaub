@@ -181,13 +181,13 @@ export default function SolarSystem3D({ onReturn }) {
     return () => clearTimeout(timer)
   }, [])
 
-  const [diwaliMode, setDiwaliMode] = useState(true)
-  const diwaliModeRef = useRef(true)
+  const [cityLights, setCityLights] = useState(true)
+  const cityLightsRef = useRef(true)
   const earthNightMatRef = useRef(null)
 
   useEffect(() => {
-    diwaliModeRef.current = diwaliMode
-  }, [diwaliMode])
+    cityLightsRef.current = cityLights
+  }, [cityLights])
 
   // Shared references for animation loop
   const targetCamPosRef = useRef(null)
@@ -212,7 +212,7 @@ export default function SolarSystem3D({ onReturn }) {
       if (e.key === 'w' || e.key === 'W') {
         handleReturnTrigger()
       } else if (e.key === 'd' || e.key === 'D') {
-        setDiwaliMode(prev => !prev)
+        setCityLights(prev => !prev)
       }
     }
     window.addEventListener('keydown', handleKey)
@@ -230,9 +230,9 @@ export default function SolarSystem3D({ onReturn }) {
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x02050b)
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 1, 8000)
-    // Start at superluminal deep space coordinates for cinematic entry swoop
-    camera.position.set(0, 1800, 2400)
+    const camera = new THREE.PerspectiveCamera(60, width / height, 1, 8000)
+    // Start at superluminal deep space coordinates with wide warped perspective
+    camera.position.set(0, 1200, 1800)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
     renderer.setSize(width, height)
@@ -245,7 +245,7 @@ export default function SolarSystem3D({ onReturn }) {
     controls.enableDamping = true
     controls.dampingFactor = 0.05
     controls.maxDistance = 2600
-    controls.minDistance = 15
+    controls.minDistance = 12
 
     // ── 2. Texture Loader & Base Resolution ─────────────────────────────────
     const BASE = import.meta.env.BASE_URL || './'
@@ -263,49 +263,8 @@ export default function SolarSystem3D({ onReturn }) {
     const moonTexture        = loadTex('moon.jpg')
     const saturnRingTexture  = loadTex('saturn_ring.png')
 
-    // ── 2b. White Hole Emergence Shockwave & 3D Warp Deceleration Streaks ───
-    const emergenceRingGeo = new THREE.RingGeometry(12, 28, 64)
-    emergenceRingGeo.rotateX(Math.PI / 2)
-    const emergenceRingMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.95,
-      side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
-    })
-    const emergenceRing = new THREE.Mesh(emergenceRingGeo, emergenceRingMat)
-    scene.add(emergenceRing)
-
-    const warpCount = 180
-    const warpPos = new Float32Array(warpCount * 6)
-    for (let i = 0; i < warpCount; i++) {
-      const i6 = i * 6
-      const rad = 60 + Math.random() * 800
-      const ang = Math.random() * Math.PI * 2
-      const x = Math.cos(ang) * rad
-      const y = (Math.random() - 0.5) * 600
-      const z = 800 + Math.random() * 2200
-      const len = 350 + Math.random() * 450
-      warpPos[i6]     = x
-      warpPos[i6 + 1] = y
-      warpPos[i6 + 2] = z
-      warpPos[i6 + 3] = x
-      warpPos[i6 + 4] = y
-      warpPos[i6 + 5] = z + len
-    }
-    const warpGeo = new THREE.BufferGeometry()
-    warpGeo.setAttribute('position', new THREE.BufferAttribute(warpPos, 3))
-    const warpMat = new THREE.LineBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-    })
-    const warpLines = new THREE.LineSegments(warpGeo, warpMat)
-    scene.add(warpLines)
-
     const arrivalStartTime = performance.now()
-    const arrivalDuration = 2600
+    const arrivalDuration = 2400
 
     // ── 3. Lighting Architecture ────────────────────────────────────────────
     // Central Sol PointLight for realistic daytime illumination & terminator shadows
@@ -758,7 +717,7 @@ export default function SolarSystem3D({ onReturn }) {
       const delta = clock.getDelta()
       const speedMult = simSpeedRef.current
 
-      // Superluminal Arrival Camera Swoop & Warp Deceleration
+      // Superluminal Orbital Insertion Swoop & Dynamic FOV Decompression
       const nowTime = performance.now()
       const arrivalElapsed = nowTime - arrivalStartTime
       if (arrivalElapsed < arrivalDuration) {
@@ -767,22 +726,13 @@ export default function SolarSystem3D({ onReturn }) {
 
         camera.position.set(
           0,
-          1800 + (340 - 1800) * ease,
-          2400 + (720 - 2400) * ease
+          1200 + (340 - 1200) * ease,
+          1800 + (720 - 1800) * ease
         )
+        // Optical FOV decompression: wide warp perspective (60 deg) relaxes into standard cinematic view (45 deg)
+        camera.fov = 60 - 15 * ease
+        camera.updateProjectionMatrix()
         controls.target.set(0, 0, 0)
-
-        // Expand emergence shockwave
-        const ringScale = 1 + ease * 50
-        emergenceRing.scale.set(ringScale, ringScale, ringScale)
-        emergenceRingMat.opacity = Math.max(0, (1 - ease) * 0.95)
-
-        // Stream warp lines backward
-        warpMat.opacity = Math.max(0, (1 - ease) * 0.85)
-        warpLines.position.z -= 28 * (1 - ease)
-      } else {
-        if (emergenceRing.visible) emergenceRing.visible = false
-        if (warpLines.visible) warpLines.visible = false
       }
 
       // Rotate Sun and Corona
@@ -845,7 +795,7 @@ export default function SolarSystem3D({ onReturn }) {
       // Update Earth Night Lights Shader Uniforms
       if (earthNightMatRef.current) {
         earthNightMatRef.current.uniforms.uTime.value = clock.getElapsedTime()
-        earthNightMatRef.current.uniforms.uFestiveMode.value = diwaliModeRef.current ? 1.0 : 0.0
+        earthNightMatRef.current.uniforms.uFestiveMode.value = cityLightsRef.current ? 1.0 : 0.0
       }
 
       controls.update()
@@ -867,10 +817,6 @@ export default function SolarSystem3D({ onReturn }) {
       cancelAnimationFrame(animationFrameId)
       window.removeEventListener('resize', handleResize)
       container.removeEventListener('pointerdown', handlePointerDown)
-      emergenceRingGeo.dispose()
-      emergenceRingMat.dispose()
-      warpGeo.dispose()
-      warpMat.dispose()
       if (earthNightMatRef.current) {
         earthNightMatRef.current.dispose()
       }
@@ -920,21 +866,21 @@ export default function SolarSystem3D({ onReturn }) {
         {/* Action controls */}
         <div className="hud-actions-strip">
           <button
-            className={`diwali-glow-btn ${diwaliMode ? 'active' : ''}`}
+            className={`city-lights-btn ${cityLights ? 'active' : ''}`}
             onClick={() => {
-              const next = !diwaliMode
-              setDiwaliMode(next)
+              const next = !cityLights
+              setCityLights(next)
               setArrivalTelemetry(
                 next
-                  ? '🪔 DIWALI & NEW YEAR FESTIVAL ILLUMINATION ACTIVE // EARTH NIGHTSIDE ABLAZE'
-                  : '✦ REALISTIC NASA BLACK MARBLE NIGHT LIGHTS ACTIVE'
+                  ? '✦ NOCTURNAL CITY LIGHTS: ACTIVE // TERMINATOR ILLUMINATION ON'
+                  : '✦ NOCTURNAL CITY LIGHTS: INACTIVE'
               )
               setTimeout(() => setArrivalTelemetry(''), 2800)
             }}
-            title="Toggle Diwali & New Year Festive Night Lights (D)"
+            title="Toggle Earth Nocturnal City Lights (D)"
           >
-            <span className="diwali-icon">🪔</span>
-            <span>{diwaliMode ? 'DIWALI LIGHTS: ON' : 'DIWALI LIGHTS: OFF'}</span>
+            <span className="city-lights-icon">🌃</span>
+            <span>{cityLights ? 'CITY LIGHTS: ON' : 'CITY LIGHTS: OFF'}</span>
           </button>
 
           <div className="speed-controller">

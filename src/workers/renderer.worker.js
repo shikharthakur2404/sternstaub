@@ -890,37 +890,7 @@ function render(now) {
     const hy = cy + wormhole.collapseY
 
     // ── GARGANTUA RELATIVISTIC GRAVITATIONAL LENSING & ACCRETION DISK ──
-    ctx.save()
-
-    // 1. Spacetime Geodesic Grid Distortion Wave
-    const waveAlpha = Math.sin(prog * Math.PI) * 0.55
-    if (waveAlpha > 0.02) {
-      ctx.strokeStyle = `rgba(56, 189, 248, ${waveAlpha * 0.5})`
-      ctx.lineWidth = 1.2
-      // Warped metric circles
-      for (let r = 40; r <= 560; r += 45) {
-        const curR = r * (1 - prog * 0.6)
-        ctx.beginPath()
-        ctx.ellipse(hx, hy, curR, curR * (0.68 - prog * 0.2), prog * 2.5, 0, Math.PI * 2)
-        ctx.stroke()
-      }
-      // Logarithmic Geodesic Inward Infall Spirals
-      ctx.strokeStyle = `rgba(168, 85, 247, ${waveAlpha * 0.6})`
-      for (let a = 0; a < 10; a++) {
-        const startA = (a / 10) * Math.PI * 2 + prog * 6.0
-        ctx.beginPath()
-        for (let s = 0; s < 30; s++) {
-          const rad = 460 * Math.pow(1 - s / 30, 1.4)
-          const theta = startA + (s / 30) * (4.5 + prog * 4.0)
-          const gx = hx + Math.cos(theta) * rad
-          const gy = hy + Math.sin(theta) * rad * 0.65
-          if (s === 0) ctx.moveTo(gx, gy); else ctx.lineTo(gx, gy)
-        }
-        ctx.stroke()
-      }
-    }
-
-    // 2. High-Velocity Accretion Vortex Physics (Inward Logarithmic Spiraling)
+    // 1. High-Velocity Accretion Vortex Physics (Inward Logarithmic Spiraling)
     for (let i = 0; i < n; i++) {
       const p = particles[i]
       p.prevX = p.x
@@ -930,105 +900,80 @@ function render(now) {
       const dist = Math.hypot(dx, dy)
 
       // Extreme gravitational acceleration near event horizon
-      const pull = Math.min(55, (1200 / (dist + 12)) * (0.8 + Math.pow(prog, 2) * 3.5))
+      const pull = Math.min(50, (950 / (dist + 16)) * (0.8 + Math.pow(prog, 2) * 3.2))
       const normX = dx / (dist || 1)
       const normY = dy / (dist || 1)
 
-      // Infall radial velocity
-      p.vx += normX * pull
-      p.vy += normY * pull
-
       // Relativistic frame-dragging orbital spin (whirlpool effect)
-      const spinSpeed = (240 / (dist + 25)) * (1.2 + prog * 2.8)
-      p.vx += -normY * spinSpeed
-      p.vy +=  normX * spinSpeed
+      const spinSpeed = (200 / (dist + 24)) * (1.1 + prog * 2.5)
+      p.vx += normX * pull - normY * spinSpeed
+      p.vy += normY * pull + normX * spinSpeed
 
-      p.vx *= 0.86
-      p.vy *= 0.86
+      p.vx *= 0.87
+      p.vy *= 0.87
       p.x += p.vx
       p.y += p.vy
     }
 
-    // 3. Render Luminous Particle Infall Streaks (Motion-Blur Tail)
-    ctx.globalCompositeOperation = 'lighter'
-    ctx.lineWidth = 1.6
-    for (let i = 0; i < n; i++) {
-      const p = particles[i]
-      const dx = p.x - (p.prevX ?? p.x)
-      const dy = p.y - (p.prevY ?? p.y)
-      const speed = Math.hypot(dx, dy)
-      if (speed > 1.5) {
-        const alpha = Math.min(1.0, (speed / 35) * (0.4 + prog * 0.6))
-        ctx.strokeStyle = i % 2 === 0
-          ? `rgba(56, 189, 248, ${alpha})`
-          : `rgba(253, 224, 71, ${alpha})`
-        ctx.beginPath()
-        ctx.moveTo(p.prevX + cx, p.prevY + cy)
-        ctx.lineTo(p.x + cx, p.y + cy)
-        ctx.stroke()
-      }
-    }
-
-    // 4. Christopher Nolan "Interstellar" Gargantua Accretion Disk & Gravitational Lens Arcs
-    const bhRadius = 26 + Math.pow(prog, 2) * 115
+    // 2. Christopher Nolan "Interstellar" Gargantua Accretion Disk & Gravitational Lens Arcs
+    const bhRadius = 24 + Math.pow(prog, 2) * 110
     const diskRadius = bhRadius * 2.8
 
-    // Outer diffuse accretion gas glow
-    const gasGrad = ctx.createRadialGradient(hx, hy, bhRadius * 0.9, hx, hy, diskRadius * 1.5)
-    gasGrad.addColorStop(0,    `rgba(255, 255, 255, ${0.85 + prog * 0.15})`)
-    gasGrad.addColorStop(0.18, `rgba(253, 224, 71, ${0.75 * (1 - prog * 0.2)})`) // golden amber
-    gasGrad.addColorStop(0.48, `rgba(249, 115, 22, ${0.55 * (1 - prog * 0.2)})`) // fiery orange
-    gasGrad.addColorStop(0.78, `rgba(56, 189, 248, ${0.35 * (1 - prog * 0.2)})`) // electric blue
+    ctx.save()
+    ctx.globalCompositeOperation = 'lighter'
+
+    // Diffuse relativistic plasma envelope
+    const gasGrad = ctx.createRadialGradient(hx, hy, bhRadius * 0.8, hx, hy, diskRadius * 1.6)
+    gasGrad.addColorStop(0,    `rgba(255, 255, 255, ${0.9 * (1 - prog * 0.15)})`)
+    gasGrad.addColorStop(0.18, `rgba(253, 224, 71, ${0.75 * (1 - prog * 0.15)})`) // golden amber
+    gasGrad.addColorStop(0.48, `rgba(249, 115, 22, ${0.50 * (1 - prog * 0.15)})`) // fiery orange
+    gasGrad.addColorStop(0.78, `rgba(56, 189, 248, ${0.28 * (1 - prog * 0.15)})`) // electric blue
     gasGrad.addColorStop(1,    'rgba(0, 0, 0, 0)')
     ctx.fillStyle = gasGrad
     ctx.beginPath()
-    ctx.ellipse(hx, hy, diskRadius * 1.5, diskRadius * 0.75, 0.15, 0, Math.PI * 2)
+    ctx.ellipse(hx, hy, diskRadius * 1.6, diskRadius * 0.72, 0.12, 0, Math.PI * 2)
     ctx.fill()
 
-    // Upper Gravitational Lensing Halo Arc (bent over event horizon)
-    ctx.strokeStyle = `rgba(254, 240, 138, ${0.75 + prog * 0.25})`
-    ctx.lineWidth = Math.max(3, bhRadius * 0.18)
+    // Gravitational Lensing Halo (Rear disk light bent over and under event horizon)
+    const haloGrad = ctx.createRadialGradient(hx, hy, bhRadius * 0.92, hx, hy, bhRadius * 1.85)
+    haloGrad.addColorStop(0,   `rgba(255, 255, 255, ${0.85 + prog * 0.15})`)
+    haloGrad.addColorStop(0.3, `rgba(254, 240, 138, ${0.70})`)
+    haloGrad.addColorStop(0.7, `rgba(56, 189, 248, ${0.40})`)
+    haloGrad.addColorStop(1,   'rgba(0, 0, 0, 0)')
+    ctx.fillStyle = haloGrad
     ctx.beginPath()
-    ctx.ellipse(hx, hy - bhRadius * 0.45, bhRadius * 2.2, bhRadius * 1.25, 0, Math.PI * 0.95, Math.PI * 2.05)
-    ctx.stroke()
+    ctx.arc(hx, hy, bhRadius * 1.85, 0, Math.PI * 2)
+    ctx.fill()
 
-    // Lower Gravitational Lensing Halo Arc (bent under event horizon)
-    ctx.strokeStyle = `rgba(56, 189, 248, ${0.65 + prog * 0.35})`
-    ctx.lineWidth = Math.max(2, bhRadius * 0.14)
-    ctx.beginPath()
-    ctx.ellipse(hx, hy + bhRadius * 0.45, bhRadius * 2.2, bhRadius * 1.25, 0, 0, Math.PI * 1.05)
-    ctx.stroke()
-
-    // Front Equatorial Accretion Disk with Relativistic Doppler Asymmetry (left side brighter)
+    // Front Equatorial Accretion Disk with Relativistic Doppler Asymmetry
     const diskGrad = ctx.createLinearGradient(hx - diskRadius, hy, hx + diskRadius, hy)
-    diskGrad.addColorStop(0,    `rgba(56, 189, 248, ${0.9 + prog * 0.1})`)   // Blue-shifted approaching side
-    diskGrad.addColorStop(0.35, `rgba(255, 255, 255, 1.0)`)                  // Central super-hot peak
-    diskGrad.addColorStop(0.65, `rgba(251, 146, 60, ${0.75})`)                 // Amber warm
-    diskGrad.addColorStop(1,    `rgba(153, 27, 27, ${0.45})`)                  // Red-shifted receding side
-    ctx.strokeStyle = diskGrad
-    ctx.lineWidth = Math.max(4, bhRadius * 0.24)
+    diskGrad.addColorStop(0,    `rgba(56, 189, 248, ${0.95 + prog * 0.05})`) // Blue-shifted approaching side
+    diskGrad.addColorStop(0.35, 'rgba(255, 255, 255, 1.0)')                  // Super-hot core
+    diskGrad.addColorStop(0.65, 'rgba(251, 146, 60, 0.80)')                 // Amber warm
+    diskGrad.addColorStop(1,    'rgba(153, 27, 27, 0.35)')                  // Red-shifted receding side
+    ctx.fillStyle = diskGrad
     ctx.beginPath()
-    ctx.ellipse(hx, hy, diskRadius, diskRadius * 0.32, -0.12, 0, Math.PI * 2)
-    ctx.stroke()
+    ctx.ellipse(hx, hy, diskRadius, diskRadius * 0.28, -0.1, 0, Math.PI * 2)
+    ctx.fill()
 
-    // 5. Pitch-Black Event Horizon Void Sphere
+    // 3. Pitch-Black Event Horizon Void Sphere (Source-Over)
     ctx.globalCompositeOperation = 'source-over'
     ctx.fillStyle = '#000000'
     ctx.beginPath()
     ctx.arc(hx, hy, bhRadius, 0, Math.PI * 2)
     ctx.fill()
 
-    // 6. Laser-Sharp Relativistic Photon Ring
+    // 4. Razor-Sharp Relativistic Photon Ring
     ctx.strokeStyle = '#ffffff'
-    ctx.lineWidth = 2.4
+    ctx.lineWidth = 2.0
     ctx.beginPath()
     ctx.arc(hx, hy, bhRadius, 0, Math.PI * 2)
     ctx.stroke()
 
-    ctx.strokeStyle = `rgba(56, 189, 248, 0.8)`
-    ctx.lineWidth = 1.2
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)'
+    ctx.lineWidth = 1.0
     ctx.beginPath()
-    ctx.arc(hx, hy, bhRadius + 2.5, 0, Math.PI * 2)
+    ctx.arc(hx, hy, bhRadius + 2.0, 0, Math.PI * 2)
     ctx.stroke()
 
     ctx.restore()
@@ -1051,92 +996,71 @@ function render(now) {
     }
 
     ctx.save()
+    ctx.globalCompositeOperation = 'lighter'
 
-    // 1. Hyperspace Deep Perspective Grid Rings (32 Rings traveling at Warp 9)
-    const tunnelSpeed = 1200
-    for (let ring = 0; ring < 32; ring++) {
-      const ringZ = ((ring * 50 - elapsed * tunnelSpeed) % 1500 + 1500) % 1500
-      const scale = 380 / (ringZ + 18)
-      const rOuter = 160 * scale
-      const rInner = Math.max(0, rOuter - 18 * scale)
-      const ringAlpha = Math.min(1.0, scale * 1.1) * Math.sin(prog * Math.PI)
+    // 1. Relativistic Starfield Warp Stream (3D Perspective Projection of Particles)
+    // Stars stream outward smoothly from the center with authentic 1/Z depth scaling
+    const warpSpeed = 1600
+    const starCount = Math.min(n, 1200)
+    for (let i = 0; i < starCount; i++) {
+      // Golden angle distribution for uniform organic cylindrical coverage
+      const theta = i * 2.399963
+      const radius = 35 + Math.sqrt(i / starCount) * Math.max(w, h) * 0.72
+      const zBase = ((i * 47 - elapsed * warpSpeed) % 1000 + 1000) % 1000 + 12
+      const scale = 280 / zBase
+      const prevScale = 280 / (zBase + 55)
 
-      if (rOuter > 8 && rOuter < Math.max(w, h) * 1.2) {
-        // Filled translucent perspective ribbon
-        const ribbonGrad = ctx.createRadialGradient(cx, cy, rInner, cx, cy, rOuter)
-        if (ring % 3 === 0) {
-          ribbonGrad.addColorStop(0, `rgba(56, 189, 248, 0)`)
-          ribbonGrad.addColorStop(0.7, `rgba(56, 189, 248, ${ringAlpha * 0.45})`)
-          ribbonGrad.addColorStop(1, `rgba(255, 255, 255, ${ringAlpha * 0.85})`)
-        } else if (ring % 3 === 1) {
-          ribbonGrad.addColorStop(0, `rgba(168, 85, 247, 0)`)
-          ribbonGrad.addColorStop(0.7, `rgba(168, 85, 247, ${ringAlpha * 0.45})`)
-          ribbonGrad.addColorStop(1, `rgba(253, 224, 71, ${ringAlpha * 0.75})`)
-        } else {
-          ribbonGrad.addColorStop(0, `rgba(236, 72, 153, 0)`)
-          ribbonGrad.addColorStop(0.8, `rgba(236, 72, 153, ${ringAlpha * 0.4})`)
-          ribbonGrad.addColorStop(1, `rgba(56, 189, 248, ${ringAlpha * 0.75})`)
-        }
+      const sx = cx + Math.cos(theta) * radius * scale
+      const sy = cy + Math.sin(theta) * radius * scale * 0.82
+      const px = cx + Math.cos(theta) * radius * prevScale
+      const py = cy + Math.sin(theta) * radius * prevScale * 0.82
 
-        ctx.fillStyle = ribbonGrad
+      const distFromCenter = Math.hypot(sx - cx, sy - cy)
+      if (distFromCenter > 15 && distFromCenter < Math.max(w, h) * 1.5) {
+        const starAlpha = Math.min(1.0, scale * 0.45) * Math.sin(prog * Math.PI)
+        ctx.strokeStyle = i % 3 === 0
+          ? `rgba(255, 255, 255, ${starAlpha})`
+          : i % 3 === 1
+          ? `rgba(56, 189, 248, ${starAlpha * 0.85})`
+          : `rgba(168, 85, 247, ${starAlpha * 0.75})`
+        ctx.lineWidth = Math.min(3.5, Math.max(1.0, 1.6 * scale))
         ctx.beginPath()
-        // Dodecagonal geometric portal ring
-        const sides = 12
-        const twistAngle = elapsed * 1.8 + ring * 0.18
-        for (let pt = 0; pt <= sides; pt++) {
-          const ang = (pt / sides) * Math.PI * 2 + twistAngle
-          const rx = cx + Math.cos(ang) * rOuter
-          const ry = cy + Math.sin(ang) * rOuter * 0.75
-          if (pt === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry)
-        }
-        ctx.fill()
-
-        ctx.strokeStyle = `rgba(255, 255, 255, ${ringAlpha * 0.6})`
-        ctx.lineWidth = Math.max(1, 2.5 * scale)
+        ctx.moveTo(px, py)
+        ctx.lineTo(sx, sy)
         ctx.stroke()
       }
     }
 
-    // 2. 160 Volumetric Relativistic Warp Star Streaks (Dual Chromatic Pass)
-    for (let s = 0; s < 160; s++) {
-      const sAng = (s / 160) * Math.PI * 2 + Math.sin(s * 31) * 0.35
-      const inR = 14 + Math.sin(s * 13) * 22
-      const streakLength = 90 + Math.pow(prog, 2) * 520
-      const outR = inR + streakLength
-
-      // Cyan dispersion line
-      ctx.strokeStyle = `rgba(56, 189, 248, ${0.45 + Math.sin(prog * Math.PI) * 0.5})`
-      ctx.lineWidth = 1.4
+    // 2. Expanding Einstein Ring (Gravitational Lensing Throat Horizon)
+    const einsteinR = 40 + Math.pow(prog, 1.8) * Math.max(w, h) * 0.95
+    const ringAlpha = Math.sin(prog * Math.PI) * 0.75
+    if (ringAlpha > 0.01) {
+      const ringGrad = ctx.createRadialGradient(cx, cy, Math.max(0, einsteinR - 24), cx, cy, einsteinR + 24)
+      ringGrad.addColorStop(0, 'rgba(56, 189, 248, 0)')
+      ringGrad.addColorStop(0.5, `rgba(255, 255, 255, ${ringAlpha})`)
+      ringGrad.addColorStop(1, 'rgba(168, 85, 247, 0)')
+      ctx.fillStyle = ringGrad
       ctx.beginPath()
-      ctx.moveTo(cx + Math.cos(sAng) * inR - 1.2, cy + Math.sin(sAng) * inR * 0.75)
-      ctx.lineTo(cx + Math.cos(sAng) * outR - 1.2, cy + Math.sin(sAng) * outR * 0.75)
-      ctx.stroke()
-
-      // Core white streak
-      ctx.strokeStyle = `rgba(255, 255, 255, ${0.75 + Math.sin(prog * Math.PI) * 0.25})`
-      ctx.lineWidth = 2.2
-      ctx.beginPath()
-      ctx.moveTo(cx + Math.cos(sAng) * inR, cy + Math.sin(sAng) * inR * 0.75)
-      ctx.lineTo(cx + Math.cos(sAng) * outR, cy + Math.sin(sAng) * outR * 0.75)
-      ctx.stroke()
+      ctx.arc(cx, cy, einsteinR + 24, 0, Math.PI * 2)
+      ctx.fill()
     }
 
-    // 3. Central Singularity Eye (Infinite Light Core)
-    const eyeRad = 15 + Math.pow(prog, 2) * 90
+    // 3. Central Throat Exit Aperture (Soft Ethereal Optical Flare)
+    const eyeRad = 25 + Math.pow(prog, 2.4) * 260
     const eyeGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, eyeRad)
     eyeGrad.addColorStop(0,   '#ffffff')
-    eyeGrad.addColorStop(0.3, 'rgba(56, 189, 248, 0.95)')
-    eyeGrad.addColorStop(0.7, 'rgba(168, 85, 247, 0.65)')
+    eyeGrad.addColorStop(0.25, `rgba(56, 189, 248, ${0.95 * Math.sin(prog * Math.PI)})`)
+    eyeGrad.addColorStop(0.65, `rgba(168, 85, 247, ${0.45 * Math.sin(prog * Math.PI)})`)
     eyeGrad.addColorStop(1,   'rgba(0, 0, 0, 0)')
     ctx.fillStyle = eyeGrad
     ctx.beginPath()
     ctx.arc(cx, cy, eyeRad, 0, Math.PI * 2)
     ctx.fill()
 
-    // 4. Superluminal Coronal Inversion Whiteout (Final Hand-off Blast)
-    if (prog > 0.68) {
-      const flashProg = (prog - 0.68) / 0.32
-      const flashAlpha = Math.pow(flashProg, 2.2) * 0.98
+    // 4. Superluminal Coronal Whiteout Flash (Seamless Dissolve into Target Dimension)
+    if (prog > 0.65) {
+      const flashProg = (prog - 0.65) / 0.35
+      const flashAlpha = Math.pow(flashProg, 2.0) * 0.98
       ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`
       ctx.fillRect(0, 0, w, h)
     }
