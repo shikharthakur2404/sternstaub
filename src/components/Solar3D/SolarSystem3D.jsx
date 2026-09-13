@@ -660,13 +660,10 @@ export default function SolarSystem3D({ onReturn }) {
 
     // ── 13. Subsystem Lifecycle & Realm Visibility Sync ──────────────────────
     const syncRealmVisibility = (realm) => {
-      const isSol = realm === 'sol'
-      const isExo = realm === 'exosystem'
-      const isAndromeda = realm === 'andromeda'
-
-      solGroup.visible = isSol
-      exosystem.group.visible = isExo
-      andromeda.group.visible = isAndromeda
+      // Enable simultaneous rendering of all realms for macro-scale viewing
+      solGroup.visible = true
+      exosystem.group.visible = true
+      andromeda.group.visible = true
     }
     // Initialize root realm visibility
     syncRealmVisibility('sol')
