@@ -207,12 +207,57 @@ export function createAsteroidBelt() {
   const raycastTargets = []
 
   // ── A. Mineral Class Materials ────────────────────────────────────────────
+  const asteroidUniforms = {
+    uTime: { value: 0 },
+  }
+
+  const setupAsteroidMaterial = (mat) => {
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = asteroidUniforms.uTime
+      shader.vertexShader = `
+        attribute vec3 aTumbleAxis;
+        attribute float aTumbleSpeed;
+        attribute float aTumblePhase;
+        uniform float uTime;
+
+        vec3 rotateAroundAxis(vec3 v, vec3 axis, float angle) {
+          float c = cos(angle);
+          float s = sin(angle);
+          return v * c + cross(axis, v) * s + axis * dot(axis, v) * (1.0 - c);
+        }
+      ` + shader.vertexShader
+
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `
+        #include <begin_vertex>
+        #ifdef USE_INSTANCING
+          float tumbleAngle = uTime * aTumbleSpeed + aTumblePhase;
+          transformed = rotateAroundAxis(transformed, aTumbleAxis, tumbleAngle);
+        #endif
+        `
+      )
+
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <beginnormal_vertex>',
+        `
+        #include <beginnormal_vertex>
+        #ifdef USE_INSTANCING
+          float tumbleAngleNorm = uTime * aTumbleSpeed + aTumblePhase;
+          objectNormal = rotateAroundAxis(objectNormal, aTumbleAxis, tumbleAngleNorm);
+        #endif
+        `
+      )
+    }
+  }
+
   // 1. C-type: Carbonaceous Chondrite (Dark Charcoal/Slate, 70% frequency)
   const cTypeMat = new THREE.MeshStandardMaterial({
     color: 0x222a36,
     roughness: 0.96,
     metalness: 0.05,
   })
+  setupAsteroidMaterial(cTypeMat)
   materialsToDispose.push(cTypeMat)
 
   // 2. S-type: Stony Silicate / Basalt (Warm Dusty Ochre/Grey, 20% frequency)
@@ -221,6 +266,7 @@ export function createAsteroidBelt() {
     roughness: 0.88,
     metalness: 0.12,
   })
+  setupAsteroidMaterial(sTypeMat)
   materialsToDispose.push(sTypeMat)
 
   // 3. M-type: Metallic Nickel-Iron (Reflective Silvery Sheen, 10% frequency)
@@ -229,6 +275,7 @@ export function createAsteroidBelt() {
     roughness: 0.38,
     metalness: 0.82,
   })
+  setupAsteroidMaterial(mTypeMat)
   materialsToDispose.push(mTypeMat)
 
   // ── B. Instanced Multi-Archetype Asteroid Swarm (2,800 bodies) ─────────────
@@ -246,8 +293,30 @@ export function createAsteroidBelt() {
   const BATCH_SIZE = Math.floor(TOTAL_ASTEROIDS / 4) // 700 per geometry
 
   const createBatch = (geo, mat) => {
+    // Bake GPU per-instance tumbling attributes
+    const tumbleAxes = new Float32Array(BATCH_SIZE * 3)
+    const tumbleSpeeds = new Float32Array(BATCH_SIZE)
+    const tumblePhases = new Float32Array(BATCH_SIZE)
+
+    for (let i = 0; i < BATCH_SIZE; i++) {
+      const i3 = i * 3
+      const u = Math.random() * 2 - 1
+      const theta = Math.random() * Math.PI * 2
+      const r = Math.sqrt(Math.max(0, 1 - u * u))
+      tumbleAxes[i3]     = r * Math.cos(theta)
+      tumbleAxes[i3 + 1] = r * Math.sin(theta)
+      tumbleAxes[i3 + 2] = u
+
+      tumbleSpeeds[i] = (Math.random() > 0.5 ? 1 : -1) * (0.35 + Math.random() * 1.25)
+      tumblePhases[i] = Math.random() * Math.PI * 2
+    }
+
+    geo.setAttribute('aTumbleAxis', new THREE.InstancedBufferAttribute(tumbleAxes, 3))
+    geo.setAttribute('aTumbleSpeed', new THREE.InstancedBufferAttribute(tumbleSpeeds, 1))
+    geo.setAttribute('aTumblePhase', new THREE.InstancedBufferAttribute(tumblePhases, 1))
+
     const mesh = new THREE.InstancedMesh(geo, mat, BATCH_SIZE)
-    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+    mesh.instanceMatrix.setUsage(THREE.StaticDrawUsage)
     mesh.castShadow = true
     mesh.receiveShadow = true
     beltGroup.add(mesh)
@@ -261,8 +330,6 @@ export function createAsteroidBelt() {
   const batch4 = createBatch(geoContact, mTypeMat)
   const batches = [batch1, batch2, batch3, batch4]
 
-  // Individual Asteroid Physics & Orbit Metadata
-  const asteroidInstances = []
   const dummy = new THREE.Object3D()
 
   // Radial distribution: 218 to 284 (Kirkwood Gaps modeled)
@@ -294,30 +361,6 @@ export function createAsteroidBelt() {
       dummy.updateMatrix()
 
       batches[b].setMatrixAt(i, dummy.matrix)
-
-      // Independent tumbling rate & Keplerian orbital angular speed (ω ∝ r^-1.5)
-      const orbitSpeed = 0.0075 * Math.pow(250 / dist, 1.5) * (0.95 + Math.random() * 0.1)
-      const tumbleX = (Math.random() - 0.5) * 0.8
-      const tumbleY = (Math.random() - 0.5) * 1.2
-      const tumbleZ = (Math.random() - 0.5) * 0.8
-
-      asteroidInstances.push({
-        batchIndex: b,
-        instanceIndex: i,
-        dist,
-        angle,
-        y,
-        scaleX,
-        scaleY,
-        scaleZ,
-        rotX: dummy.rotation.x,
-        rotY: dummy.rotation.y,
-        rotZ: dummy.rotation.z,
-        tumbleX,
-        tumbleY,
-        tumbleZ,
-        orbitSpeed,
-      })
     }
     batches[b].instanceMatrix.needsUpdate = true
   }
@@ -456,7 +499,6 @@ export function createAsteroidBelt() {
   // ── F. Animation & Tumbling Physics Loop ───────────────────────────────────
   let ceresAngle = 1.2
   let vestaAngle = 3.6
-  let tumbleAccumulator = 0
 
   const updateAsteroidBelt = (delta, simSpeed) => {
     // 1. Advance Major Belt Bodies (Ceres & Vesta)
@@ -471,35 +513,13 @@ export function createAsteroidBelt() {
     vestaMesh.rotation.y += 0.038 * simSpeed // 5.34h rotation period
     vestaMesh.rotation.x += 0.012 * simSpeed
 
-    // 2. Continuous 3D Tumbling & Keplerian Advance for Asteroid Swarm
-    // Update every frame for ultra-smooth realistic tumbling
-    tumbleAccumulator += delta * simSpeed
-    if (tumbleAccumulator > 0.016) {
-      tumbleAccumulator = 0
-      // Update a slice or all asteroids
-      const countPerBatch = [0, 0, 0, 0]
-      for (let i = 0; i < asteroidInstances.length; i++) {
-        const ast = asteroidInstances[i]
-        ast.angle += ast.orbitSpeed * delta * simSpeed
-        ast.rotX += ast.tumbleX * delta * simSpeed
-        ast.rotY += ast.tumbleY * delta * simSpeed
-        ast.rotZ += ast.tumbleZ * delta * simSpeed
+    // 2. Advance GPU Time Uniform (Drives 2,800-asteroid tumbling in vertex shader with 0 CPU overhead)
+    asteroidUniforms.uTime.value += delta * simSpeed
 
-        dummy.position.set(Math.cos(ast.angle) * ast.dist, ast.y, Math.sin(ast.angle) * ast.dist)
-        dummy.rotation.set(ast.rotX, ast.rotY, ast.rotZ)
-        dummy.scale.set(ast.scaleX, ast.scaleY, ast.scaleZ)
-        dummy.updateMatrix()
+    // 3. Continuous Orbital Revolution of the Main Asteroid Belt
+    beltGroup.rotation.y += 0.00075 * delta * simSpeed
 
-        batches[ast.batchIndex].setMatrixAt(ast.instanceIndex, dummy.matrix)
-        countPerBatch[ast.batchIndex]++
-      }
-
-      for (let b = 0; b < 4; b++) {
-        batches[b].instanceMatrix.needsUpdate = true
-      }
-    }
-
-    // 3. Slowly Rotate Zodiacal Dust Cloud
+    // 4. Slowly Rotate Zodiacal Dust Cloud
     dustCloud.rotation.y += 0.0003 * simSpeed
   }
 

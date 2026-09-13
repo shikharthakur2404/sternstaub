@@ -219,14 +219,83 @@ export function createAndromedaGalaxy() {
   }
   galaxyGroup.add(smbhMesh)
 
+  // Relativistic Einstein Ring & Gravitational Lensing Accretion Halo
+  const lensGeo = new THREE.RingGeometry(38.2, 120, 64)
+  const lensMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vWorldPosition;
+      void main() {
+        vUv = uv;
+        vec4 worldPos = modelMatrix * vec4(position, 1.0);
+        vWorldPosition = worldPos.xyz;
+        gl_Position = projectionMatrix * viewMatrix * worldPos;
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      varying vec2 vUv;
+      varying vec3 vWorldPosition;
+
+      void main() {
+        vec2 centered = vUv * 2.0 - 1.0;
+        float dist = length(centered);
+
+        // Gravitational lensing radius (Einstein Ring peak at dist ≈ 0.45)
+        float einsteinRing = exp(-pow((dist - 0.45) * 8.0, 2.0));
+        // Inner event horizon cutoff (black hole shadow)
+        float shadow = smoothstep(0.30, 0.36, dist);
+
+        // Relativistic Doppler brightening (approaching side is brighter & bluer)
+        float angle = atan(centered.y, centered.x) + uTime * 0.45;
+        float doppler = 1.0 + 0.50 * sin(angle);
+
+        // Gravitational redshift: warm amber near horizon, azure at outer boundary
+        vec3 innerColor = vec3(1.0, 0.52, 0.12); // Redshifted photon orbit
+        vec3 outerColor = vec3(0.35, 0.75, 1.0);  // High-energy lensing fringe
+        vec3 color = mix(innerColor, outerColor, smoothstep(0.35, 0.85, dist)) * doppler;
+
+        float alpha = einsteinRing * shadow * 0.90;
+        if (alpha <= 0.005) discard;
+
+        gl_FragColor = vec4(color * alpha * 1.6, alpha);
+      }
+    `,
+    transparent: true,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  })
+  const lensMesh = new THREE.Mesh(lensGeo, lensMat)
+  lensMesh.name = 'einstein-lensing-ring'
+  lensMesh.rotation.x = Math.PI / 2.2
+  galaxyGroup.add(lensMesh)
+
   // Slow galactic differential rotation handler
   const updateGalaxy = (delta, simSpeed) => {
     galaxyGroup.rotation.z += 0.00015 * simSpeed
+    lensMat.uniforms.uTime.value += delta * simSpeed
+  }
+
+  const dispose = () => {
+    starGeo.dispose()
+    starMat.dispose()
+    particleTexture.dispose()
+    coreTex.dispose()
+    coreSpriteMat.dispose()
+    smbhGeo.dispose()
+    smbhMat.dispose()
+    lensGeo.dispose()
+    lensMat.dispose()
   }
 
   return {
     group: galaxyGroup,
     coreMesh: smbhMesh,
     updateGalaxy,
+    dispose,
   }
 }

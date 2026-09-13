@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import * as THREE from 'three'
+import { createAtmosphereMesh } from './atmosphereShader.js'
 import {
   createRedDwarfTexture,
   createTrappist1bTexture,
@@ -299,19 +300,21 @@ export function createExosystem() {
     pivot.add(pMesh)
     raycastTargets.push(pMesh)
 
-    // Atmospheric Glow Shell
+    // Physical Rayleigh + Mie Atmospheric Scattering Shell
+    let atmoObj = null
     if (p.hasAtmosphere) {
-      const atmoGeo = new THREE.SphereGeometry(p.r * 1.04, 36, 36)
-      geometriesToDispose.push(atmoGeo)
-      const atmoMat = new THREE.MeshBasicMaterial({
-        color: p.atmoColor,
-        transparent: true,
-        opacity: p.atmoOpacity,
-        side: THREE.BackSide,
-        blending: THREE.AdditiveBlending,
+      atmoObj = createAtmosphereMesh({
+        radius: p.r,
+        atmosphereScale: 1.04,
+        dayColor: p.atmoColor,
+        sunsetTint: 0xf59e0b,
+        density: p.id === 'trappist_1e' ? 1.5 : 1.1,
+        rimPower: 3.0,
       })
-      materialsToDispose.push(atmoMat)
-      pMesh.add(new THREE.Mesh(atmoGeo, atmoMat))
+      atmoObj.updateSunPosition(EXOSYSTEM_POS)
+      materialsToDispose.push(atmoObj.material)
+      geometriesToDispose.push(atmoObj.mesh.geometry)
+      pMesh.add(atmoObj.mesh)
     }
 
     // Swirling Cloud Shell for Habitable Worlds (1e & 1f)
