@@ -697,7 +697,7 @@ export default function SolarSystem3D({ onReturn }) {
       } else if (targetData.id === 'torus_station') {
         targetCamPosRef.current = new THREE.Vector3(5.2, 2.6, 5.2)
       } else if (targetData.id === 'comet_c2026') {
-        targetCamPosRef.current = new THREE.Vector3(14, 6, 14)
+        targetCamPosRef.current = new THREE.Vector3(18, 8, 18)
       } else {
         const offset = targetData.isMoon
           ? targetRadius * 5.0 + 8
