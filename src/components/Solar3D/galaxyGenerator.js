@@ -5,6 +5,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import * as THREE from 'three'
+import { createSupermassiveBlackHole } from './blackHoleGenerator.js'
 
 /**
  * Creates a photorealistic 3D grand-design spiral galaxy (Andromeda M31).
@@ -178,123 +179,27 @@ export function createAndromedaGalaxy() {
   const starPoints = new THREE.Points(starGeo, starMat)
   galaxyGroup.add(starPoints)
 
-  // ── 4. Luminous Galactic Core Bulge (Supermassive Core Glow) ───────────────
-  const coreCanvas = document.createElement('canvas')
-  coreCanvas.width = 128
-  coreCanvas.height = 128
-  const cCtx = coreCanvas.getContext('2d')
-  const cGrad = cCtx.createRadialGradient(64, 64, 0, 64, 64, 64)
-  cGrad.addColorStop(0.0, 'rgba(255, 250, 235, 1.0)')
-  cGrad.addColorStop(0.2, 'rgba(254, 240, 138, 0.82)')
-  cGrad.addColorStop(0.5, 'rgba(251, 191, 36, 0.35)')
-  cGrad.addColorStop(0.8, 'rgba(217, 119, 6, 0.12)')
-  cGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)')
-  cCtx.fillStyle = cGrad
-  cCtx.fillRect(0, 0, 128, 128)
-
-  const coreTex = new THREE.CanvasTexture(coreCanvas)
-  coreTex.colorSpace = THREE.SRGBColorSpace
-
-  const coreSpriteMat = new THREE.SpriteMaterial({
-    map: coreTex,
-    color: 0xfffae6,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  })
-  const coreSprite = new THREE.Sprite(coreSpriteMat)
-  coreSprite.scale.set(1600, 1200, 1)
-  galaxyGroup.add(coreSprite)
-
-  // Central Supermassive Black Hole (M31* Core Void)
-  const smbhGeo = new THREE.SphereGeometry(38, 32, 32)
-  const smbhMat = new THREE.MeshBasicMaterial({ color: 0x000000 })
-  const smbhMesh = new THREE.Mesh(smbhGeo, smbhMat)
-  smbhMesh.userData = {
-    id: 'andromeda',
-    name: 'Andromeda Galaxy (M31)',
-    radius: diskRadius,
-    mesh: galaxyGroup,
-    isGalaxy: true,
-  }
-  galaxyGroup.add(smbhMesh)
-
-  // Relativistic Einstein Ring & Gravitational Lensing Accretion Halo
-  const lensGeo = new THREE.RingGeometry(38.2, 120, 64)
-  const lensMat = new THREE.ShaderMaterial({
-    uniforms: {
-      uTime: { value: 0 },
-    },
-    vertexShader: `
-      varying vec2 vUv;
-      varying vec3 vWorldPosition;
-      void main() {
-        vUv = uv;
-        vec4 worldPos = modelMatrix * vec4(position, 1.0);
-        vWorldPosition = worldPos.xyz;
-        gl_Position = projectionMatrix * viewMatrix * worldPos;
-      }
-    `,
-    fragmentShader: `
-      uniform float uTime;
-      varying vec2 vUv;
-      varying vec3 vWorldPosition;
-
-      void main() {
-        vec2 centered = vUv * 2.0 - 1.0;
-        float dist = length(centered);
-
-        // Gravitational lensing radius (Einstein Ring peak at dist ≈ 0.45)
-        float einsteinRing = exp(-pow((dist - 0.45) * 8.0, 2.0));
-        // Inner event horizon cutoff (black hole shadow)
-        float shadow = smoothstep(0.30, 0.36, dist);
-
-        // Relativistic Doppler brightening (approaching side is brighter & bluer)
-        float angle = atan(centered.y, centered.x) + uTime * 0.45;
-        float doppler = 1.0 + 0.50 * sin(angle);
-
-        // Gravitational redshift: warm amber near horizon, azure at outer boundary
-        vec3 innerColor = vec3(1.0, 0.52, 0.12); // Redshifted photon orbit
-        vec3 outerColor = vec3(0.35, 0.75, 1.0);  // High-energy lensing fringe
-        vec3 color = mix(innerColor, outerColor, smoothstep(0.35, 0.85, dist)) * doppler;
-
-        float alpha = einsteinRing * shadow * 0.90;
-        if (alpha <= 0.005) discard;
-
-        gl_FragColor = vec4(color * alpha * 1.6, alpha);
-      }
-    `,
-    transparent: true,
-    side: THREE.DoubleSide,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  })
-  const lensMesh = new THREE.Mesh(lensGeo, lensMat)
-  lensMesh.name = 'einstein-lensing-ring'
-  lensMesh.rotation.x = Math.PI / 2.2
-  galaxyGroup.add(lensMesh)
+  // ── 4. Central Supermassive Black Hole & Doppler-Beamed Accretion Disk ────
+  const blackHole = createSupermassiveBlackHole()
+  galaxyGroup.add(blackHole.group)
 
   // Slow galactic differential rotation handler
-  const updateGalaxy = (delta, simSpeed) => {
+  const updateGalaxy = (delta, simSpeed, cameraPos) => {
     galaxyGroup.rotation.z += 0.00015 * simSpeed
-    lensMat.uniforms.uTime.value += delta * simSpeed
+    blackHole.updateBlackHole(delta, simSpeed, cameraPos)
   }
 
   const dispose = () => {
     starGeo.dispose()
     starMat.dispose()
     particleTexture.dispose()
-    coreTex.dispose()
-    coreSpriteMat.dispose()
-    smbhGeo.dispose()
-    smbhMat.dispose()
-    lensGeo.dispose()
-    lensMat.dispose()
+    blackHole.dispose()
   }
 
   return {
     group: galaxyGroup,
-    coreMesh: smbhMesh,
+    coreMesh: blackHole.shadowMesh,
+    blackHole,
     updateGalaxy,
     dispose,
   }

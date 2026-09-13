@@ -692,7 +692,7 @@ export default function SolarSystem3D({ onReturn }) {
       focusedTargetRef.current = targetData
 
       let realm = 'sol'
-      if (targetData.isGalaxy) {
+      if (targetData.isGalaxy || targetData.isBlackHole || targetData.id === 'andromeda_smbh') {
         realm = 'andromeda'
       } else if (targetData.systemGroup || targetData.id?.startsWith('trappist')) {
         realm = 'exosystem'
@@ -704,10 +704,19 @@ export default function SolarSystem3D({ onReturn }) {
       setActiveRealm(realm)
       syncRealmVisibility(realm)
 
+      if (targetData.isBlackHole || targetData.id === 'andromeda_smbh') {
+        targetFovRef.current = 45
+        targetLookAtRef.current.copy(andromeda.group.position)
+        const localOffset = new THREE.Vector3(0, 105, 245)
+        localOffset.applyQuaternion(andromeda.group.quaternion)
+        targetCamPosRef.current = localOffset
+        return
+      }
+
       if (realm === 'andromeda') {
         targetFovRef.current = 58
         targetLookAtRef.current.copy(andromeda.group.position)
-        targetCamPosRef.current = andromeda.group.position.clone().add(new THREE.Vector3(0, 4800, 10500))
+        targetCamPosRef.current = new THREE.Vector3(0, 4800, 10500)
         return
       }
 
@@ -862,8 +871,10 @@ export default function SolarSystem3D({ onReturn }) {
         container.switchRealm('exosystem')
       } else if (id === 'trappist_star') {
         focusOnTarget(exosystem.starMesh.userData)
-      } else if (id === 'andromeda_overview' || id === 'andromeda_core') {
+      } else if (id === 'andromeda_overview') {
         container.switchRealm('andromeda')
+      } else if (id === 'andromeda_core') {
+        focusOnTarget(andromeda.coreMesh.userData)
       } else {
         const solFound = planetObjects.find(p => p.data.id === id)
         if (solFound) {
@@ -899,6 +910,9 @@ export default function SolarSystem3D({ onReturn }) {
             } else {
               container.switchRealm(activeRealmRef.current || 'sol')
             }
+          } else if (cur.isBlackHole || cur.id === 'andromeda_smbh' || activeRealmRef.current === 'andromeda') {
+            container.switchRealm('andromeda')
+            setArrivalTelemetry('✦ STEP ZOOM OUT // ANDROMEDA GALAXY (M31) MACRO FIELD')
           } else {
             // Planet / Star / Comet -> Step back to System Overview
             if (activeRealmRef.current === 'exosystem') {
@@ -923,9 +937,13 @@ export default function SolarSystem3D({ onReturn }) {
       } else {
         // ── STEP FORWARD (ZOOM IN 1 TIER) ──
         if (activeRealmRef.current === 'andromeda') {
-          // Intergalactic -> Step into closest system (Sol)
-          container.switchRealm('sol')
-          setArrivalTelemetry('✦ STEP ZOOM IN // SOL SYSTEM ORBIT')
+          if (!focusedTargetRef.current) {
+            container.focusPlanet('andromeda_core')
+            setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: M31* SUPERMASSIVE BLACK HOLE')
+          } else {
+            container.switchRealm('sol')
+            setArrivalTelemetry('✦ STEP ZOOM IN // SOL SYSTEM ORBIT')
+          }
         } else if (!focusedTargetRef.current) {
           // System Overview -> Step into primary habitable planet
           if (activeRealmRef.current === 'exosystem') {
@@ -1096,8 +1114,8 @@ export default function SolarSystem3D({ onReturn }) {
         // Update TRAPPIST-1 Exosystem
         exosystem.updateExosystem(delta, speedMult)
       } else if (curRealm === 'andromeda') {
-        // Update Andromeda Galaxy Rotation
-        andromeda.updateGalaxy(delta, speedMult)
+        // Update Andromeda Galaxy Rotation & Relativistic Black Hole
+        andromeda.updateGalaxy(delta, speedMult, camera.position)
       }
 
       // Smooth Camera Lerp
@@ -1408,13 +1426,13 @@ export default function SolarSystem3D({ onReturn }) {
         {activeRealm === 'andromeda' && (
           <div className="dock-strip" onWheel={handleHorizontalScrollWheel}>
             <button
-              className="nav-chip active"
+              className={`nav-chip ${!selectedPlanet || selectedPlanet === 'Andromeda Galaxy (M31)' ? 'active' : ''}`}
               onClick={() => mountRef.current?.focusPlanet?.('andromeda_overview')}
             >
               🌌 ANDROMEDA SPIRAL DISK
             </button>
             <button
-              className="nav-chip"
+              className={`nav-chip ${selectedPlanet?.includes('Black Hole') || selectedPlanet?.includes('M31*') ? 'active' : ''}`}
               onClick={() => mountRef.current?.focusPlanet?.('andromeda_core')}
             >
               ✨ NUCLEUS & SMBH
