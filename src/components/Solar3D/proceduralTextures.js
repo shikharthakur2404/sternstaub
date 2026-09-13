@@ -363,3 +363,114 @@ export function createCryoIceTexture() {
   texture.wrapS = THREE.RepeatWrapping
   return texture
 }
+
+/**
+ * Procedural Photovoltaic Solar Array Texture (ISS & Satellite Wings)
+ * Authentic dark blue/navy silicon wafer cells, golden-copper busbar traces,
+ * anti-reflective coating specular sheen, and gold Kapton polyimide backing.
+ */
+export function createPhotovoltaicArrayTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 512
+  canvas.height = 256
+  const ctx = canvas.getContext('2d')
+
+  // Base deep navy/black silicon substrate
+  ctx.fillStyle = '#0a0f1d'
+  ctx.fillRect(0, 0, 512, 256)
+
+  // Solar wafer grid: 8 columns x 16 rows of silicon cells
+  const cols = 8
+  const rows = 16
+  const cellW = (512 - 20) / cols
+  const cellH = (256 - 16) / rows
+
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      const x = 10 + c * cellW
+      const y = 8 + r * cellH
+
+      const cellGrad = ctx.createLinearGradient(x, y, x + cellW, y + cellH)
+      cellGrad.addColorStop(0.0, '#172554')
+      cellGrad.addColorStop(0.5, '#1e3a8a')
+      cellGrad.addColorStop(1.0, '#0f172a')
+
+      ctx.fillStyle = cellGrad
+      ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2)
+
+      // Fine silver grid lines across wafer
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)'
+      ctx.lineWidth = 0.5
+      for (let g = 1; g < 4; g++) {
+        ctx.beginPath()
+        ctx.moveTo(x + (cellW * g) / 4, y + 1)
+        ctx.lineTo(x + (cellW * g) / 4, y + cellH - 1)
+        ctx.stroke()
+      }
+    }
+  }
+
+  // Dual major copper/gold conductor busbars
+  ctx.strokeStyle = '#f59e0b'
+  ctx.lineWidth = 2.5
+  for (let c = 0; c < cols; c++) {
+    const x = 10 + c * cellW + cellW * 0.5
+    ctx.beginPath()
+    ctx.moveTo(x, 4)
+    ctx.lineTo(x, 252)
+    ctx.stroke()
+  }
+
+  // Perimeter gold thermal foil edge
+  ctx.strokeStyle = '#d97706'
+  ctx.lineWidth = 3
+  ctx.strokeRect(2, 2, 508, 252)
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  return texture
+}
+
+/**
+ * Procedural Thermal Blanket Texture (Multi-Layer Insulation - MLI)
+ * Quilted metallic silver/gold thermal blankets used on spacecraft hulls.
+ */
+export function createThermalBlanketTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 256
+  canvas.height = 256
+  const ctx = canvas.getContext('2d')
+
+  ctx.fillStyle = '#e2e8f0'
+  ctx.fillRect(0, 0, 256, 256)
+
+  ctx.strokeStyle = '#94a3b8'
+  ctx.lineWidth = 1
+  const step = 32
+  for (let i = 0; i <= 256; i += step) {
+    ctx.beginPath()
+    ctx.moveTo(i, 0)
+    ctx.lineTo(i, 256)
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.moveTo(0, i)
+    ctx.lineTo(256, i)
+    ctx.stroke()
+  }
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'
+  for (let x = 0; x < 256; x += step) {
+    for (let y = 0; y < 256; y += step) {
+      ctx.fillRect(x + 4, y + 4, step - 8, step - 8)
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  return texture
+}

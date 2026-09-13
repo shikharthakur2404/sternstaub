@@ -678,7 +678,9 @@ export default function SolarSystem3D({ onReturn }) {
         const dist = targetRadius * 3.2 + 8
         targetCamPosRef.current = new THREE.Vector3(dist * 0.72, dist * 0.38, dist * 0.72)
       } else if (targetData.id === 'iss') {
-        targetCamPosRef.current = new THREE.Vector3(3.2, 1.8, 3.2)
+        targetCamPosRef.current = new THREE.Vector3(2.4, 1.2, 2.4)
+      } else if (targetData.id === 'hubble') {
+        targetCamPosRef.current = new THREE.Vector3(2.0, 1.0, 2.0)
       } else if (targetData.id === 'comet_c2026') {
         targetCamPosRef.current = new THREE.Vector3(14, 6, 14)
       } else {
@@ -741,6 +743,8 @@ export default function SolarSystem3D({ onReturn }) {
         focusOnTarget(sunMesh.userData)
       } else if (id === 'iss') {
         if (earthSatellites) focusOnTarget(earthSatellites.issVessel.userData)
+      } else if (id === 'hubble') {
+        if (earthSatellites) focusOnTarget(earthSatellites.hstVessel.userData)
       } else if (id === 'comet_c2026') {
         focusOnTarget(comet.cometVessel.userData)
       } else if (id === 'exosystem_overview') {
@@ -770,7 +774,7 @@ export default function SolarSystem3D({ onReturn }) {
         // ── STEP BACK (ZOOM OUT 1 TIER) ──
         if (focusedTargetRef.current) {
           const cur = focusedTargetRef.current
-          if (cur.id === 'iss' || cur.isSatellite) {
+          if (cur.id === 'iss' || cur.id === 'hubble' || cur.isSatellite) {
             // Satellite -> Step back to parent Earth
             const earth = planetObjects.find(p => p.data.id === 'earth')
             if (earth) focusOnTarget(earth.mesh.userData)
@@ -826,6 +830,10 @@ export default function SolarSystem3D({ onReturn }) {
             // Earth -> Step into ISS Space Station
             container.focusPlanet('iss')
             setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: ISS (LOW EARTH ORBIT)')
+          } else if (cur.id === 'iss') {
+            // ISS -> Step over to Hubble Space Telescope
+            container.focusPlanet('hubble')
+            setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: HST (HUBBLE SPACE TELESCOPE)')
           } else if (cur.id === 'jupiter') {
             const europa = cur.mesh?.children?.find(c => c.userData?.id === 'europa')
             if (europa) {
@@ -1163,6 +1171,13 @@ export default function SolarSystem3D({ onReturn }) {
               title="Lock on International Space Station in LEO orbit"
             >
               🛰️ ISS
+            </button>
+            <button
+              className={`nav-chip ${selectedPlanet === 'HST (Hubble Space Telescope)' ? 'active' : ''}`}
+              onClick={() => mountRef.current?.focusPlanet?.('hubble')}
+              title="Lock on Hubble Space Telescope in 28.5° LEO orbit"
+            >
+              🔭 HUBBLE
             </button>
             <button
               className={`nav-chip ${selectedPlanet === 'Comet C/2026 (Hyperbolic Visitor)' ? 'active' : ''}`}
