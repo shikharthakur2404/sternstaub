@@ -1,9 +1,9 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `3a0fe64`  
+> Git Commit Reference: `fa4d64f`  
 > Live Public Deployment: https://shikharthakur2404.github.io/sternstaub/  
-> Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Rotatable Keplerian Solar System). Cinema-grade Interstellar Gargantua black hole transition. Earth features photorealistic day terrain + real glowing night city lights (NASA Black Marble map via custom WebGL GLSL shader), dynamic solar terminator day/night demarcation, and Diwali & New Year celebration illumination (warm golden diya glow, India subcontinent radiant epicenter, micro-twinkling, celebratory fireworks, and HUD toggle keybind 'D'). Complete 9-planet Solar System with Pluto, authentic moons, Earth clouds, Saturn rings, and Asteroid Belt.
+> Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Rotatable Keplerian Solar System). Modern astrophysical wormhole transition: volumetric Gargantua black hole with soft Doppler accretion disk, laser-thin photon ring, and 3D relativistic starfield throat traversal (1,200 depth-scaled star streaks, optical Einstein ring, soft aperture flare — zero 80s wireframe polygons). Smooth 3D orbital insertion with optical FOV decompression (60 deg to 45 deg). Earth features photorealistic daytime terrain + nocturnal city lights (NASA Black Marble 2K map via custom WebGL GLSL shader), dynamic solar terminator day/night demarcation, and HUD toggle keybind 'D'. Complete 9-planet Solar System with Pluto, authentic moons, Earth clouds, Saturn rings, and Asteroid Belt.
 
 ---
 
@@ -58,8 +58,8 @@ Follow these non-negotiable architectural rules:
 | `src/components/ControlPanel.jsx` | Glassmorphic HUD | Controls Geometry (5 shapes), Exposure slider, Dispersion, Drift, Particles, Gravity toggle, Nova pulse, Palettes (6 themes), Presets. |
 | `src/components/ControlPanel.css` | HUD Styling | Promoted to GPU layer via `transform: translateZ(0); will-change: transform;`. |
 | `src/config/palettes.js` | Color Themes | Ethereal Gold (Default), Hyperion Blue, Borealis Emerald, Supernova Iris, Solar Flare, Cosmic Amethyst. |
-| `src/components/Solar3D/SolarSystem3D.jsx` | 3D Planetary Engine | Three.js WebGL scene with OrbitControls, 9 rotatable planets (incl. Pluto & Charon), authentic moon systems, Earth clouds & Moon, Earth dynamic night lights with Diwali/New Year celebration shader, Saturn 3D rings, Asteroid belt, camera lerp, and Singularity Gate. |
-| `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, planet nav chips, Diwali glow button, time warp slider, arrival telemetry banner, reverse plunge singularity vortex overlay. |
+| `src/components/Solar3D/SolarSystem3D.jsx` | 3D Planetary Engine | Three.js WebGL scene with OrbitControls, 9 rotatable planets (incl. Pluto & Charon), authentic moon systems, Earth clouds & Moon, Earth dynamic night city lights shader, Saturn 3D rings, Asteroid belt, camera lerp, and Singularity Gate. |
+| `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, planet nav chips, City Lights button, time warp slider, arrival telemetry banner, reverse plunge singularity vortex overlay. |
 | `public/textures/planets/` | Authentic NASA Equirectangular Maps | Real photographic 1K/2K maps for Sun, Mercury, Venus, Earth, Earth clouds, Earth night lights (2048x1024), Moon, Mars, Jupiter, Saturn, Saturn rings, Uranus, Neptune, Pluto. |
 
 ---
@@ -83,34 +83,32 @@ morphSpeed = 0.045 // attractor lerp speed
 
 ---
 
-## 5. QUANTUM ANOMALY & INTERSTELLAR GARGANTUA WORMHOLE TRANSIT
+## 5. QUANTUM ANOMALY & ASTROPHYSICAL WORMHOLE TRANSIT
 
 ```javascript
 // Quantum Anomaly Beacon (Particle 0)
 - Always active across all 5 geometries.
 - Renders via createAnomalySprite(): 8-point diffraction star with multi-spectral prism chromatic dispersion.
 - Real-time hovering reticle & rotating bracket lock overlay with cursor pointer changes.
-- Click triggers the 3-stage Interstellar Gargantua wormhole transit:
+- Click triggers the 3-stage astrophysical wormhole transit:
 
-1. Stage 1: Gravitational Collapse (2.4s)
-   - Logarithmic spiraling infall physics with tangential frame dragging (dAngle = 28 / (dist + 15)).
-   - Motion-blur velocity tails drawn along particle flight vectors.
-   - Geodesic spacetime distortion metric shockwaves (3 expanding concentric rings).
-   - Relativistic Doppler-beamed accretion disk: blue-shifted (0x38bdf8) approaching side, red-shifted (0x991b1b) receding side.
-   - Upper and lower gravitational lensing light arcs bent around the event horizon.
-   - Pure black event horizon void + laser-sharp white/cyan photon ring.
+1. Stage 1: Volumetric Gravitational Collapse (2.4s)
+   - Real stardust particles spiral inward with relativistic frame-dragging and gravitational acceleration.
+   - Smooth volumetric accretion disk with relativistic Doppler beaming (blue-shifted approaching, red-shifted receding).
+   - Gravitational lensing halo (rear disk light curved over and under event horizon).
+   - Pitch-black spherical event horizon void + razor-sharp 2px photon ring.
+   - Zero wireframe polygons or harsh stroke lines.
 
-2. Stage 2: 4D Hyperspace Warp Tunnel (2.0s)
-   - 32 twisting dodecagonal perspective rings streaming at Warp 9 (z = 0 to 1500).
-   - 160 relativistic star streaks with dual-chromatic dispersion (cyan offset + white core).
-   - Central glowing singularity eye.
-   - Exponential coronal whiteout flash (prog > 0.68) transitioning seamlessly into Three.js.
+2. Stage 2: Relativistic Starfield Throat Traversal (2.0s)
+   - 1,200 3D perspective projected relativistic star streaks (1/z depth scaling from 1000 down to 12).
+   - Expanding optical Einstein ring (gravitational lensing perimeter).
+   - Soft, ethereal throat exit aperture glow.
+   - Superluminal coronal whiteout flash (prog > 0.65) for seamless dimensional handoff.
 
-3. Stage 3: Superluminal 3D Planetary Drop-Out (2.6s in Three.js)
-   - Camera spawns at deep space (0, 1800, 2400) and swoops into orbital altitude on a quartic curve (1 - (1 - t)^4).
-   - Expanding White Hole emergence shockwave ring (THREE.RingGeometry) dissipating over 2.6s.
-   - 180 3D hyperspace deceleration streaks (THREE.LineSegments) streaming backward past camera.
-   - Cyan arrival telemetry HUD banner: "✦ HYPERSPACE DROP-OUT // COMPLETED 4D WORMHOLE TRANSIT // ORBITAL INSERTION CONFIRMED" with animated radar ping.
+3. Stage 3: Superluminal 3D Orbital Insertion (Three.js)
+   - Camera spawns at (0, 1200, 1800) with wide perspective (FOV 60 deg).
+   - Smooth quartic deceleration into orbital view (0, 340, 720) with dynamic FOV decompression (60 deg to 45 deg).
+   - Zero cheesy wireframe line segments or flat 2D rings.
 ```
 
 ---
