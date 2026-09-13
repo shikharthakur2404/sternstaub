@@ -232,6 +232,10 @@ export default function SolarSystem3D({ onReturn }) {
         mountRef.current?.switchRealm?.('exosystem')
       } else if (e.key === '3') {
         mountRef.current?.switchRealm?.('andromeda')
+      } else if (e.key === '-' || e.key === '_') {
+        mountRef.current?.zoomBy?.(1.35)
+      } else if (e.key === '=' || e.key === '+') {
+        mountRef.current?.zoomBy?.(0.75)
       }
     }
     window.addEventListener('keydown', handleKey)
@@ -748,6 +752,16 @@ export default function SolarSystem3D({ onReturn }) {
       }
     }
 
+    // Expose Zoom Step to HUD and keyboard
+    container.zoomBy = (factor) => {
+      const offset = camera.position.clone().sub(controls.target)
+      const currentLen = offset.length()
+      const newLen = Math.max(controls.minDistance, Math.min(controls.maxDistance, currentLen * factor))
+      offset.setLength(newLen)
+      camera.position.copy(controls.target).add(offset)
+      controls.update()
+    }
+
     // ── 14. Render & Physics Loop ───────────────────────────────────────────
     let animationFrameId
     const clock = new THREE.Clock()
@@ -1055,6 +1069,24 @@ export default function SolarSystem3D({ onReturn }) {
               <span>{cityLights ? 'CITY LIGHTS: ON' : 'CITY LIGHTS: OFF'}</span>
             </button>
           )}
+
+          <div className="zoom-controls">
+            <button
+              className="zoom-btn"
+              onClick={() => mountRef.current?.zoomBy?.(1.4)}
+              title="Zoom Out (− key)"
+            >
+              −
+            </button>
+            <span className="zoom-label">ZOOM</span>
+            <button
+              className="zoom-btn"
+              onClick={() => mountRef.current?.zoomBy?.(0.7)}
+              title="Zoom In (+ key)"
+            >
+              +
+            </button>
+          </div>
 
           <div className="speed-controller">
             <span className="speed-label">TIME WARP</span>
