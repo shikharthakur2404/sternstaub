@@ -925,10 +925,9 @@ export default function SolarSystem3D({ onReturn }) {
       coronaInnerMesh.rotation.y -= 0.002 * speedMult
       coronaOuterMesh.rotation.y += 0.001 * speedMult
 
-      // Rotate Gateway & Asteroids
+      // Rotate Gateway
       gateTorus.rotation.x += 0.02 * speedMult
       gateTorus.rotation.y += 0.03 * speedMult
-      asteroidMesh.rotation.y += 0.0007 * speedMult
 
       // Update Andromeda Galaxy Rotation
       andromeda.updateGalaxy(delta, speedMult)
