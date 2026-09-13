@@ -227,6 +227,48 @@
   min-width: 28px;
 }
 
+.meteor-storm-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #fef08a;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow:
+    0 2px 10px rgba(245, 158, 11, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.meteor-storm-btn:hover {
+  background: rgba(245, 158, 11, 0.35);
+  border-color: #fde047;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.5);
+  transform: translateY(-1px);
+}
+
+.meteor-storm-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.meteor-icon {
+  font-size: 12px;
+  display: inline-block;
+  animation: meteorTilt 2s infinite ease-in-out;
+}
+
+@keyframes meteorTilt {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(2px, -2px); }
+}
+
 .city-lights-btn {
   display: flex;
   align-items: center;

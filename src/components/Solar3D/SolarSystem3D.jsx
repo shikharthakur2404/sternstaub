@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // SolarSystem3D.jsx — Super-Realistic Keplerian 3D Multi-Cosmic Engine (Three.js)
 // Sol System • TRAPPIST-1 Red Dwarf Exosystem • Andromeda (M31) 3D Spiral Galaxy
-// Logarithmic Depth Buffer • Deep Intergalactic Macro Zoom • Seamless Navigation
+// Earth Satellites (ISS) • Hyperbolic Comet C/2026 • Meteor Showers & Bolides
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState, useCallback } from 'react'
@@ -9,6 +9,9 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { createAndromedaGalaxy } from './galaxyGenerator.js'
 import { createExosystem, EXOPLANET_CONFIG } from './exosystemGenerator.js'
+import { createMeteorShower } from './meteorShower.js'
+import { createEarthSatellites } from './earthSatellites.js'
+import { createComet } from './cometGenerator.js'
 import './SolarSystem3D.css'
 
 // ── Sol Planetary Astronomical Configuration ────────────────────────────────
@@ -189,6 +192,7 @@ export default function SolarSystem3D({ onReturn }) {
   const [cityLights, setCityLights] = useState(true)
   const cityLightsRef = useRef(true)
   const earthNightMatRef = useRef(null)
+  const meteorShowerRef = useRef(null)
 
   useEffect(() => {
     cityLightsRef.current = cityLights
@@ -218,6 +222,10 @@ export default function SolarSystem3D({ onReturn }) {
         handleReturnTrigger()
       } else if (e.key === 'd' || e.key === 'D') {
         setCityLights(prev => !prev)
+      } else if (e.key === 'm' || e.key === 'M') {
+        meteorShowerRef.current?.triggerStorm()
+        setArrivalTelemetry('✦ METEOR STORM ENGAGED // HYPERSONIC BOLIDE IONIZATION WAVE')
+        setTimeout(() => setArrivalTelemetry(''), 2600)
       } else if (e.key === '1') {
         mountRef.current?.switchRealm?.('sol')
       } else if (e.key === '2') {
@@ -259,9 +267,8 @@ export default function SolarSystem3D({ onReturn }) {
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
     controls.dampingFactor = 0.05
-    // Extended maxDistance allows zooming out to view both systems and Andromeda
     controls.maxDistance = 36000
-    controls.minDistance = 12
+    controls.minDistance = 6
 
     // ── 2. Texture Loader & Base Resolution ─────────────────────────────────
     const BASE = import.meta.env.BASE_URL || './'
@@ -290,7 +297,7 @@ export default function SolarSystem3D({ onReturn }) {
     const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.12)
     scene.add(ambientLight)
 
-    // ── 4. Deep-Cosmic Astronomical Starfield (Extended Intergalactic Sphere) ──
+    // ── 4. Deep-Cosmic Astronomical Starfield ───────────────────────────────
     const starGeo = new THREE.BufferGeometry()
     const starCount = 6500
     const starPos = new Float32Array(starCount * 3)
@@ -336,7 +343,16 @@ export default function SolarSystem3D({ onReturn }) {
     const exosystem = createExosystem()
     scene.add(exosystem.group)
 
-    // ── 7. Sol Mesh & Plasma Corona ─────────────────────────────────────────
+    // ── 7. Interplanetary Meteor Shower Engine ──────────────────────────────
+    const meteorShower = createMeteorShower()
+    scene.add(meteorShower.group)
+    meteorShowerRef.current = meteorShower
+
+    // ── 8. Hyperbolic Interplanetary Comet C/2026 ───────────────────────────
+    const comet = createComet()
+    scene.add(comet.group)
+
+    // ── 9. Sol Mesh & Plasma Corona ─────────────────────────────────────────
     const sunGeo = new THREE.SphereGeometry(32, 64, 64)
     const sunMat = new THREE.MeshBasicMaterial({ map: sunTexture })
     const sunMesh = new THREE.Mesh(sunGeo, sunMat)
@@ -364,11 +380,17 @@ export default function SolarSystem3D({ onReturn }) {
     const coronaOuterMesh = new THREE.Mesh(coronaOuterGeo, coronaOuterMat)
     sunMesh.add(coronaOuterMesh)
 
-    const raycastTargets = [sunMesh, andromeda.coreMesh, ...exosystem.raycastTargets]
+    const raycastTargets = [
+      sunMesh,
+      andromeda.coreMesh,
+      comet.cometVessel,
+      ...exosystem.raycastTargets,
+    ]
     sunMesh.userData = { id: 'sun', name: 'Sol (The Sun)', radius: 32, mesh: sunMesh }
 
-    // ── 8. Sol Planetary Systems ────────────────────────────────────────────
+    // ── 10. Sol Planetary Systems & Earth Satellites (ISS) ──────────────────
     const planetObjects = []
+    let earthSatellites = null
 
     PLANET_CONFIG.forEach(p => {
       const orbitCurve = new THREE.EllipseCurve(0, 0, p.dist, p.dist, 0, 2 * Math.PI, false, 0)
@@ -427,6 +449,7 @@ export default function SolarSystem3D({ onReturn }) {
         pMesh.add(cloudMesh)
       }
 
+      // Earth Real Glowing Night Lights & Satellites (ISS)
       if (p.id === 'earth') {
         const nightGeo = new THREE.SphereGeometry(p.r * 1.018, 64, 64)
         const nightMat = new THREE.ShaderMaterial({
@@ -489,6 +512,10 @@ export default function SolarSystem3D({ onReturn }) {
         })
         earthNightMatRef.current = nightMat
         pMesh.add(new THREE.Mesh(nightGeo, nightMat))
+
+        // Attach Earth Orbital Satellites (ISS & Constellation)
+        earthSatellites = createEarthSatellites(pMesh, p.r)
+        raycastTargets.push(...earthSatellites.raycastTargets)
       }
 
       if (p.hasRings) {
@@ -578,7 +605,7 @@ export default function SolarSystem3D({ onReturn }) {
       })
     })
 
-    // ── 9. Main Asteroid Belt (InstancedMesh) ────────────────────────────────
+    // ── 11. Main Asteroid Belt (InstancedMesh) ───────────────────────────────
     const asteroidGeo = new THREE.DodecahedronGeometry(0.75, 1)
     const asteroidMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.92 })
     const asteroidCount = 480
@@ -599,7 +626,7 @@ export default function SolarSystem3D({ onReturn }) {
     asteroidMesh.instanceMatrix.needsUpdate = true
     scene.add(asteroidMesh)
 
-    // ── 10. Quantum Singularity Gateway (Return Beacon) ─────────────────────
+    // ── 12. Quantum Singularity Gateway (Return Beacon) ─────────────────────
     const gatewayGroup = new THREE.Group()
     gatewayGroup.position.set(410, 55, -310)
     scene.add(gatewayGroup)
@@ -616,7 +643,7 @@ export default function SolarSystem3D({ onReturn }) {
     gateHole.userData = { id: 'gateway', name: 'Quantum Singularity Gate' }
     raycastTargets.push(gateHole)
 
-    // ── 11. Raycaster & Navigation Mechanics ────────────────────────────────
+    // ── 13. Raycaster & Navigation Mechanics ────────────────────────────────
     const raycaster = new THREE.Raycaster()
     const mouse = new THREE.Vector2()
 
@@ -641,6 +668,10 @@ export default function SolarSystem3D({ onReturn }) {
       if (targetData.id === 'earth') {
         const dist = targetRadius * 3.2 + 8
         targetCamPosRef.current = new THREE.Vector3(dist * 0.72, dist * 0.38, dist * 0.72)
+      } else if (targetData.id === 'iss') {
+        targetCamPosRef.current = new THREE.Vector3(3.2, 1.8, 3.2)
+      } else if (targetData.id === 'comet_c2026') {
+        targetCamPosRef.current = new THREE.Vector3(14, 6, 14)
       } else {
         const offset = targetData.isMoon
           ? targetRadius * 5.0 + 8
@@ -694,6 +725,10 @@ export default function SolarSystem3D({ onReturn }) {
         container.switchRealm('sol')
       } else if (id === 'sun') {
         focusOnTarget(sunMesh.userData)
+      } else if (id === 'iss') {
+        if (earthSatellites) focusOnTarget(earthSatellites.issVessel.userData)
+      } else if (id === 'comet_c2026') {
+        focusOnTarget(comet.cometVessel.userData)
       } else if (id === 'exosystem_overview') {
         container.switchRealm('exosystem')
       } else if (id === 'trappist_star') {
@@ -713,7 +748,7 @@ export default function SolarSystem3D({ onReturn }) {
       }
     }
 
-    // ── 12. Render & Physics Loop ───────────────────────────────────────────
+    // ── 14. Render & Physics Loop ───────────────────────────────────────────
     let animationFrameId
     const clock = new THREE.Clock()
     let lastAltitudeCheck = 0
@@ -755,6 +790,17 @@ export default function SolarSystem3D({ onReturn }) {
 
       // Update TRAPPIST-1 Exosystem
       exosystem.updateExosystem(delta, speedMult)
+
+      // Update Meteor Shower Trails
+      meteorShower.updateMeteors(delta, speedMult)
+
+      // Update Hyperbolic Comet
+      comet.updateComet(delta, speedMult)
+
+      // Update Earth Satellites (ISS)
+      if (earthSatellites) {
+        earthSatellites.updateSatellites(delta, speedMult)
+      }
 
       // Advance Sol Planets & Moons
       planetObjects.forEach(po => {
@@ -821,7 +867,7 @@ export default function SolarSystem3D({ onReturn }) {
     }
     animate()
 
-    // ── 13. Viewport Resize ─────────────────────────────────────────────────
+    // ── 15. Viewport Resize ─────────────────────────────────────────────────
     const handleResize = () => {
       const w = container.clientWidth
       const h = container.clientHeight
@@ -836,6 +882,9 @@ export default function SolarSystem3D({ onReturn }) {
       window.removeEventListener('resize', handleResize)
       container.removeEventListener('pointerdown', handlePointerDown)
       exosystem.dispose()
+      meteorShower.dispose()
+      comet.dispose()
+      if (earthSatellites) earthSatellites.dispose()
       if (earthNightMatRef.current) {
         earthNightMatRef.current.dispose()
       }
@@ -908,6 +957,20 @@ export default function SolarSystem3D({ onReturn }) {
                   {p.id === 'earth' ? '🌍 EARTH' : p.id === 'pluto' ? '♇ PLUTO' : p.name.toUpperCase()}
                 </button>
               ))}
+              <button
+                className={`nav-chip ${selectedPlanet === 'ISS (International Space Station)' ? 'active' : ''}`}
+                onClick={() => mountRef.current?.focusPlanet?.('iss')}
+                title="Lock on International Space Station in LEO orbit"
+              >
+                🛰️ ISS
+              </button>
+              <button
+                className={`nav-chip ${selectedPlanet === 'Comet C/2026 (Hyperbolic Visitor)' ? 'active' : ''}`}
+                onClick={() => mountRef.current?.focusPlanet?.('comet_c2026')}
+                title="Lock on Hyperbolic Interplanetary Comet C/2026"
+              >
+                ☄️ COMET
+              </button>
             </>
           )}
 
@@ -960,6 +1023,19 @@ export default function SolarSystem3D({ onReturn }) {
 
         {/* Action controls */}
         <div className="hud-actions-strip">
+          <button
+            className="meteor-storm-btn"
+            onClick={() => {
+              meteorShowerRef.current?.triggerStorm()
+              setArrivalTelemetry('✦ METEOR STORM ENGAGED // HYPERSONIC BOLIDE IONIZATION WAVE')
+              setTimeout(() => setArrivalTelemetry(''), 2600)
+            }}
+            title="Trigger Interplanetary Meteor Shower Wave (M)"
+          >
+            <span className="meteor-icon">🌠</span>
+            <span>METEORS (M)</span>
+          </button>
+
           {activeRealm === 'sol' && (
             <button
               className={`city-lights-btn ${cityLights ? 'active' : ''}`}

@@ -1,9 +1,9 @@
 # STERNSTAUB ✦ ENGINE CHECKPOINT & PROMPT RESTORATION SPEC
 
 > **Permanent Architectural Snapshot & AI Rebuild Prompt**  
-> Git Commit Reference: `fa4d64f` (Advancing to multi-cosmic release)  
+> Git Commit Reference: `b62eb6c` (Advancing to cosmic detailing release)  
 > Live Public Deployment: https://shikharthakur2404.github.io/sternstaub/  
-> Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Multi-Cosmic Observatory). Deep intergalactic zoom scale enabled by WebGL `logarithmicDepthBuffer: true` (camera altitude from 12 units up to 36,000 units). Features: (1) Complete 9-planet Keplerian Sol System with Earth night city lights, clouds, rings, moons, and Asteroid Belt; (2) Andromeda (M31) 3D Spiral Galaxy rendered via 18,000 volumetric density-wave stars with 5000K core bulge, hot blue OB spiral arms, H-alpha emission nebulae, and differential rotation; (3) TRAPPIST-1 Red Dwarf Exosystem located across the interstellar gulf with an ultra-cool M-dwarf host star and 5 scientifically authentic procedural exoplanets (Pyroclast lava world, Aethelgard habitable eyeball ocean world, Zephyrus banded methane super-earth, Chronos ringed giant, Nix cryo-ice dwarf); (4) Macro HUD Realm Switcher and real-time Cosmic Altitude light-year gauge.
+> Last Verified Working State: Dual-Engine Architecture (Dimension 1: OffscreenCanvas 2D Particle Worker + Dimension 2: Three.js 3D Multi-Cosmic Observatory). Deep intergalactic zoom scale enabled by WebGL `logarithmicDepthBuffer: true` (camera altitude from 6 units up to 36,000 units). Features: (1) Complete 9-planet Keplerian Sol System with Earth night city lights, clouds, rings, moons, and Asteroid Belt; (2) Earth Orbital Satellites: International Space Station (ISS) in authentic 51.6° LEO orbit with 4 golden solar wings and flashing navigational strobe LEDs, plus 12-node satellite constellation; (3) Hyperbolic Interplanetary Comet C/2026 with eccentric Keplerian orbit (e = 0.86), sublimating cyan coma, Type I Ion Gas Tail (strictly directed away from Sol), and curved Type II Dust Tail; (4) Dynamic Meteor Shower Engine: periodic hypersonic bolide waves (14s cadence) with vertex-alpha ionization line trails, terminal ablation bursts, and on-demand trigger (Key 'M'); (5) Andromeda (M31) 3D Spiral Galaxy: 18,000 density-wave stars with 5000K core bulge, hot blue OB spiral arms, H-alpha nebulae, and differential rotation; (6) TRAPPIST-1 Red Dwarf Exosystem with 5 procedural exoplanets; (7) Macro HUD Realm Switcher, contextual quick-nav chips, and real-time Cosmic Altitude light-year gauge.
 
 ---
 
@@ -62,7 +62,10 @@ Follow these non-negotiable architectural rules:
 | `src/components/Solar3D/galaxyGenerator.js` | Andromeda M31 3D Spiral Galaxy | 18,000 volumetric density-wave stars, 5000K golden bulge, hot blue OB arms, H-alpha nebulae, SMBH void, and differential rotation. |
 | `src/components/Solar3D/exosystemGenerator.js` | TRAPPIST-1 Red Dwarf Exosystem | Ultra-cool M-dwarf host star with 5 procedural exoplanets (Pyroclast, Aethelgard, Zephyrus, Chronos, Nix), exorings, and exomoons. |
 | `src/components/Solar3D/proceduralTextures.js` | Procedural Texture Synthesizers | Canvas2D equirectangular map generators for red dwarf granules/sunspots, lava fissures, eyeball oceans, methane bands, and exorings. |
-| `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, realm switcher tabs, contextual planet chips, cosmic altitude gauge, time warp slider, and singularity vortex. |
+| `src/components/Solar3D/meteorShower.js` | Meteor Shower & Bolide Engine | Periodic hypersonic bolide waves, dynamic LineSegments ionization trails, and terminal ablation bursts. |
+| `src/components/Solar3D/earthSatellites.js` | Earth Satellites & ISS | International Space Station in 51.6° LEO orbit with 4 golden solar wings and strobe LEDs, plus satellite constellation. |
+| `src/components/Solar3D/cometGenerator.js` | Hyperbolic Interplanetary Comet | Comet C/2026 on eccentric Keplerian orbit (e = 0.86) with cyan coma, Type I Ion Tail, and curved Type II Dust Tail. |
+| `src/components/Solar3D/SolarSystem3D.css` | 3D HUD & Warp Styles | Glassmorphic HUD, realm switcher tabs, contextual planet chips, meteor storm button, cosmic altitude gauge, time warp slider, and singularity vortex. |
 | `public/textures/planets/` | Authentic NASA Equirectangular Maps | Real photographic 1K/2K maps for Sun, Mercury, Venus, Earth, Earth clouds, Earth night lights (2048x1024), Moon, Mars, Jupiter, Saturn, Saturn rings, Uranus, Neptune, Pluto. |
 
 ---
