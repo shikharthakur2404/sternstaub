@@ -474,3 +474,82 @@ export function createThermalBlanketTexture() {
   texture.wrapT = THREE.RepeatWrapping
   return texture
 }
+
+/**
+ * Procedural Stanford Torus Habitation & Hull Plating Texture
+ * Features titanium-white exterior thermal tiles, illuminated city/habitation windows,
+ * emerald bio-dome parks, and structural expansion joints.
+ */
+export function createTorusHabitatTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1024
+  canvas.height = 256
+  const ctx = canvas.getContext('2d')
+
+  // Base metallic titanium hull
+  ctx.fillStyle = '#cbd5e1'
+  ctx.fillRect(0, 0, 1024, 256)
+
+  // Structural panel seams
+  ctx.strokeStyle = '#94a3b8'
+  ctx.lineWidth = 1.0
+  for (let x = 0; x < 1024; x += 32) {
+    ctx.beginPath()
+    ctx.moveTo(x, 0)
+    ctx.lineTo(x, 256)
+    ctx.stroke()
+  }
+  for (let y = 0; y < 256; y += 32) {
+    ctx.beginPath()
+    ctx.moveTo(0, y)
+    ctx.lineTo(1024, y)
+    ctx.stroke()
+  }
+
+  // Central Habitation Window Strip (facing inward toward the hub under 1g gravity)
+  // Window band spans y = 90 to 166
+  ctx.fillStyle = '#0f172a'
+  ctx.fillRect(0, 80, 1024, 96)
+
+  // Glowing city lights, residential modules, and bio-parks
+  for (let x = 0; x < 1024; x += 8) {
+    // Alternating residential warm gold, cool blue labs, and emerald bio-parks
+    const sector = Math.floor(x / 64) % 4
+    for (let wy = 86; wy <= 164; wy += 12) {
+      if (Math.random() > 0.15) {
+        if (sector === 0) {
+          // Warm residential city glow
+          ctx.fillStyle = Math.random() > 0.3 ? '#fef08a' : '#fed7aa'
+        } else if (sector === 1) {
+          // Scientific labs & command decks
+          ctx.fillStyle = Math.random() > 0.2 ? '#38bdf8' : '#e0f2fe'
+        } else if (sector === 2) {
+          // Hydroponic bio-dome agriculture & parks
+          ctx.fillStyle = Math.random() > 0.2 ? '#4ade80' : '#86efac'
+        } else {
+          // Concourse & transit promenade
+          ctx.fillStyle = '#f8fafc'
+        }
+        ctx.fillRect(x + 1, wy, 5, 8)
+      }
+    }
+  }
+
+  // Golden radiator/conduction strips along the outer rim
+  ctx.fillStyle = '#f59e0b'
+  ctx.fillRect(0, 24, 1024, 6)
+  ctx.fillRect(0, 226, 1024, 6)
+
+  // Blue LED navigation track along perimeter
+  ctx.fillStyle = '#38bdf8'
+  ctx.fillRect(0, 72, 1024, 3)
+  ctx.fillRect(0, 181, 1024, 3)
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  texture.repeat.set(6, 1)
+  return texture
+}
+

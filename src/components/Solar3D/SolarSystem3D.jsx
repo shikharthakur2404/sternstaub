@@ -11,6 +11,7 @@ import { createAndromedaGalaxy } from './galaxyGenerator.js'
 import { createExosystem, EXOPLANET_CONFIG } from './exosystemGenerator.js'
 import { createMeteorShower } from './meteorShower.js'
 import { createEarthSatellites } from './earthSatellites.js'
+import { createTorusStation } from './torusStation.js'
 import { createComet } from './cometGenerator.js'
 import './SolarSystem3D.css'
 
@@ -400,6 +401,7 @@ export default function SolarSystem3D({ onReturn }) {
     // ── 10. Sol Planetary Systems & Earth Satellites (ISS) ──────────────────
     const planetObjects = []
     let earthSatellites = null
+    let torusStation = null
 
     PLANET_CONFIG.forEach(p => {
       const orbitCurve = new THREE.EllipseCurve(0, 0, p.dist, p.dist, 0, 2 * Math.PI, false, 0)
@@ -525,6 +527,10 @@ export default function SolarSystem3D({ onReturn }) {
         // Attach Earth Orbital Satellites (ISS & Constellation)
         earthSatellites = createEarthSatellites(pMesh, p.r)
         raycastTargets.push(...earthSatellites.raycastTargets)
+
+        // Attach Olympus Torus Space Station (High Earth Orbit)
+        torusStation = createTorusStation(pMesh, p.r)
+        raycastTargets.push(...torusStation.raycastTargets)
       }
 
       if (p.hasRings) {
@@ -681,6 +687,8 @@ export default function SolarSystem3D({ onReturn }) {
         targetCamPosRef.current = new THREE.Vector3(2.4, 1.2, 2.4)
       } else if (targetData.id === 'hubble') {
         targetCamPosRef.current = new THREE.Vector3(2.0, 1.0, 2.0)
+      } else if (targetData.id === 'torus_station') {
+        targetCamPosRef.current = new THREE.Vector3(5.2, 2.6, 5.2)
       } else if (targetData.id === 'comet_c2026') {
         targetCamPosRef.current = new THREE.Vector3(14, 6, 14)
       } else {
@@ -745,6 +753,8 @@ export default function SolarSystem3D({ onReturn }) {
         if (earthSatellites) focusOnTarget(earthSatellites.issVessel.userData)
       } else if (id === 'hubble') {
         if (earthSatellites) focusOnTarget(earthSatellites.hstVessel.userData)
+      } else if (id === 'torus_station') {
+        if (torusStation) focusOnTarget(torusStation.vesselGroup.userData)
       } else if (id === 'comet_c2026') {
         focusOnTarget(comet.cometVessel.userData)
       } else if (id === 'exosystem_overview') {
@@ -774,8 +784,8 @@ export default function SolarSystem3D({ onReturn }) {
         // ── STEP BACK (ZOOM OUT 1 TIER) ──
         if (focusedTargetRef.current) {
           const cur = focusedTargetRef.current
-          if (cur.id === 'iss' || cur.id === 'hubble' || cur.isSatellite) {
-            // Satellite -> Step back to parent Earth
+          if (cur.id === 'iss' || cur.id === 'hubble' || cur.id === 'torus_station' || cur.isSatellite || cur.isStation) {
+            // Satellite / Space Station -> Step back to parent Earth
             const earth = planetObjects.find(p => p.data.id === 'earth')
             if (earth) focusOnTarget(earth.mesh.userData)
             setArrivalTelemetry('✦ STEP ZOOM OUT // ORBITAL REFERENCE: EARTH')
@@ -834,6 +844,10 @@ export default function SolarSystem3D({ onReturn }) {
             // ISS -> Step over to Hubble Space Telescope
             container.focusPlanet('hubble')
             setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: HST (HUBBLE SPACE TELESCOPE)')
+          } else if (cur.id === 'hubble') {
+            // Hubble -> Step over to Olympus Torus Station
+            container.focusPlanet('torus_station')
+            setArrivalTelemetry('✦ STEP ZOOM IN // LOCKED: OLYMPUS TORUS (HIGH EARTH ORBIT)')
           } else if (cur.id === 'jupiter') {
             const europa = cur.mesh?.children?.find(c => c.userData?.id === 'europa')
             if (europa) {
@@ -928,9 +942,14 @@ export default function SolarSystem3D({ onReturn }) {
       // Update Hyperbolic Comet
       comet.updateComet(delta, speedMult)
 
-      // Update Earth Satellites (ISS)
+      // Update Earth Satellites (ISS & HST)
       if (earthSatellites) {
         earthSatellites.updateSatellites(delta, speedMult)
+      }
+
+      // Update Olympus Torus Space Station
+      if (torusStation) {
+        torusStation.updateStation(delta, speedMult)
       }
 
       // Advance Sol Planets & Moons
@@ -1016,6 +1035,7 @@ export default function SolarSystem3D({ onReturn }) {
       meteorShower.dispose()
       comet.dispose()
       if (earthSatellites) earthSatellites.dispose()
+      if (torusStation) torusStation.dispose()
       if (earthNightMatRef.current) {
         earthNightMatRef.current.dispose()
       }
@@ -1178,6 +1198,13 @@ export default function SolarSystem3D({ onReturn }) {
               title="Lock on Hubble Space Telescope in 28.5° LEO orbit"
             >
               🔭 HUBBLE
+            </button>
+            <button
+              className={`nav-chip ${selectedPlanet === 'Olympus Torus (Orbital Station)' ? 'active' : ''}`}
+              onClick={() => mountRef.current?.focusPlanet?.('torus_station')}
+              title="Lock on Olympus Torus Space Station in High Earth Orbit"
+            >
+              🛞 TORUS
             </button>
             <button
               className={`nav-chip ${selectedPlanet === 'Comet C/2026 (Hyperbolic Visitor)' ? 'active' : ''}`}
