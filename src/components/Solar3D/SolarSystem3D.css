@@ -29,15 +29,15 @@
   top: 14px;
   left: 16px;
   right: 16px;
+  max-width: calc(100vw - 32px);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 10px 18px;
-  background: rgba(4, 7, 18, 0.78);
+  gap: 12px;
+  padding: 8px 14px;
+  background: rgba(4, 7, 18, 0.82);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(56, 189, 248, 0.24);
+  border: 1px solid rgba(56, 189, 248, 0.28);
   border-radius: 12px;
   box-shadow:
     0 12px 36px rgba(0, 0, 0, 0.75),
@@ -45,6 +45,20 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   z-index: 30;
   pointer-events: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.solar-3d-hud::-webkit-scrollbar {
+  display: none;
+}
+
+.solar-3d-hud::after {
+  content: '';
+  flex: 0 0 4px;
 }
 
 /* Brand & Target Lock */
@@ -53,6 +67,7 @@
   align-items: center;
   gap: 10px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .hud-pulse-dot {
@@ -86,6 +101,10 @@
   background: rgba(56, 189, 248, 0.12);
   border: 1px solid rgba(56, 189, 248, 0.4);
   border-radius: 4px;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   animation: lockBlink 2.4s infinite ease-in-out;
 }
 
@@ -102,6 +121,7 @@
   padding: 0 10px;
   border-left: 1px solid rgba(56, 189, 248, 0.22);
   border-right: 1px solid rgba(56, 189, 248, 0.22);
+  flex-shrink: 0;
 }
 
 .realm-tab {
@@ -207,27 +227,29 @@
 .hud-actions-strip {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .zoom-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: rgba(15, 23, 42, 0.55);
-  padding: 3px 8px;
+  padding: 2px 6px;
   border: 1px solid rgba(56, 189, 248, 0.2);
   border-radius: 6px;
 }
 
 .zoom-btn {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.12);
@@ -259,11 +281,11 @@
 .speed-controller {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 10px;
+  gap: 6px;
+  font-size: 9px;
   color: #94a3b8;
   background: rgba(15, 23, 42, 0.5);
-  padding: 4px 10px;
+  padding: 3px 8px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
 }
@@ -274,7 +296,7 @@
 }
 
 .speed-controller input[type="range"] {
-  width: 72px;
+  width: 58px;
   height: 4px;
   appearance: none;
   background: rgba(255, 255, 255, 0.15);
@@ -296,17 +318,17 @@
 .speed-value {
   color: #38bdf8;
   font-weight: 700;
-  min-width: 28px;
+  min-width: 24px;
 }
 
 .meteor-storm-btn {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 13px;
-  font-size: 11px;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: #fef08a;
   background: rgba(245, 158, 11, 0.18);
   border: 1px solid rgba(245, 158, 11, 0.45);
@@ -331,7 +353,7 @@
 }
 
 .meteor-icon {
-  font-size: 12px;
+  font-size: 11px;
   display: inline-block;
   animation: meteorTilt 2s infinite ease-in-out;
 }
@@ -344,11 +366,11 @@
 .city-lights-btn {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 13px;
-  font-size: 11px;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: #e0f2fe;
   background: rgba(14, 116, 144, 0.25);
   border: 1px solid rgba(56, 189, 248, 0.45);
@@ -380,7 +402,7 @@
 }
 
 .city-lights-icon {
-  font-size: 13px;
+  font-size: 11px;
   filter: drop-shadow(0 0 4px #fbbf24);
   display: inline-block;
 }
@@ -398,11 +420,11 @@
 .return-wormhole-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  font-size: 11px;
+  gap: 6px;
+  padding: 5px 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: #f8fafc;
   background: linear-gradient(135deg, rgba(168, 85, 247, 0.35) 0%, rgba(56, 189, 248, 0.35) 100%);
   border: 1px solid rgba(168, 85, 247, 0.6);
@@ -412,6 +434,7 @@
     0 4px 16px rgba(168, 85, 247, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
 }
 
 .return-wormhole-btn:hover {
@@ -602,9 +625,11 @@
 /* ── Mobile & Compact Viewports ─────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .solar-3d-hud {
-    flex-wrap: wrap;
-    padding: 8px 12px;
+    padding: 6px 10px;
     gap: 8px;
+  }
+  .hud-system-title {
+    display: none;
   }
   .hud-actions-strip {
     gap: 8px;

@@ -199,6 +199,13 @@ export default function SolarSystem3D({ onReturn }) {
   const cityLightsRef = useRef(true)
   const earthNightMatRef = useRef(null)
   const meteorShowerRef = useRef(null)
+  const hudRef = useRef(null)
+
+  const handleHorizontalScrollWheel = useCallback((e) => {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      e.currentTarget.scrollLeft += e.deltaY * 0.85
+    }
+  }, [])
 
   useEffect(() => {
     cityLightsRef.current = cityLights
@@ -1050,12 +1057,16 @@ export default function SolarSystem3D({ onReturn }) {
   return (
     <div className={`solar-3d-container ${isWarpingOut ? 'warp-out' : ''}`} ref={mountRef}>
       {/* ── TIER 1: TOP SCI-FI OBSERVATORY HUD ─────────────────────────────── */}
-      <div className="solar-3d-hud">
+      <div className="solar-3d-hud" ref={hudRef} onWheel={handleHorizontalScrollWheel}>
         {/* Brand & Target Lock */}
         <div className="hud-brand">
           <span className="hud-pulse-dot" />
           <span className="hud-system-title">✦ MULTI-COSMIC 3D OBSERVATORY</span>
-          {selectedPlanet && <span className="hud-planet-focus">LOCKED: {selectedPlanet.toUpperCase()}</span>}
+          {selectedPlanet && (
+            <span className="hud-planet-focus" title={`Locked Target: ${selectedPlanet}`}>
+              LOCKED: {selectedPlanet.toUpperCase()}
+            </span>
+          )}
         </div>
 
         {/* Macro Realm Switcher Tabs */}
@@ -1163,7 +1174,7 @@ export default function SolarSystem3D({ onReturn }) {
       {/* ── TIER 2: FLOATING BOTTOM CELESTIAL DOCK ──────────────────────────── */}
       <div className="celestial-dock">
         {activeRealm === 'sol' && (
-          <div className="dock-strip">
+          <div className="dock-strip" onWheel={handleHorizontalScrollWheel}>
             <button
               className={`nav-chip ${!selectedPlanet ? 'active' : ''}`}
               onClick={() => mountRef.current?.focusPlanet?.('overview')}
@@ -1217,7 +1228,7 @@ export default function SolarSystem3D({ onReturn }) {
         )}
 
         {activeRealm === 'exosystem' && (
-          <div className="dock-strip">
+          <div className="dock-strip" onWheel={handleHorizontalScrollWheel}>
             <button
               className={`nav-chip ${!selectedPlanet ? 'active' : ''}`}
               onClick={() => mountRef.current?.focusPlanet?.('exosystem_overview')}
@@ -1246,7 +1257,7 @@ export default function SolarSystem3D({ onReturn }) {
         )}
 
         {activeRealm === 'andromeda' && (
-          <div className="dock-strip">
+          <div className="dock-strip" onWheel={handleHorizontalScrollWheel}>
             <button
               className="nav-chip active"
               onClick={() => mountRef.current?.focusPlanet?.('andromeda_overview')}
