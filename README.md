@@ -63,3 +63,9 @@ npm run lint
 ## License
 
 MIT © [Shikhar Thakur](https://github.com/shikharthakur2404)
+
+---
+
+Copyright © 2026 Shikhar Thakur.
+
+Released under the MIT License — see [LICENSE](LICENSE).
