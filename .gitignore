@@ -3,3 +3,8 @@ dist/
 src-tauri/target/
 *.local
 .DS_Store
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
